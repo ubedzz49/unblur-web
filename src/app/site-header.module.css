@@ -1,0 +1,14 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 2px solid var(--line);
+  gap: 12px;
+}
+
+.logo {
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 1px;
+}

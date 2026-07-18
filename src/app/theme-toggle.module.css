@@ -1,0 +1,17 @@
+.toggle {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  padding: 10px 16px;
+  min-height: 44px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--accent);
+}

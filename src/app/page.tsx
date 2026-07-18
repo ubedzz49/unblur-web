@@ -1,66 +1,32 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+
+import Link from "next/link";
+import { useIsLoggedIn } from "@/lib/auth";
+import { SiteHeader } from "./site-header";
+import shared from "./shared.module.css";
 
 export default function Home() {
+  const loggedIn = useIsLoggedIn();
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className={shared.wrap}>
+      <SiteHeader />
+      <section style={{ padding: "60px 0" }}>
+        <h1 className={shared.heading} style={{ maxWidth: "16ch" }}>
+          Every room you speak in <span style={{ color: "var(--accent-2)" }}>keeps score</span>.
+        </h1>
+        <p className={shared.muted} style={{ maxWidth: "44ch", marginBottom: 24, fontSize: 17 }}>
+          Post a doubt, get a real answer live, and build a communication record along the
+          way.
+        </p>
+        <Link
+          href={loggedIn ? "/profile" : "/login"}
+          className={shared.button}
+          style={{ display: "inline-block", width: "auto", padding: "14px 26px", textAlign: "center" }}
+        >
+          {loggedIn ? "Go to your profile" : "Log in"}
+        </Link>
+      </section>
     </div>
   );
 }
