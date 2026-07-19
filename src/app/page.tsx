@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useIsLoggedIn } from "@/lib/auth";
+import { useAuth } from "@/lib/auth-context";
+import { PageTransition } from "@/components/ui/PageTransition";
 import { SiteHeader } from "./site-header";
 import shared from "./shared.module.css";
 
 export default function Home() {
-  const loggedIn = useIsLoggedIn();
+  const { isLoggedIn } = useAuth();
 
   return (
-    <div className={shared.wrap}>
+    <PageTransition className={shared.wrap}>
       <SiteHeader />
       <section style={{ padding: "60px 0" }}>
         <h1 className={shared.heading} style={{ maxWidth: "16ch" }}>
@@ -20,13 +21,13 @@ export default function Home() {
           way.
         </p>
         <Link
-          href={loggedIn ? "/profile" : "/login"}
+          href={isLoggedIn ? "/profile" : "/login"}
           className={shared.button}
           style={{ display: "inline-block", width: "auto", padding: "14px 26px", textAlign: "center" }}
         >
-          {loggedIn ? "Go to your profile" : "Log in"}
+          {isLoggedIn ? "Go to your profile" : "Log in"}
         </Link>
       </section>
-    </div>
+    </PageTransition>
   );
 }

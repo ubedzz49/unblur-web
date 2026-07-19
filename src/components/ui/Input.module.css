@@ -1,0 +1,39 @@
+.field {
+  margin-bottom: 16px;
+}
+
+.label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin: 0 0 6px;
+  display: block;
+}
+
+.input {
+  width: 100%;
+  padding: 12px;
+  min-height: 44px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 16px;
+  transition: border-color 0.15s;
+}
+
+.input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.inputError {
+  border-color: var(--accent-2);
+}
+
+.errorText {
+  color: var(--accent-2);
+  font-size: 13px;
+  margin-top: 6px;
+}

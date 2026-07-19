@@ -1,193 +1,161 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getMe, updateMe, UserProfile } from "@/lib/api";
-import { clearToken, getToken } from "@/lib/auth";
+import { useAuth } from "@/lib/auth-context";
+import { useMe, useUpdateProfile, useUploadProfilePhoto } from "@/lib/queries/users";
+import { useToast } from "@/components/ui/Toast";
+import { Button, ButtonStatus } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Card } from "@/components/ui/Card";
+import { Avatar } from "@/components/ui/Avatar";
+import { ProfileCardSkeleton } from "@/components/ui/Skeleton";
+import { PageTransition } from "@/components/ui/PageTransition";
 import { SiteHeader } from "../site-header";
 import shared from "../shared.module.css";
 
-const SAVED_MESSAGE_MS = 2500;
-
 export default function ProfilePage() {
   const router = useRouter();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const { isLoggedIn, logout } = useAuth();
+  const { showToast } = useToast();
+  const me = useMe();
+  const updateProfile = useUpdateProfile();
+  const uploadPhoto = useUploadProfilePhoto();
+
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [aiNotes, setAiNotes] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-  const savedTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  // a ref, not just the `saving` state, so truly-simultaneous clicks (before React
-  // has re-rendered to reflect setSaving(true)) still can't fire a second request
-  const savingRef = useRef(false);
+  const [saveStatus, setSaveStatus] = useState<ButtonStatus>("idle");
+  // tracks which fetched profile the form fields were last synced from -- set during
+  // render (React's documented pattern for "adjust state when a prop changes"),
+  // not in an effect, so it can't trigger a cascading re-render
+  const [syncedProfileId, setSyncedProfileId] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.replace("/login");
-      return;
-    }
+    if (!isLoggedIn) router.replace("/login");
+  }, [isLoggedIn, router]);
 
-    getMe(token)
-      .then((user) => {
-        setProfile(user);
-        setName(user.name ?? "");
-        setBio(user.bio ?? "");
-        setAiNotes(user.aiNotesAndTranscriptsEnabled);
-      })
-      .catch(() => {
-        clearToken();
-        router.replace("/login");
-      })
-      .finally(() => setLoading(false));
-  }, [router]);
-
-  useEffect(() => {
-    return () => clearTimeout(savedTimeout.current);
-  }, []);
-
-  function clearSavedMessageSoon() {
-    clearTimeout(savedTimeout.current);
-    savedTimeout.current = setTimeout(() => setSaved(false), SAVED_MESSAGE_MS);
+  if (me.data && me.data.id !== syncedProfileId) {
+    setSyncedProfileId(me.data.id);
+    setName(me.data.name ?? "");
+    setBio(me.data.bio ?? "");
+    setAiNotes(me.data.aiNotesAndTranscriptsEnabled);
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (savingRef.current) return;
-    savingRef.current = true;
+    if (saveStatus === "loading") return;
 
-    const token = getToken();
-    if (!token) {
-      savingRef.current = false;
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-    setSaved(false);
+    setSaveStatus("loading");
     try {
-      const updated = await updateMe(token, {
-        name,
-        bio,
-        aiNotesAndTranscriptsEnabled: aiNotes,
-      });
-      setProfile(updated);
-      setSaved(true);
-      clearSavedMessageSoon();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "couldn't save that");
-    } finally {
-      savingRef.current = false;
-      setSaving(false);
+      await updateProfile.mutateAsync({ name, bio, aiNotesAndTranscriptsEnabled: aiNotes });
+      setSaveStatus("success");
+      showToast("Profile updated");
+      setTimeout(() => setSaveStatus("idle"), 1500);
+    } catch {
+      setSaveStatus("idle");
+      showToast("Couldn't save that — try again.", "error");
+    }
+  }
+
+  async function handlePhotoSelected(file: File) {
+    try {
+      const publicUrl = await uploadPhoto.mutateAsync(file);
+      await updateProfile.mutateAsync({ photoUrl: publicUrl });
+      showToast("Photo updated");
+    } catch {
+      showToast("Couldn't upload that photo — try again.", "error");
     }
   }
 
   function handleLogout() {
-    clearToken();
+    logout();
     router.push("/");
   }
 
-  if (loading) {
+  if (!isLoggedIn) return null;
+
+  if (me.isLoading) {
     return (
       <div className={shared.wrap}>
         <SiteHeader />
-        <p className={shared.muted} style={{ padding: "40px 0" }}>
-          Loading your profile…
+        <section style={{ padding: "40px 0" }}>
+          <ProfileCardSkeleton />
+        </section>
+      </div>
+    );
+  }
+
+  if (me.isError || !me.data) {
+    return (
+      <div className={shared.wrap}>
+        <SiteHeader />
+        <p className={shared.error} style={{ padding: "40px 0" }}>
+          Couldn&apos;t load your profile. Try refreshing the page.
         </p>
       </div>
     );
   }
 
   return (
-    <div className={shared.wrap}>
+    <PageTransition className={shared.wrap}>
       <SiteHeader />
       <section style={{ padding: "40px 0" }}>
         <h1 className={shared.heading}>Your profile</h1>
         <p className={shared.muted} style={{ marginBottom: 24 }}>
-          {profile?.email ?? profile?.phone}
+          {me.data.email ?? me.data.phone}
         </p>
 
-        <form className={shared.card} onSubmit={handleSave} style={{ maxWidth: 440 }}>
-          <fieldset
-            disabled={saving}
-            style={{ border: "none", padding: 0, margin: 0 }}
-          >
-            <div className={shared.field}>
-              <label className={shared.label} htmlFor="name">
-                Name
-              </label>
-              <input
-                id="name"
-                className={shared.input}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-              />
-            </div>
+        <Card style={{ maxWidth: 440 }}>
+          <div style={{ marginBottom: 20 }}>
+            <Avatar
+              photoUrl={me.data.photoUrl}
+              name={me.data.name}
+              uploading={uploadPhoto.isPending}
+              onFileSelected={handlePhotoSelected}
+              onInvalidFile={(message) => showToast(message, "error")}
+            />
+          </div>
 
-            <div className={shared.field}>
-              <label className={shared.label} htmlFor="bio">
-                Bio
-              </label>
-              <input
+          <form onSubmit={handleSave}>
+            <fieldset disabled={saveStatus === "loading"} style={{ border: "none", padding: 0, margin: 0 }}>
+              <Input id="name" label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
+              <Input
                 id="bio"
-                className={shared.input}
+                label="Bio"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="What do you help people with?"
               />
-            </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                <input
+                  id="aiNotes"
+                  type="checkbox"
+                  checked={aiNotes}
+                  onChange={(e) => setAiNotes(e.target.checked)}
+                  style={{ width: 20, height: 20 }}
+                />
+                <label htmlFor="aiNotes" style={{ fontSize: 14 }}>
+                  Send me AI notes and transcripts after my sessions
+                </label>
+              </div>
+            </fieldset>
 
-            <div className={shared.field} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <input
-                id="aiNotes"
-                type="checkbox"
-                checked={aiNotes}
-                onChange={(e) => setAiNotes(e.target.checked)}
-                style={{ width: 20, height: 20 }}
-              />
-              <label htmlFor="aiNotes" style={{ fontSize: 14 }}>
-                Send me AI notes and transcripts after my sessions
-              </label>
-            </div>
-          </fieldset>
-
-          {error && (
-            <p className={shared.error} role="alert">
-              {error}
-            </p>
-          )}
-          <p
-            role="status"
-            style={{
-              color: "var(--accent)",
-              fontWeight: 700,
-              fontSize: 14,
-              minHeight: 20,
-              marginBottom: 8,
-              visibility: saved ? "visible" : "hidden",
-            }}
-          >
-            ✓ Saved
-          </p>
-
-          <button className={shared.button} type="submit" disabled={saving}>
-            {saving ? "Saving…" : "Save changes"}
-          </button>
-          <button
-            type="button"
-            className={shared.buttonSecondary}
-            style={{ marginTop: 10 }}
-            onClick={handleLogout}
-            disabled={saving}
-          >
-            Log out
-          </button>
-        </form>
+            <Button type="submit" status={saveStatus} loadingLabel="Saving…" successLabel="Saved">
+              Save changes
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              style={{ marginTop: 10 }}
+              onClick={handleLogout}
+              disabled={saveStatus === "loading"}
+            >
+              Log out
+            </Button>
+          </form>
+        </Card>
       </section>
-    </div>
+    </PageTransition>
   );
 }
