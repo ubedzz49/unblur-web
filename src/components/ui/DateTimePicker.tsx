@@ -4,7 +4,10 @@ import { useMemo, useState } from "react";
 import styles from "./DateTimePicker.module.css";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
-const MINUTE_STEPS = [0, 15, 30, 45];
+// every minute, not just quarter-hours -- a quick "N minutes from now" pick rarely lands on
+// a 15-minute boundary, and a value outside the option list silently fails to display
+// (a controlled <select> shows nothing selected when its value has no matching <option>)
+const MINUTE_STEPS = Array.from({ length: 60 }, (_, m) => m);
 
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());

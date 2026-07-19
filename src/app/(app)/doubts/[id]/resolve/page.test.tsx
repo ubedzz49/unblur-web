@@ -121,13 +121,24 @@ describe("ResolveRequestPage", () => {
   });
 
   describe("quick pick", () => {
-    it("goes from opening the form to a submittable request using only duration, amount, and one quick-pick click", async () => {
+    it("goes from opening the form to a submittable request using only duration, amount, and one quick-pick", async () => {
       renderWithProviders(<ResolveRequestPage />);
 
       fireEvent.change(screen.getByLabelText(/amount/i), { target: { value: "100" } });
-      fireEvent.click(screen.getByRole("button", { name: /in 5 min/i }));
+      fireEvent.change(screen.getByLabelText(/minutes from now/i), { target: { value: "5" } });
+      fireEvent.click(screen.getByRole("button", { name: /^set$/i }));
 
       expect(screen.getByRole("button", { name: /send offer/i })).not.toBeDisabled();
+    });
+
+    it("rejects an out-of-range quick-pick value (disables Set) instead of silently clamping", async () => {
+      renderWithProviders(<ResolveRequestPage />);
+
+      fireEvent.change(screen.getByLabelText(/minutes from now/i), { target: { value: "61" } });
+      expect(screen.getByRole("button", { name: /^set$/i })).toBeDisabled();
+
+      fireEvent.change(screen.getByLabelText(/minutes from now/i), { target: { value: "-1" } });
+      expect(screen.getByRole("button", { name: /^set$/i })).toBeDisabled();
     });
 
     it("produces a slot value that is genuinely later than now, not a hardcoded date", async () => {
@@ -135,7 +146,8 @@ describe("ResolveRequestPage", () => {
 
       const before = Date.now();
       fireEvent.change(screen.getByLabelText(/amount/i), { target: { value: "100" } });
-      fireEvent.click(screen.getByRole("button", { name: /in 15 min/i }));
+      fireEvent.change(screen.getByLabelText(/minutes from now/i), { target: { value: "15" } });
+      fireEvent.click(screen.getByRole("button", { name: /^set$/i }));
 
       vi.spyOn(api, "createResolutionRequest").mockResolvedValue({
         id: "req-2",
@@ -155,7 +167,7 @@ describe("ResolveRequestPage", () => {
       const call = vi.mocked(api.createResolutionRequest).mock.calls[0][1];
       const slotMs = new Date(call.proposedSlots[0]).getTime();
       expect(slotMs).toBeGreaterThan(before);
-      // "in 15 min" should land close to +15 minutes, not some other preset
+      // "15" minutes should land close to +15 minutes, not some other value
       expect(slotMs - before).toBeGreaterThan(10 * 60 * 1000);
       expect(slotMs - before).toBeLessThan(20 * 60 * 1000);
     });
@@ -179,7 +191,8 @@ describe("ResolveRequestPage", () => {
       pickSlotViaCalendar("dtp-slot-1");
       fireEvent.change(screen.getByLabelText(/amount/i), { target: { value: "50" } });
 
-      fireEvent.click(screen.getByRole("button", { name: /in 2 min/i }));
+      fireEvent.change(screen.getByLabelText(/minutes from now/i), { target: { value: "2" } });
+      fireEvent.click(screen.getByRole("button", { name: /^set$/i }));
       fireEvent.click(screen.getByRole("button", { name: /send offer/i }));
 
       await waitFor(() => expect(api.createResolutionRequest).toHaveBeenCalled());
@@ -192,6 +205,66 @@ describe("ResolveRequestPage", () => {
       expect(slot1Ms).toBeGreaterThan(Date.now() + 24 * 60 * 60 * 1000);
       expect(slot2Ms).toBeGreaterThan(Date.now());
       expect(slot2Ms).toBeLessThan(Date.now() + 10 * 60 * 1000);
+    });
+  });
+
+  describe("custom duration", () => {
+    it("accepts a free-typed duration within 1-90 minutes", async () => {
+      renderWithProviders(<ResolveRequestPage />);
+
+      fireEvent.change(screen.getByLabelText(/or enter any duration/i), { target: { value: "45" } });
+      fireEvent.change(screen.getByLabelText(/amount/i), { target: { value: "100" } });
+      fireEvent.change(screen.getByLabelText(/minutes from now/i), { target: { value: "10" } });
+      fireEvent.click(screen.getByRole("button", { name: /^set$/i }));
+
+      vi.spyOn(api, "createResolutionRequest").mockResolvedValue({
+        id: "req-4",
+        doubtId: "doubt-1",
+        resolverUserId: "user-1",
+        durationMins: 45,
+        amountCents: 10000,
+        proposedSlots: [],
+        status: "pending",
+        acceptedSlotAt: null,
+        createdAt: new Date().toISOString(),
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: /send offer/i }));
+
+      await waitFor(() => expect(api.createResolutionRequest).toHaveBeenCalled());
+      const call = vi.mocked(api.createResolutionRequest).mock.calls[0][1];
+      expect(call.durationMins).toBe(45);
+    });
+
+    it("clamps a duration typed above the 90-minute max", async () => {
+      renderWithProviders(<ResolveRequestPage />);
+
+      fireEvent.change(screen.getByLabelText(/amount/i), { target: { value: "100" } });
+      fireEvent.change(screen.getByLabelText(/minutes from now/i), { target: { value: "10" } });
+      fireEvent.click(screen.getByRole("button", { name: /^set$/i }));
+
+      fireEvent.change(screen.getByLabelText(/or enter any duration/i), { target: { value: "500" } });
+      expect(screen.getByLabelText(/or enter any duration/i)).toHaveValue(500); // raw input echoes what was typed
+
+      vi.spyOn(api, "createResolutionRequest").mockResolvedValue({
+        id: "req-5",
+        doubtId: "doubt-1",
+        resolverUserId: "user-1",
+        durationMins: 90,
+        amountCents: 10000,
+        proposedSlots: [],
+        status: "pending",
+        acceptedSlotAt: null,
+        createdAt: new Date().toISOString(),
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: /send offer/i }));
+
+      await waitFor(() => expect(api.createResolutionRequest).toHaveBeenCalled());
+      const call = vi.mocked(api.createResolutionRequest).mock.calls[0][1];
+      // the underlying durationMins actually sent is clamped to the max, even though
+      // the raw text input still shows what the user typed
+      expect(call.durationMins).toBe(90);
     });
   });
 });
