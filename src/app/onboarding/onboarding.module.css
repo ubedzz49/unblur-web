@@ -1,0 +1,51 @@
+.progress {
+  display: flex;
+  gap: 6px;
+  margin: 24px 0 28px;
+}
+
+.progressStep {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+.progressStep[data-done="true"] {
+  background: var(--accent-2);
+}
+
+.stepTitle {
+  font-weight: 900;
+  font-size: clamp(24px, 6vw, 34px);
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+
+.stepHint {
+  color: var(--muted);
+  font-size: 15px;
+  margin-bottom: 24px;
+}
+
+.avatarWrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.skip {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 10px;
+  text-decoration: underline;
+}

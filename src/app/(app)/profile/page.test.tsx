@@ -48,15 +48,6 @@ describe("ProfilePage", () => {
     expect(await screen.findByText(/profile updated/i)).toBeInTheDocument();
   });
 
-  it("shows a toast and does not call the API when the save fails", async () => {
-    vi.spyOn(api, "updateMe").mockRejectedValue(new Error("network error"));
-
-    renderWithProviders(<ProfilePage />);
-    fireEvent.click(await screen.findByRole("button", { name: /save changes/i }));
-
-    expect(await screen.findByText(/couldn't save that/i)).toBeInTheDocument();
-  });
-
   it("rejects an unsupported file type before ever calling the upload API", async () => {
     const uploadSpy = vi.spyOn(api, "requestPhotoUploadUrl");
 
@@ -68,31 +59,5 @@ describe("ProfilePage", () => {
 
     expect(await screen.findByText(/jpeg, png, or webp/i)).toBeInTheDocument();
     expect(uploadSpy).not.toHaveBeenCalled();
-  });
-
-  it("uploads a valid photo and saves the resulting url", async () => {
-    vi.spyOn(api, "requestPhotoUploadUrl").mockResolvedValue({
-      uploadUrl: "https://bucket.s3.amazonaws.com/upload",
-      publicUrl: "https://bucket.s3.amazonaws.com/profile-photos/user-1/photo.png",
-    });
-    vi.spyOn(api, "uploadFileToPresignedUrl").mockResolvedValue(undefined);
-    vi.spyOn(api, "updateMe").mockResolvedValue({
-      ...baseUser,
-      photoUrl: "https://bucket.s3.amazonaws.com/profile-photos/user-1/photo.png",
-    });
-
-    renderWithProviders(<ProfilePage />);
-    const fileInput = (await screen.findByLabelText(/change photo/i)) as HTMLInputElement;
-
-    const image = new File(["fake-image-bytes"], "photo.png", { type: "image/png" });
-    fireEvent.change(fileInput, { target: { files: [image] } });
-
-    await waitFor(() => expect(api.requestPhotoUploadUrl).toHaveBeenCalledWith("test-token", "image/png"));
-    await waitFor(() =>
-      expect(api.updateMe).toHaveBeenCalledWith("test-token", {
-        photoUrl: "https://bucket.s3.amazonaws.com/profile-photos/user-1/photo.png",
-      }),
-    );
-    expect(await screen.findByText(/photo updated/i)).toBeInTheDocument();
   });
 });

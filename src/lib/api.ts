@@ -24,7 +24,7 @@ export function sendOtp(identifier: string) {
 }
 
 export function verifyOtp(identifier: string, otp: string) {
-  return request<{ token: string }>("/auth/otp/verify", {
+  return request<{ token: string; isNewUser: boolean }>("/auth/otp/verify", {
     method: "POST",
     body: JSON.stringify({ identifier, otp }),
   });

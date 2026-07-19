@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useMe, useUpdateProfile, useUploadProfilePhoto } from "@/lib/queries/users";
 import { useToast } from "@/components/ui/Toast";
@@ -11,12 +11,11 @@ import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { ProfileCardSkeleton } from "@/components/ui/Skeleton";
 import { PageTransition } from "@/components/ui/PageTransition";
-import { SiteHeader } from "../site-header";
-import shared from "../shared.module.css";
+import shared from "../../shared.module.css";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { isLoggedIn, logout } = useAuth();
+  const { logout } = useAuth();
   const { showToast } = useToast();
   const me = useMe();
   const updateProfile = useUpdateProfile();
@@ -26,14 +25,9 @@ export default function ProfilePage() {
   const [bio, setBio] = useState("");
   const [aiNotes, setAiNotes] = useState(false);
   const [saveStatus, setSaveStatus] = useState<ButtonStatus>("idle");
-  // tracks which fetched profile the form fields were last synced from -- set during
-  // render (React's documented pattern for "adjust state when a prop changes"),
-  // not in an effect, so it can't trigger a cascading re-render
+  // synced during render (React's "adjust state when data changes" pattern), not in
+  // an effect, so it can't trigger a cascading re-render
   const [syncedProfileId, setSyncedProfileId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isLoggedIn) router.replace("/login");
-  }, [isLoggedIn, router]);
 
   if (me.data && me.data.id !== syncedProfileId) {
     setSyncedProfileId(me.data.id);
@@ -73,34 +67,25 @@ export default function ProfilePage() {
     router.push("/");
   }
 
-  if (!isLoggedIn) return null;
-
   if (me.isLoading) {
     return (
-      <div className={shared.wrap}>
-        <SiteHeader />
-        <section style={{ padding: "40px 0" }}>
-          <ProfileCardSkeleton />
-        </section>
-      </div>
+      <section style={{ padding: "32px 0" }}>
+        <ProfileCardSkeleton />
+      </section>
     );
   }
 
   if (me.isError || !me.data) {
     return (
-      <div className={shared.wrap}>
-        <SiteHeader />
-        <p className={shared.error} style={{ padding: "40px 0" }}>
-          Couldn&apos;t load your profile. Try refreshing the page.
-        </p>
-      </div>
+      <p className={shared.error} style={{ padding: "32px 0" }}>
+        Couldn&apos;t load your profile. Try refreshing the page.
+      </p>
     );
   }
 
   return (
-    <PageTransition className={shared.wrap}>
-      <SiteHeader />
-      <section style={{ padding: "40px 0" }}>
+    <PageTransition>
+      <section style={{ padding: "32px 0" }}>
         <h1 className={shared.heading}>Your profile</h1>
         <p className={shared.muted} style={{ marginBottom: 24 }}>
           {me.data.email ?? me.data.phone}

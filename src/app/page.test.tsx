@@ -13,12 +13,12 @@ describe("Home", () => {
     expect(screen.getByRole("link", { name: /log in/i })).toHaveAttribute("href", "/login");
   });
 
-  it("links to profile when signed in", () => {
+  it("links to home when signed in", () => {
     saveToken("test-token");
     renderWithProviders(<Home />);
-    expect(screen.getByRole("link", { name: /go to your profile/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /go to your home/i })).toHaveAttribute(
       "href",
-      "/profile",
+      "/home",
     );
   });
 });

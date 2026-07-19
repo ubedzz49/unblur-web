@@ -21,11 +21,11 @@ export default function Home() {
           way.
         </p>
         <Link
-          href={isLoggedIn ? "/profile" : "/login"}
+          href={isLoggedIn ? "/home" : "/login"}
           className={shared.button}
           style={{ display: "inline-block", width: "auto", padding: "14px 26px", textAlign: "center" }}
         >
-          {isLoggedIn ? "Go to your profile" : "Log in"}
+          {isLoggedIn ? "Go to your home" : "Log in"}
         </Link>
       </section>
     </PageTransition>
