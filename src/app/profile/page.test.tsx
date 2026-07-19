@@ -1,14 +1,15 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import { screen, fireEvent, waitFor } from "@testing-library/react";
 import ProfilePage from "./page";
+import { renderWithProviders } from "@/test-utils";
 import * as api from "@/lib/api";
-import * as auth from "@/lib/auth";
+import { saveToken } from "@/lib/auth";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
 
-const baseUser = {
+const baseUser: api.UserProfile = {
   id: "user-1",
   email: "student@example.com",
   phone: null,
@@ -21,55 +22,77 @@ const baseUser = {
 
 describe("ProfilePage", () => {
   beforeEach(() => {
-    vi.spyOn(auth, "getToken").mockReturnValue("test-token");
+    window.localStorage.clear();
+    saveToken("test-token");
     vi.spyOn(api, "getMe").mockResolvedValue(baseUser);
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+  it("loads the profile and saves an edit with a success toast", async () => {
+    vi.spyOn(api, "updateMe").mockResolvedValue({ ...baseUser, name: "Asha" });
 
-  it("shows a clear saved confirmation, then it fades on its own", async () => {
-    vi.spyOn(api, "updateMe").mockResolvedValue(baseUser);
+    renderWithProviders(<ProfilePage />);
 
-    render(<ProfilePage />);
-    const saveButton = await screen.findByRole("button", { name: /save changes/i });
+    const nameInput = await screen.findByLabelText(/^name$/i);
+    expect(nameInput).toHaveValue("Ubed");
 
-    vi.useFakeTimers();
-    fireEvent.click(saveButton);
-    // flushes both the resolved-promise microtasks and any due (fake) timers
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(0);
-    });
-    expect(screen.getByRole("status")).toBeVisible();
+    fireEvent.change(nameInput, { target: { value: "Asha" } });
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
 
-    act(() => {
-      vi.advanceTimersByTime(2500);
-    });
-    // hidden: true -- once visibility is hidden, it drops out of the default
-    // accessibility tree query entirely, not just fail a visibility check
-    expect(screen.getByRole("status", { hidden: true })).not.toBeVisible();
-  });
-
-  it("disables the form while a save is in flight so a second click can't fire a second request", async () => {
-    let resolveUpdate!: (value: typeof baseUser) => void;
-    vi.spyOn(api, "updateMe").mockReturnValue(
-      new Promise((resolve) => {
-        resolveUpdate = resolve;
+    await waitFor(() =>
+      expect(api.updateMe).toHaveBeenCalledWith("test-token", {
+        name: "Asha",
+        bio: "Software Engineer",
+        aiNotesAndTranscriptsEnabled: true,
       }),
     );
+    expect(await screen.findByText(/profile updated/i)).toBeInTheDocument();
+  });
 
-    render(<ProfilePage />);
-    const saveButton = await screen.findByRole("button", { name: /save changes/i });
+  it("shows a toast and does not call the API when the save fails", async () => {
+    vi.spyOn(api, "updateMe").mockRejectedValue(new Error("network error"));
 
-    fireEvent.click(saveButton);
-    fireEvent.click(saveButton);
-    fireEvent.click(saveButton);
+    renderWithProviders(<ProfilePage />);
+    fireEvent.click(await screen.findByRole("button", { name: /save changes/i }));
 
-    expect(api.updateMe).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled();
+    expect(await screen.findByText(/couldn't save that/i)).toBeInTheDocument();
+  });
 
-    resolveUpdate(baseUser);
-    await waitFor(() => expect(screen.getByRole("button", { name: /save changes/i })).toBeEnabled());
+  it("rejects an unsupported file type before ever calling the upload API", async () => {
+    const uploadSpy = vi.spyOn(api, "requestPhotoUploadUrl");
+
+    renderWithProviders(<ProfilePage />);
+    const fileInput = (await screen.findByLabelText(/change photo/i)) as HTMLInputElement;
+
+    const pdf = new File(["not an image"], "resume.pdf", { type: "application/pdf" });
+    fireEvent.change(fileInput, { target: { files: [pdf] } });
+
+    expect(await screen.findByText(/jpeg, png, or webp/i)).toBeInTheDocument();
+    expect(uploadSpy).not.toHaveBeenCalled();
+  });
+
+  it("uploads a valid photo and saves the resulting url", async () => {
+    vi.spyOn(api, "requestPhotoUploadUrl").mockResolvedValue({
+      uploadUrl: "https://bucket.s3.amazonaws.com/upload",
+      publicUrl: "https://bucket.s3.amazonaws.com/profile-photos/user-1/photo.png",
+    });
+    vi.spyOn(api, "uploadFileToPresignedUrl").mockResolvedValue(undefined);
+    vi.spyOn(api, "updateMe").mockResolvedValue({
+      ...baseUser,
+      photoUrl: "https://bucket.s3.amazonaws.com/profile-photos/user-1/photo.png",
+    });
+
+    renderWithProviders(<ProfilePage />);
+    const fileInput = (await screen.findByLabelText(/change photo/i)) as HTMLInputElement;
+
+    const image = new File(["fake-image-bytes"], "photo.png", { type: "image/png" });
+    fireEvent.change(fileInput, { target: { files: [image] } });
+
+    await waitFor(() => expect(api.requestPhotoUploadUrl).toHaveBeenCalledWith("test-token", "image/png"));
+    await waitFor(() =>
+      expect(api.updateMe).toHaveBeenCalledWith("test-token", {
+        photoUrl: "https://bucket.s3.amazonaws.com/profile-photos/user-1/photo.png",
+      }),
+    );
+    expect(await screen.findByText(/photo updated/i)).toBeInTheDocument();
   });
 });

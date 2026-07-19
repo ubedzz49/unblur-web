@@ -61,3 +61,22 @@ export function updateMe(token: string, update: ProfileUpdate) {
     body: JSON.stringify(update),
   });
 }
+
+export function requestPhotoUploadUrl(token: string, contentType: string) {
+  return request<{ uploadUrl: string; publicUrl: string }>("/users/me/photo-upload-url", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ contentType }),
+  });
+}
+
+export async function uploadFileToPresignedUrl(uploadUrl: string, file: File): Promise<void> {
+  const res = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+  if (!res.ok) {
+    throw new Error(`upload failed with status ${res.status}`);
+  }
+}

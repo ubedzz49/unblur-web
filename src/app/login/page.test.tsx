@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { screen, fireEvent, waitFor } from "@testing-library/react";
 import LoginPage from "./page";
+import { renderWithProviders } from "@/test-utils";
 import * as api from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -19,7 +20,7 @@ describe("LoginPage", () => {
     vi.spyOn(api, "sendOtp").mockResolvedValue({ sent: true, otp: "123456" });
     vi.spyOn(api, "verifyOtp").mockResolvedValue({ token: "test-token" });
 
-    render(<LoginPage />);
+    renderWithProviders(<LoginPage />);
 
     fireEvent.change(screen.getByLabelText(/email or phone/i), {
       target: { value: "student@example.com" },
@@ -35,15 +36,15 @@ describe("LoginPage", () => {
     await waitFor(() =>
       expect(api.verifyOtp).toHaveBeenCalledWith("student@example.com", "123456"),
     );
-    expect(getToken()).toBe("test-token");
+    await waitFor(() => expect(getToken()).toBe("test-token"));
     expect(pushMock).toHaveBeenCalledWith("/profile");
   });
 
-  it("shows an error message when verification fails", async () => {
+  it("shows a toast when verification fails", async () => {
     vi.spyOn(api, "sendOtp").mockResolvedValue({ sent: true, otp: "123456" });
     vi.spyOn(api, "verifyOtp").mockRejectedValue(new Error("invalid or expired otp"));
 
-    render(<LoginPage />);
+    renderWithProviders(<LoginPage />);
 
     fireEvent.change(screen.getByLabelText(/email or phone/i), {
       target: { value: "student@example.com" },
@@ -54,6 +55,6 @@ describe("LoginPage", () => {
     fireEvent.change(screen.getByLabelText(/6-digit code/i), { target: { value: "000000" } });
     fireEvent.click(screen.getByRole("button", { name: /verify and continue/i }));
 
-    expect(await screen.findByText(/invalid or expired otp/i)).toBeInTheDocument();
+    expect(await screen.findByText(/didn't work/i)).toBeInTheDocument();
   });
 });
