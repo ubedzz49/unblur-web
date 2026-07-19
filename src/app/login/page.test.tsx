@@ -73,4 +73,61 @@ describe("LoginPage", () => {
 
     expect(await screen.findByText(/didn't work/i)).toBeInTheDocument();
   });
+
+  it("logs in with password and lands on home when no reset is required", async () => {
+    vi.spyOn(api, "loginWithPassword").mockResolvedValue({
+      token: "test-token",
+      mustResetPassword: false,
+    });
+
+    renderWithProviders(<LoginPage />);
+
+    fireEvent.click(screen.getByRole("tab", { name: /password/i }));
+    fireEvent.change(screen.getByLabelText(/email or phone/i), {
+      target: { value: "student@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "hunter2000" } });
+    fireEvent.click(screen.getByRole("button", { name: /^log in$/i }));
+
+    await waitFor(() =>
+      expect(api.loginWithPassword).toHaveBeenCalledWith("student@example.com", "hunter2000"),
+    );
+    await waitFor(() => expect(getToken()).toBe("test-token"));
+    expect(pushMock).toHaveBeenCalledWith("/home");
+  });
+
+  it("routes to the forced password-change screen when a reset is required", async () => {
+    vi.spyOn(api, "loginWithPassword").mockResolvedValue({
+      token: "test-token",
+      mustResetPassword: true,
+    });
+
+    renderWithProviders(<LoginPage />);
+
+    fireEvent.click(screen.getByRole("tab", { name: /password/i }));
+    fireEvent.change(screen.getByLabelText(/email or phone/i), {
+      target: { value: "student@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "default-pass" } });
+    fireEvent.click(screen.getByRole("button", { name: /^log in$/i }));
+
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/change-password"));
+    // not logged in yet -- login() must not be called until the reset completes
+    expect(getToken()).toBeNull();
+  });
+
+  it("shows a toast when password login fails", async () => {
+    vi.spyOn(api, "loginWithPassword").mockRejectedValue(new Error("invalid credentials"));
+
+    renderWithProviders(<LoginPage />);
+
+    fireEvent.click(screen.getByRole("tab", { name: /password/i }));
+    fireEvent.change(screen.getByLabelText(/email or phone/i), {
+      target: { value: "student@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "wrong" } });
+    fireEvent.click(screen.getByRole("button", { name: /^log in$/i }));
+
+    expect(await screen.findByText(/didn't work/i)).toBeInTheDocument();
+  });
 });

@@ -1,0 +1,23 @@
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+  max-width: 380px;
+}
+
+.tab {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.tab[data-active="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}

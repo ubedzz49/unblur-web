@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
@@ -130,6 +131,11 @@ export default function ProfilePage() {
             <Button type="submit" status={saveStatus} loadingLabel="Saving…" successLabel="Saved">
               Save changes
             </Button>
+            <Link href="/change-password" style={{ display: "block", marginTop: 10 }}>
+              <Button type="button" variant="secondary" disabled={saveStatus === "loading"}>
+                Change password
+              </Button>
+            </Link>
             <Button
               type="button"
               variant="secondary"
