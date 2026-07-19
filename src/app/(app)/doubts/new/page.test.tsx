@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { screen, fireEvent, waitFor } from "@testing-library/react";
 import NewDoubtPage from "./page";
 import { renderWithProviders } from "@/test-utils";
 import * as api from "@/lib/api";
@@ -70,8 +70,18 @@ describe("NewDoubtPage", () => {
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   });
 
-  it("shows suggested subjects after the user pauses typing a title, and clicking one selects it", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+  it("does not fetch suggestions automatically while typing a title", async () => {
+    renderWithProviders(<NewDoubtPage />);
+    await screen.findByRole("button", { name: /post doubt/i });
+
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Help with limits" } });
+
+    // give any accidental auto-fetch a moment to fire, then confirm it never did
+    await new Promise((r) => setTimeout(r, 50));
+    expect(api.getSuggestedExpertise).not.toHaveBeenCalled();
+  });
+
+  it("only fetches suggestions when the Auto-suggest button is clicked, and clicking a suggestion selects it", async () => {
     vi.spyOn(api, "getSuggestedExpertise").mockResolvedValue([
       { expertiseLevelId: "level-eng", expertiseTypeId: "type-maths", label: "Mathematics (Engineering (B.Tech))", similarity: 0.92 },
     ]);
@@ -80,14 +90,11 @@ describe("NewDoubtPage", () => {
     await screen.findByRole("button", { name: /post doubt/i });
 
     fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Help with limits" } });
-
     expect(api.getSuggestedExpertise).not.toHaveBeenCalled();
 
-    await act(async () => {
-      vi.advanceTimersByTime(500);
-    });
+    fireEvent.click(screen.getByTestId("auto-suggest-button"));
 
-    await waitFor(() => expect(api.getSuggestedExpertise).toHaveBeenCalledWith("test-token", "Help with limits", undefined, 5));
+    await waitFor(() => expect(api.getSuggestedExpertise).toHaveBeenCalledWith("test-token", "Help with limits", undefined, 2));
 
     const suggestion = await screen.findByTestId("expertise-suggestion");
     expect(suggestion).toHaveTextContent(/mathematics/i);
@@ -98,17 +105,17 @@ describe("NewDoubtPage", () => {
     expect(screen.queryByTestId("expertise-suggestion")).not.toBeInTheDocument();
   });
 
-  it("does not fetch suggestions until the title has a minimum length", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+  it("disables the Auto-suggest button until the title has a minimum length", async () => {
     renderWithProviders(<NewDoubtPage />);
     await screen.findByRole("button", { name: /post doubt/i });
 
+    expect(await screen.findByTestId("auto-suggest-button")).toBeDisabled();
+
     fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Hi" } });
+    expect(screen.getByTestId("auto-suggest-button")).toBeDisabled();
 
-    await act(async () => {
-      vi.advanceTimersByTime(1000);
-    });
-
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Help with limits" } });
+    expect(screen.getByTestId("auto-suggest-button")).not.toBeDisabled();
     expect(api.getSuggestedExpertise).not.toHaveBeenCalled();
   });
 

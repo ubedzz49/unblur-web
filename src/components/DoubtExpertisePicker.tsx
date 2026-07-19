@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useExpertiseOptions } from "@/lib/queries/expertise";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/components/ui/Toast";
 import { createCustomExpertise, getSuggestedExpertise, SuggestedExpertise } from "@/lib/api";
@@ -11,8 +12,9 @@ import { flattenExpertiseOptions, searchExpertiseOptions } from "@/lib/expertise
 import styles from "./ExpertisePicker.module.css";
 
 const MAX_RESULTS = 8;
-const SUGGESTION_LIMIT = 5;
-const SUGGESTION_DEBOUNCE_MS = 450;
+// only the most confident matches -- this is a manual "give me your best guess" action,
+// not a browsing list, so a couple of strong suggestions beats a longer, noisier one
+const SUGGESTION_LIMIT = 2;
 const MIN_TITLE_LENGTH = 3;
 
 export interface SelectedExpertise {
@@ -38,6 +40,8 @@ export function DoubtExpertisePicker({ title, description, value, onChange }: Do
   const [focused, setFocused] = useState(false);
   const [addingCustom, setAddingCustom] = useState(false);
   const [suggestions, setSuggestions] = useState<SuggestedExpertise[]>([]);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [suggestError, setSuggestError] = useState(false);
   const blurTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const selectedLevelIds = useMemo(() => new Set(value.map((v) => v.levelId)), [value]);
@@ -54,24 +58,27 @@ export function DoubtExpertisePicker({ title, description, value, onChange }: Do
   const trimmedTitle = title.trim();
   const titleEligibleForSuggestions = trimmedTitle.length >= MIN_TITLE_LENGTH;
 
-  // Debounced fetch of suggested subjects as the user types a title/description.
-  useEffect(() => {
-    if (!token || !titleEligibleForSuggestions) {
-      return;
+  // Suggestions are opt-in only -- fetched once, on demand, when the user explicitly
+  // asks for them (the "Auto-suggest" button below), never automatically as they type.
+  async function handleAutoSuggest() {
+    if (!token || !titleEligibleForSuggestions || suggestLoading) return;
+    setSuggestLoading(true);
+    setSuggestError(false);
+    try {
+      const results = await getSuggestedExpertise(token, trimmedTitle, description?.trim() || undefined, SUGGESTION_LIMIT);
+      setSuggestions(results);
+      if (results.length === 0) setSuggestError(true);
+    } catch {
+      setSuggestions([]);
+      setSuggestError(true);
+    } finally {
+      setSuggestLoading(false);
     }
-
-    const timer = setTimeout(() => {
-      getSuggestedExpertise(token, trimmedTitle, description?.trim() || undefined, SUGGESTION_LIMIT)
-        .then((results) => setSuggestions(results))
-        .catch(() => setSuggestions([]));
-    }, SUGGESTION_DEBOUNCE_MS);
-
-    return () => clearTimeout(timer);
-  }, [token, titleEligibleForSuggestions, trimmedTitle, description]);
+  }
 
   const visibleSuggestions = useMemo(
-    () => (titleEligibleForSuggestions ? suggestions.filter((s) => !selectedLevelIds.has(s.expertiseLevelId)) : []),
-    [suggestions, selectedLevelIds, titleEligibleForSuggestions],
+    () => suggestions.filter((s) => !selectedLevelIds.has(s.expertiseLevelId)),
+    [suggestions, selectedLevelIds],
   );
 
   function handleAdd(option: SelectedExpertise) {
@@ -149,6 +156,29 @@ export function DoubtExpertisePicker({ title, description, value, onChange }: Do
           })}
         </div>
       )}
+
+      <div style={{ marginBottom: 10 }}>
+        <Button
+          type="button"
+          variant="secondary"
+          style={{ width: "auto" }}
+          disabled={!titleEligibleForSuggestions || suggestLoading}
+          onClick={handleAutoSuggest}
+          data-testid="auto-suggest-button"
+        >
+          {suggestLoading ? "Finding matches…" : "Auto-suggest for me"}
+        </Button>
+        {!titleEligibleForSuggestions && (
+          <p className={styles.empty} style={{ marginTop: 4 }}>
+            Add a bit more to the title first so there&apos;s something to match against.
+          </p>
+        )}
+        {suggestError && titleEligibleForSuggestions && (
+          <p className={styles.empty} style={{ marginTop: 4 }}>
+            Couldn&apos;t find a confident match — try searching below instead.
+          </p>
+        )}
+      </div>
 
       {visibleSuggestions.length > 0 && (
         <div className={styles.chips} data-testid="expertise-suggestions">
