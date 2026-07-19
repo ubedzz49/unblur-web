@@ -218,3 +218,199 @@ export function getMyDoubts(token: string, authorUserId: string) {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+
+export type ResolutionRequestStatus = "pending" | "accepted" | "rejected";
+
+export interface ResolutionRequest {
+  id: string;
+  doubtId: string;
+  resolverUserId: string;
+  durationMins: number;
+  amountCents: number;
+  proposedSlots: string[];
+  status: ResolutionRequestStatus;
+  acceptedSlotAt: string | null;
+  createdAt: string;
+}
+
+export interface CreateResolutionRequestInput {
+  doubtId: string;
+  durationMins: number;
+  amountCents: number;
+  proposedSlots: string[];
+}
+
+export function createResolutionRequest(token: string, input: CreateResolutionRequestInput) {
+  return request<ResolutionRequest>("/resolution-requests", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(input),
+  });
+}
+
+export interface ResolutionRequestFilters {
+  doubtId?: string;
+  resolverUserId?: string;
+  status?: ResolutionRequestStatus;
+}
+
+export function getResolutionRequests(token: string, filters: ResolutionRequestFilters) {
+  const params = new URLSearchParams();
+  if (filters.doubtId) params.set("doubtId", filters.doubtId);
+  if (filters.resolverUserId) params.set("resolverUserId", filters.resolverUserId);
+  if (filters.status) params.set("status", filters.status);
+  return request<ResolutionRequest[]>(`/resolution-requests?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export type BookingStatus = "scheduled" | "completed" | "cancelled";
+
+export interface Booking {
+  id: string;
+  doubtId: string;
+  resolutionRequestId: string;
+  posterUserId: string;
+  resolverUserId: string;
+  slotAt: string;
+  durationMins: number;
+  amountCents: number;
+  paymentId: string;
+  status: BookingStatus;
+  completedAt: string | null;
+  createdAt: string;
+}
+
+export function acceptResolutionRequest(token: string, requestId: string, chosenSlot: string) {
+  return request<Booking>(`/resolution-requests/${requestId}/accept`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ chosenSlot }),
+  });
+}
+
+export function rejectResolutionRequest(token: string, requestId: string) {
+  return request<ResolutionRequest>(`/resolution-requests/${requestId}/reject`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function getBooking(token: string, bookingId: string) {
+  return request<Booking>(`/bookings/${bookingId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export type BookingRole = "poster" | "resolver";
+
+export function getMyBookings(token: string, role: BookingRole, status?: BookingStatus) {
+  const params = new URLSearchParams({ role });
+  if (status) params.set("status", status);
+  return request<Booking[]>(`/bookings/my?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function completeBooking(token: string, bookingId: string) {
+  return request<Booking>(`/bookings/${bookingId}/complete`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function cancelBooking(token: string, bookingId: string) {
+  return request<Booking>(`/bookings/${bookingId}/cancel`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export type PaymentStatus = "pending" | "completed" | "failed" | "refunded";
+
+export interface Payment {
+  id: string;
+  userId: string;
+  amountCents: number;
+  currency: string;
+  type: string;
+  referenceType: string;
+  referenceId: string;
+  platformFeeCents: number;
+  recipientAmountCents: number;
+  status: PaymentStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function getPayment(token: string, paymentId: string) {
+  return request<Payment>(`/payments/${paymentId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function confirmPayment(token: string, paymentId: string) {
+  return request<Payment>(`/payments/${paymentId}/confirm`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function getMyPayments(token: string) {
+  return request<Payment[]>("/payments", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export interface Payout {
+  id: string;
+  userId: string;
+  amountCents: number;
+  currency: string;
+  type: string;
+  referenceType: string;
+  referenceId: string;
+  status: PaymentStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function getMyPayouts(token: string) {
+  return request<Payout[]>("/payouts", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export interface PublicUserStats {
+  minutesResolved: number;
+  avgRating: number;
+  ratingCount: number;
+  minutesListener: number;
+}
+
+export interface PublicUser {
+  id: string;
+  name: string | null;
+  photoUrl: string | null;
+  stats: PublicUserStats;
+}
+
+export function getPublicUser(token: string, userId: string) {
+  return request<PublicUser>(`/users/${userId}/public`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export interface UserStats {
+  minutesResolved: number;
+  avgRating: number;
+  ratingCount: number;
+  minutesListener: number;
+  updatedAt: string;
+}
+
+export function getMyStats(token: string) {
+  return request<UserStats>("/users/me/stats", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}

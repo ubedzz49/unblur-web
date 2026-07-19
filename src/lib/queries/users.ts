@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getMe,
+  getMyStats,
+  getPublicUser,
   ProfileUpdate,
   requestPhotoUploadUrl,
   updateMe,
@@ -10,6 +12,8 @@ import {
 import { useAuth } from "@/lib/auth-context";
 
 const ME_QUERY_KEY = ["me"];
+const PUBLIC_USER_KEY = ["public-user"];
+const MY_STATS_KEY = ["my-stats"];
 
 export function useMe() {
   const { token } = useAuth();
@@ -41,5 +45,23 @@ export function useUploadProfilePhoto() {
       await uploadFileToPresignedUrl(uploadUrl, file);
       return publicUrl;
     },
+  });
+}
+
+export function usePublicUser(userId: string | undefined) {
+  const { token } = useAuth();
+  return useQuery({
+    queryKey: [...PUBLIC_USER_KEY, userId],
+    queryFn: () => getPublicUser(token!, userId!),
+    enabled: token !== null && Boolean(userId),
+  });
+}
+
+export function useMyStats() {
+  const { token } = useAuth();
+  return useQuery({
+    queryKey: MY_STATS_KEY,
+    queryFn: () => getMyStats(token!),
+    enabled: token !== null,
   });
 }

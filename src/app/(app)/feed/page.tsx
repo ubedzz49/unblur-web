@@ -34,7 +34,15 @@ function useExpertiseLabelLookup(): Map<string, string> {
   }, [options.data]);
 }
 
-function DoubtCard({ doubt, subjectLabels }: { doubt: Doubt; subjectLabels: string[] }) {
+function DoubtCard({
+  doubt,
+  subjectLabels,
+  showOfferAction,
+}: {
+  doubt: Doubt;
+  subjectLabels: string[];
+  showOfferAction?: boolean;
+}) {
   return (
     <Card className={styles.doubtCard} tabIndex={0}>
       <div className={styles.doubtHeader}>
@@ -51,6 +59,17 @@ function DoubtCard({ doubt, subjectLabels }: { doubt: Doubt; subjectLabels: stri
       <div className={styles.doubtDetails}>
         {subjectLabels.length > 0 && <p className={styles.subjectLabel}>{subjectLabels.join(" · ")}</p>}
         {doubt.description && <p className={styles.doubtDescription}>{doubt.description}</p>}
+        {showOfferAction && doubt.status === "open" && (
+          <Link
+            href={`/doubts/${doubt.id}/resolve`}
+            className={styles.offerLink}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Button type="button" variant="secondary" style={{ width: "auto" }}>
+              Offer to help
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className={styles.doubtMeta}>
@@ -188,6 +207,7 @@ export default function FeedPage() {
                   <DoubtCard
                     key={doubt.id}
                     doubt={doubt}
+                    showOfferAction
                     subjectLabels={doubt.expertiseLevelIds.map((id) => labelLookup.get(id)).filter((l): l is string => Boolean(l))}
                   />
                 ))}

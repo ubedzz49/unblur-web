@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { useMe, useUpdateProfile, useUploadProfilePhoto } from "@/lib/queries/users";
+import { useMe, useMyStats, useUpdateProfile, useUploadProfilePhoto } from "@/lib/queries/users";
 import { useToast } from "@/components/ui/Toast";
 import { Button, ButtonStatus } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -22,6 +22,7 @@ export default function ProfilePage() {
   const me = useMe();
   const updateProfile = useUpdateProfile();
   const uploadPhoto = useUploadProfilePhoto();
+  const myStats = useMyStats();
 
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
@@ -153,6 +154,37 @@ export default function ProfilePage() {
         </h2>
         <Card style={{ maxWidth: 440 }}>
           <ExpertisePicker />
+        </Card>
+
+        <h2 style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--muted)", margin: "32px 0 14px" }}>
+          Your stats
+        </h2>
+        <Card style={{ maxWidth: 440 }}>
+          {myStats.isLoading && (
+            <div style={{ display: "flex", gap: 16 }}>
+              <div style={{ flex: 1, height: 40, background: "var(--bg-alt)", borderRadius: 4 }} />
+              <div style={{ flex: 1, height: 40, background: "var(--bg-alt)", borderRadius: 4 }} />
+            </div>
+          )}
+          {myStats.isError && <p className={shared.muted}>Couldn&apos;t load your stats.</p>}
+          {myStats.isSuccess && (
+            <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+              <div>
+                <p style={{ fontWeight: 900, fontSize: 20 }}>{myStats.data.minutesResolved}</p>
+                <p className={shared.muted}>Minutes resolved</p>
+              </div>
+              <div>
+                <p style={{ fontWeight: 900, fontSize: 20 }}>
+                  {myStats.data.ratingCount > 0 ? myStats.data.avgRating.toFixed(1) : "—"}
+                </p>
+                <p className={shared.muted}>Avg rating ({myStats.data.ratingCount})</p>
+              </div>
+              <div>
+                <p style={{ fontWeight: 900, fontSize: 20 }}>{myStats.data.minutesListener}</p>
+                <p className={shared.muted}>Minutes as listener</p>
+              </div>
+            </div>
+          )}
         </Card>
       </section>
     </PageTransition>

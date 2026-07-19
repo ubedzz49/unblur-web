@@ -155,6 +155,31 @@ describe("FeedPage", () => {
     expect(await screen.findByText(/Mathematics \(Engineering \(B\.Tech\)\).*Physics \(Engineering \(B\.Tech\)\)/)).toBeInTheDocument();
   });
 
+  it("shows an 'Offer to help' action for others' open doubts but not for the user's own doubts", async () => {
+    vi.spyOn(api, "getMyExpertise").mockResolvedValue(MY_EXPERTISE);
+    vi.spyOn(api, "getFeed").mockResolvedValue([doubt]);
+    vi.spyOn(api, "getMyDoubts").mockResolvedValue([myOwnDoubt]);
+
+    renderWithProviders(<FeedPage />);
+
+    const offerLink = await screen.findByRole("link", { name: /offer to help/i });
+    expect(offerLink).toHaveAttribute("href", `/doubts/${doubt.id}/resolve`);
+
+    fireEvent.click(screen.getByRole("tab", { name: /my doubts/i }));
+    await screen.findByText(myOwnDoubt.title);
+    expect(screen.queryByRole("link", { name: /offer to help/i })).not.toBeInTheDocument();
+  });
+
+  it("does not show an 'Offer to help' action for a doubt that's already resolved", async () => {
+    vi.spyOn(api, "getMyExpertise").mockResolvedValue(MY_EXPERTISE);
+    vi.spyOn(api, "getFeed").mockResolvedValue([{ ...doubt, status: "resolved" }]);
+
+    renderWithProviders(<FeedPage />);
+
+    await screen.findByText(doubt.title);
+    expect(screen.queryByRole("link", { name: /offer to help/i })).not.toBeInTheDocument();
+  });
+
   it("shows a retry affordance on error and refetches on click", async () => {
     vi.spyOn(api, "getMyExpertise").mockResolvedValue(MY_EXPERTISE);
     const feedSpy = vi
