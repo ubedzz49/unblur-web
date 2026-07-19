@@ -40,8 +40,13 @@ export default function LoginPage() {
     try {
       const res = await verifyOtp.mutateAsync({ identifier, otp });
       login(res.token);
-      showToast("Logged in");
-      router.push("/profile");
+      // new accounts get a short onboarding; returning users land on their home screen
+      if (res.isNewUser) {
+        router.push("/onboarding");
+      } else {
+        showToast("Logged in");
+        router.push("/home");
+      }
     } catch {
       showToast("That code didn't work — check it and try again.", "error");
     }

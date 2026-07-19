@@ -16,9 +16,9 @@ describe("LoginPage", () => {
     pushMock.mockClear();
   });
 
-  it("sends a code, then verifies it and saves the token", async () => {
+  it("sends a code, then verifies a returning user and lands on home", async () => {
     vi.spyOn(api, "sendOtp").mockResolvedValue({ sent: true, otp: "123456" });
-    vi.spyOn(api, "verifyOtp").mockResolvedValue({ token: "test-token" });
+    vi.spyOn(api, "verifyOtp").mockResolvedValue({ token: "test-token", isNewUser: false });
 
     renderWithProviders(<LoginPage />);
 
@@ -37,7 +37,23 @@ describe("LoginPage", () => {
       expect(api.verifyOtp).toHaveBeenCalledWith("student@example.com", "123456"),
     );
     await waitFor(() => expect(getToken()).toBe("test-token"));
-    expect(pushMock).toHaveBeenCalledWith("/profile");
+    expect(pushMock).toHaveBeenCalledWith("/home");
+  });
+
+  it("sends a new user to onboarding after verifying", async () => {
+    vi.spyOn(api, "sendOtp").mockResolvedValue({ sent: true, otp: "123456" });
+    vi.spyOn(api, "verifyOtp").mockResolvedValue({ token: "test-token", isNewUser: true });
+
+    renderWithProviders(<LoginPage />);
+
+    fireEvent.change(screen.getByLabelText(/email or phone/i), {
+      target: { value: "new@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /send code/i }));
+    fireEvent.change(await screen.findByLabelText(/6-digit code/i), { target: { value: "123456" } });
+    fireEvent.click(screen.getByRole("button", { name: /verify and continue/i }));
+
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/onboarding"));
   });
 
   it("shows a toast when verification fails", async () => {
