@@ -127,3 +127,44 @@ export async function removeMyExpertise(token: string, userExpertiseId: string):
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+
+export type DoubtStatus = "open" | "resolved" | "closed";
+export type DoubtMatchType = "exact" | "related";
+
+export interface Doubt {
+  id: string;
+  authorUserId: string;
+  title: string;
+  description: string;
+  expertiseLevelId: string;
+  status: DoubtStatus;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt: string | null;
+  matchType: DoubtMatchType;
+}
+
+export function getFeed(expertiseLevelIds: string[], limit?: number) {
+  const params = new URLSearchParams({ expertiseLevelIds: expertiseLevelIds.join(",") });
+  if (limit) params.set("limit", String(limit));
+  return request<Doubt[]>(`/feed?${params.toString()}`);
+}
+
+export interface CreateDoubtInput {
+  authorUserId: string;
+  title: string;
+  description: string;
+  expertiseLevelId: string;
+}
+
+export function createDoubt(input: CreateDoubtInput) {
+  return request<Doubt>("/doubts", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function getMyDoubts(authorUserId: string) {
+  const params = new URLSearchParams({ authorUserId });
+  return request<Doubt[]>(`/doubts?${params.toString()}`);
+}
