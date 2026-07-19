@@ -90,7 +90,7 @@ describe("NewDoubtPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /post doubt/i }));
 
     await waitFor(() =>
-      expect(api.createDoubt).toHaveBeenCalledWith({
+      expect(api.createDoubt).toHaveBeenCalledWith("test-token", {
         authorUserId: "user-1",
         title: "Help with limits",
         description: "I don't understand epsilon-delta proofs.",
