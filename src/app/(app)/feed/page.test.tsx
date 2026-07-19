@@ -78,6 +78,9 @@ const EXPERTISE_OPTIONS: api.ExpertiseTypeOption[] = [
 function mockCommon() {
   vi.spyOn(api, "getMe").mockResolvedValue(ME);
   vi.spyOn(api, "getExpertiseOptions").mockResolvedValue([]);
+  // default: no offers on any doubt unless a test overrides this -- avoids every
+  // My-doubts test needing to stub the per-card requests-count fetch itself
+  vi.spyOn(api, "getResolutionRequests").mockResolvedValue([]);
 }
 
 describe("FeedPage", () => {
@@ -178,6 +181,70 @@ describe("FeedPage", () => {
 
     await screen.findByText(doubt.title);
     expect(screen.queryByRole("link", { name: /offer to help/i })).not.toBeInTheDocument();
+  });
+
+  it("does not show a requests badge on a My-doubts card with zero offers", async () => {
+    vi.spyOn(api, "getMyExpertise").mockResolvedValue(MY_EXPERTISE);
+    vi.spyOn(api, "getFeed").mockResolvedValue([]);
+    vi.spyOn(api, "getMyDoubts").mockResolvedValue([myOwnDoubt]);
+    vi.spyOn(api, "getResolutionRequests").mockResolvedValue([]);
+
+    renderWithProviders(<FeedPage />);
+
+    fireEvent.click(screen.getByRole("tab", { name: /my doubts/i }));
+    await screen.findByText(myOwnDoubt.title);
+
+    expect(screen.queryByText(/offer/i)).not.toBeInTheDocument();
+  });
+
+  it("does not fetch requests for a card on the main Feed tab, only under My doubts", async () => {
+    vi.spyOn(api, "getMyExpertise").mockResolvedValue(MY_EXPERTISE);
+    vi.spyOn(api, "getFeed").mockResolvedValue([doubt]);
+    vi.spyOn(api, "getMyDoubts").mockResolvedValue([]);
+    const requestsSpy = vi.spyOn(api, "getResolutionRequests");
+
+    renderWithProviders(<FeedPage />);
+
+    await screen.findByText(doubt.title);
+    expect(requestsSpy).not.toHaveBeenCalled();
+  });
+
+  it("shows a clickable requests badge on a My-doubts card with offers, opening a modal with requester details", async () => {
+    vi.spyOn(api, "getMyExpertise").mockResolvedValue(MY_EXPERTISE);
+    vi.spyOn(api, "getFeed").mockResolvedValue([]);
+    vi.spyOn(api, "getMyDoubts").mockResolvedValue([myOwnDoubt]);
+    vi.spyOn(api, "getResolutionRequests").mockResolvedValue([
+      {
+        id: "req-1",
+        doubtId: myOwnDoubt.id,
+        resolverUserId: "user-3",
+        durationMins: 30,
+        amountCents: 15000,
+        proposedSlots: [new Date(Date.now() + 60 * 60 * 1000).toISOString()],
+        status: "pending",
+        acceptedSlotAt: null,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    vi.spyOn(api, "getPublicUser").mockResolvedValue({
+      id: "user-3",
+      name: "Rohan Kumar",
+      photoUrl: null,
+      bio: "Physics tutor",
+      stats: { minutesResolved: 0, avgRating: 0, ratingCount: 0, minutesListener: 0 },
+      expertise: [{ id: "e-1", expertiseTypeName: "Physics", expertiseLevelName: "General" }],
+    });
+
+    renderWithProviders(<FeedPage />);
+
+    fireEvent.click(screen.getByRole("tab", { name: /my doubts/i }));
+    await screen.findByText(myOwnDoubt.title);
+
+    const badge = await screen.findByRole("button", { name: /1 offer/i });
+    fireEvent.click(badge);
+
+    expect(await screen.findByText("Rohan Kumar")).toBeInTheDocument();
+    expect(screen.getByText(/physics tutor/i)).toBeInTheDocument();
   });
 
   it("shows a retry affordance on error and refetches on click", async () => {

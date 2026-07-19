@@ -10,14 +10,13 @@ import { useToast } from "@/components/ui/Toast";
 import { useMe } from "@/lib/queries/users";
 import { useMyDoubts } from "@/lib/queries/doubts";
 import {
-  useAcceptResolutionRequest,
   useCancelBooking,
   useCompleteBooking,
   useMyBookings,
-  useRejectResolutionRequest,
   useResolutionRequests,
   useResolutionRequestsForDoubt,
 } from "@/lib/queries/resolution";
+import { ResolutionRequestCard } from "@/components/ResolutionRequestCard";
 import { Booking, BookingStatus, Doubt, ResolutionRequest } from "@/lib/api";
 import { relativeTime } from "@/lib/relative-time";
 import shared from "../../shared.module.css";
@@ -45,92 +44,18 @@ function formatSlot(iso: string): string {
 }
 
 function IncomingRequestsForDoubt({ doubt }: { doubt: Doubt }) {
-  const { showToast } = useToast();
   const requests = useResolutionRequestsForDoubt(doubt.id);
-  const acceptRequest = useAcceptResolutionRequest();
-  const rejectRequest = useRejectResolutionRequest();
-  const [chosenSlots, setChosenSlots] = useState<Record<string, string>>({});
-  const [busyRequestId, setBusyRequestId] = useState<string | null>(null);
 
   const pending = (requests.data ?? []).filter((r) => r.status === "pending");
   if (requests.isLoading) return <Skeleton height={60} style={{ marginBottom: 12 }} />;
   if (requests.isError || pending.length === 0) return null;
-
-  async function handleAccept(request: ResolutionRequest) {
-    const chosenSlot = chosenSlots[request.id] ?? request.proposedSlots[0];
-    if (!chosenSlot) return;
-    setBusyRequestId(request.id);
-    try {
-      await acceptRequest.mutateAsync({ requestId: request.id, chosenSlot });
-      showToast("Offer accepted");
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : "Couldn't accept that offer — try again.", "error");
-    } finally {
-      setBusyRequestId(null);
-    }
-  }
-
-  async function handleReject(request: ResolutionRequest) {
-    setBusyRequestId(request.id);
-    try {
-      await rejectRequest.mutateAsync(request.id);
-      showToast("Offer rejected");
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : "Couldn't reject that offer — try again.", "error");
-    } finally {
-      setBusyRequestId(null);
-    }
-  }
 
   return (
     <>
       {pending.map((request) => (
         <Card key={request.id} style={{ marginBottom: 12 }}>
           <h3 style={{ fontSize: 15, fontWeight: 800, marginBottom: 4 }}>{doubt.title}</h3>
-          <p className={shared.muted} style={{ marginBottom: 10 }}>
-            {request.durationMins} min · {formatAmount(request.amountCents)}
-          </p>
-
-          <div style={{ marginBottom: 10 }}>
-            <label
-              style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 }}
-              htmlFor={`slot-choice-${request.id}`}
-            >
-              Choose a time
-            </label>
-            <select
-              id={`slot-choice-${request.id}`}
-              value={chosenSlots[request.id] ?? request.proposedSlots[0]}
-              onChange={(e) => setChosenSlots((current) => ({ ...current, [request.id]: e.target.value }))}
-              style={{ width: "100%", padding: 10, borderRadius: 4, border: "1px solid var(--line)" }}
-            >
-              {request.proposedSlots.map((slot) => (
-                <option key={slot} value={slot}>
-                  {formatSlot(slot)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div style={{ display: "flex", gap: 8 }}>
-            <Button
-              type="button"
-              style={{ width: "auto" }}
-              disabled={busyRequestId === request.id}
-              onClick={() => handleAccept(request)}
-            >
-              Accept
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              style={{ width: "auto" }}
-              disabled={busyRequestId === request.id}
-              onClick={() => handleReject(request)}
-            >
-              Reject
-            </Button>
-          </div>
+          <ResolutionRequestCard request={request} bare />
         </Card>
       ))}
     </>

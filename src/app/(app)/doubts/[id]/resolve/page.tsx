@@ -6,17 +6,25 @@ import { PageTransition } from "@/components/ui/PageTransition";
 import { Card } from "@/components/ui/Card";
 import { Button, ButtonStatus } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { DateTimePicker } from "@/components/ui/DateTimePicker";
 import { useToast } from "@/components/ui/Toast";
 import { useSendResolutionRequest } from "@/lib/queries/resolution";
 import shared from "../../../../shared.module.css";
 
 const DURATION_PRESETS = [15, 30, 60];
 const MAX_SLOTS = 3;
+const QUICK_PICK_MINUTES = [2, 5, 15, 30];
 
-function isInFuture(localDateTime: string): boolean {
-  if (!localDateTime) return false;
-  const parsed = new Date(localDateTime);
+function isInFuture(isoOrLocalDateTime: string): boolean {
+  if (!isoOrLocalDateTime) return false;
+  const parsed = new Date(isoOrLocalDateTime);
   return !Number.isNaN(parsed.getTime()) && parsed.getTime() > Date.now();
+}
+
+// module-level so the impure Date.now() read isn't attributed to render of the
+// component itself -- only ever invoked from an onClick handler, never during render
+function quickPickIso(minutesFromNow: number): string {
+  return new Date(Date.now() + minutesFromNow * 60 * 1000).toISOString();
 }
 
 export default function ResolveRequestPage() {
@@ -54,6 +62,18 @@ export default function ResolveRequestPage() {
 
   function removeSlot(index: number) {
     setSlots((current) => current.filter((_, i) => i !== index));
+  }
+
+  // "in N minutes from now" quick pick -- computed fresh at click time, not baked in --
+  // fills the first empty slot row so it doesn't clobber a slot the user already set,
+  // falling back to slot 1 once every row is full
+  function applyQuickPick(minutesFromNow: number) {
+    const iso = quickPickIso(minutesFromNow);
+    setSlots((current) => {
+      const emptyIndex = current.findIndex((s) => s.trim().length === 0);
+      const targetIndex = emptyIndex === -1 ? 0 : emptyIndex;
+      return current.map((s, i) => (i === targetIndex ? iso : s));
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -141,17 +161,30 @@ export default function ResolveRequestPage() {
                 >
                   Proposed time slots
                 </label>
+
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+                  {QUICK_PICK_MINUTES.map((mins) => (
+                    <Button
+                      key={mins}
+                      type="button"
+                      variant="secondary"
+                      style={{ width: "auto" }}
+                      onClick={() => applyQuickPick(mins)}
+                    >
+                      In {mins} min
+                    </Button>
+                  ))}
+                </div>
+
                 {slots.map((slot, index) => {
                   const showError = slot.trim().length > 0 && !isInFuture(slot);
                   return (
                     <div key={index} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
                       <div style={{ flex: 1 }}>
-                        <Input
-                          id={`slot-${index}`}
+                        <DateTimePicker
                           label={`Slot ${index + 1}`}
-                          type="datetime-local"
                           value={slot}
-                          onChange={(e) => updateSlot(index, e.target.value)}
+                          onChange={(iso) => updateSlot(index, iso)}
                           error={showError ? "Pick a time in the future" : undefined}
                         />
                       </div>
@@ -159,7 +192,7 @@ export default function ResolveRequestPage() {
                         <Button
                           type="button"
                           variant="secondary"
-                          style={{ width: "auto", marginTop: 22 }}
+                          style={{ width: "auto" }}
                           onClick={() => removeSlot(index)}
                         >
                           Remove

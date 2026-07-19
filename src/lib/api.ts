@@ -388,11 +388,19 @@ export interface PublicUserStats {
   minutesListener: number;
 }
 
+export interface PublicUserExpertiseEntry {
+  id: string;
+  expertiseTypeName: string;
+  expertiseLevelName: string;
+}
+
 export interface PublicUser {
   id: string;
   name: string | null;
   photoUrl: string | null;
+  bio: string | null;
   stats: PublicUserStats;
+  expertise: PublicUserExpertiseEntry[];
 }
 
 export function getPublicUser(token: string, userId: string) {
