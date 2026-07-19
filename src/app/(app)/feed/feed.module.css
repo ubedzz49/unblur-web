@@ -100,6 +100,11 @@
   margin-top: 4px;
 }
 
+.offerLink {
+  display: inline-block;
+  margin-top: 10px;
+}
+
 .doubtMeta {
   display: flex;
   align-items: center;

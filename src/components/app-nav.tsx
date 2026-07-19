@@ -8,6 +8,7 @@ import styles from "./app-nav.module.css";
 const TABS = [
   { href: "/home", label: "Home", icon: "⌂" },
   { href: "/feed", label: "Feed", icon: "≋" },
+  { href: "/requests", label: "Requests", icon: "⇄" },
   { href: "/profile", label: "Profile", icon: "☺" },
 ];
 
