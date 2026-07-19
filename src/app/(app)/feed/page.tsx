@@ -34,7 +34,7 @@ function useExpertiseLabelLookup(): Map<string, string> {
   }, [options.data]);
 }
 
-function DoubtCard({ doubt, subjectLabel }: { doubt: Doubt; subjectLabel: string | undefined }) {
+function DoubtCard({ doubt, subjectLabels }: { doubt: Doubt; subjectLabels: string[] }) {
   return (
     <Card className={styles.doubtCard} tabIndex={0}>
       <div className={styles.doubtHeader}>
@@ -49,7 +49,7 @@ function DoubtCard({ doubt, subjectLabel }: { doubt: Doubt; subjectLabel: string
       </div>
 
       <div className={styles.doubtDetails}>
-        {subjectLabel && <p className={styles.subjectLabel}>{subjectLabel}</p>}
+        {subjectLabels.length > 0 && <p className={styles.subjectLabel}>{subjectLabels.join(" · ")}</p>}
         {doubt.description && <p className={styles.doubtDescription}>{doubt.description}</p>}
       </div>
 
@@ -185,7 +185,11 @@ export default function FeedPage() {
             {!hasNoExpertise && feed.isSuccess && othersFeed.length > 0 && (
               <div className={styles.list}>
                 {othersFeed.map((doubt) => (
-                  <DoubtCard key={doubt.id} doubt={doubt} subjectLabel={labelLookup.get(doubt.expertiseLevelId)} />
+                  <DoubtCard
+                    key={doubt.id}
+                    doubt={doubt}
+                    subjectLabels={doubt.expertiseLevelIds.map((id) => labelLookup.get(id)).filter((l): l is string => Boolean(l))}
+                  />
                 ))}
               </div>
             )}
@@ -228,7 +232,11 @@ export default function FeedPage() {
             {myDoubts.isSuccess && myDoubts.data.length > 0 && (
               <div className={styles.list}>
                 {myDoubts.data.map((doubt) => (
-                  <DoubtCard key={doubt.id} doubt={doubt} subjectLabel={labelLookup.get(doubt.expertiseLevelId)} />
+                  <DoubtCard
+                    key={doubt.id}
+                    doubt={doubt}
+                    subjectLabels={doubt.expertiseLevelIds.map((id) => labelLookup.get(id)).filter((l): l is string => Boolean(l))}
+                  />
                 ))}
               </div>
             )}

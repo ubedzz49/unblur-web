@@ -36,9 +36,8 @@ const doubt: api.Doubt = {
   authorUserId: "user-2",
   title: "How do I solve this integral?",
   description: "Stuck on integrating x^2 sin(x) by parts twice.",
-  expertiseLevelId: "level-eng",
+  expertiseLevelIds: ["level-eng"],
   status: "open",
-  autoDetected: false,
   createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
   updatedAt: new Date().toISOString(),
   resolvedAt: null,
@@ -58,6 +57,23 @@ const myOwnDoubt: api.Doubt = {
   authorUserId: ME.id,
   title: "A doubt I posted myself",
 };
+
+const EXPERTISE_OPTIONS: api.ExpertiseTypeOption[] = [
+  {
+    id: "type-maths",
+    type: "academic",
+    name: "Mathematics",
+    slug: "mathematics",
+    levels: [{ id: "level-eng", name: "Engineering (B.Tech)", slug: "engineering" }],
+  },
+  {
+    id: "type-physics",
+    type: "academic",
+    name: "Physics",
+    slug: "physics",
+    levels: [{ id: "level-physics-eng", name: "Engineering (B.Tech)", slug: "engineering" }],
+  },
+];
 
 function mockCommon() {
   vi.spyOn(api, "getMe").mockResolvedValue(ME);
@@ -124,6 +140,19 @@ describe("FeedPage", () => {
 
     expect(await screen.findByText(myOwnDoubt.title)).toBeInTheDocument();
     expect(screen.queryByText(doubt.title)).not.toBeInTheDocument();
+  });
+
+  it("shows a tag for every subject on a doubt that spans multiple subjects", async () => {
+    vi.spyOn(api, "getExpertiseOptions").mockResolvedValue(EXPERTISE_OPTIONS);
+    vi.spyOn(api, "getMyExpertise").mockResolvedValue(MY_EXPERTISE);
+    vi.spyOn(api, "getFeed").mockResolvedValue([
+      { ...doubt, expertiseLevelIds: ["level-eng", "level-physics-eng"] },
+    ]);
+
+    renderWithProviders(<FeedPage />);
+
+    await screen.findByText(doubt.title);
+    expect(await screen.findByText(/Mathematics \(Engineering \(B\.Tech\)\).*Physics \(Engineering \(B\.Tech\)\)/)).toBeInTheDocument();
   });
 
   it("shows a retry affordance on error and refetches on click", async () => {
