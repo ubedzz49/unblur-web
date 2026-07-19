@@ -38,7 +38,9 @@ function DoubtCard({ doubt, subjectLabel }: { doubt: Doubt; subjectLabel: string
   return (
     <Card className={styles.doubtCard} tabIndex={0}>
       <div className={styles.doubtHeader}>
-        <h3 className={styles.doubtTitle}>{doubt.title}</h3>
+        <h3 className={styles.doubtTitle} title={doubt.title}>
+          {doubt.title}
+        </h3>
         {doubt.status !== "open" && (
           <span className={styles.statusPill} data-status={doubt.status}>
             {STATUS_LABEL[doubt.status]}

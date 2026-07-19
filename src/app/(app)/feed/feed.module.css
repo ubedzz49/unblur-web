@@ -44,6 +44,10 @@
 .doubtCard {
   display: flex;
   flex-direction: column;
+  /* fixed collapsed height so every card is the same size regardless of title
+     length -- only the hover-revealed .doubtDetails block is allowed to grow */
+  min-height: 84px;
+  justify-content: center;
 }
 
 .doubtHeader {
@@ -54,8 +58,13 @@
 }
 
 .doubtTitle {
+  flex: 1;
   font-size: 16px;
   font-weight: 800;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* hidden until hover/focus -- keeps the feed scannable by title only, details on demand */
