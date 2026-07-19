@@ -22,9 +22,10 @@ export default function NewDoubtPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [expertise, setExpertise] = useState<SelectedExpertise | null>(null);
+  const [autoDetect, setAutoDetect] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<ButtonStatus>("idle");
 
-  const isValid = title.trim().length > 0 && description.trim().length > 0 && expertise !== null;
+  const isValid = title.trim().length > 0 && (autoDetect || expertise !== null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,12 +33,22 @@ export default function NewDoubtPage() {
 
     setSubmitStatus("loading");
     try {
-      await createDoubt.mutateAsync({
-        authorUserId: me.data.id,
-        title: title.trim(),
-        description: description.trim(),
-        expertiseLevelId: expertise!.levelId,
-      });
+      const trimmedDescription = description.trim();
+      await createDoubt.mutateAsync(
+        autoDetect
+          ? {
+              authorUserId: me.data.id,
+              title: title.trim(),
+              description: trimmedDescription || undefined,
+              autoDetect: true,
+            }
+          : {
+              authorUserId: me.data.id,
+              title: title.trim(),
+              description: trimmedDescription || undefined,
+              expertiseLevelId: expertise!.levelId,
+            },
+      );
       setSubmitStatus("success");
       showToast("Doubt posted");
       router.push("/feed");
@@ -68,33 +79,52 @@ export default function NewDoubtPage() {
               />
               <Textarea
                 id="doubt-description"
-                label="Description"
+                label="Description (optional)"
                 rows={5}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Give enough detail for someone to actually help."
+                placeholder="Add any extra detail that might help (optional)."
               />
-              <div style={{ marginBottom: 16 }}>
-                <label
-                  style={{
-                    fontSize: 12,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                    color: "var(--muted)",
-                    marginBottom: 6,
-                    display: "block",
-                  }}
-                >
-                  Subject / level
-                </label>
-                <SingleExpertisePicker value={expertise} onChange={setExpertise} />
-              </div>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  fontSize: 14,
+                  marginBottom: 16,
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={autoDetect}
+                  onChange={(e) => setAutoDetect(e.target.checked)}
+                />
+                I&apos;m not sure what subject this is — figure it out for me
+              </label>
+              {!autoDetect && (
+                <div style={{ marginBottom: 16 }}>
+                  <label
+                    style={{
+                      fontSize: 12,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.1em",
+                      color: "var(--muted)",
+                      marginBottom: 6,
+                      display: "block",
+                    }}
+                  >
+                    Subject / level
+                  </label>
+                  <SingleExpertisePicker value={expertise} onChange={setExpertise} />
+                </div>
+              )}
             </fieldset>
 
             <Button
               type="submit"
               status={submitStatus}
-              loadingLabel="Posting…"
+              loadingLabel={autoDetect ? "Figuring out the subject…" : "Posting…"}
               successLabel="Posted"
               disabled={!isValid}
             >

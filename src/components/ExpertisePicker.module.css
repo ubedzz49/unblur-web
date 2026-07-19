@@ -102,3 +102,34 @@
   color: var(--muted);
   font-size: 14px;
 }
+
+.hint {
+  padding: 12px 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.addNewItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  background: var(--bg-alt);
+  border: none;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.addNewItem:hover,
+.addNewItem:focus-visible {
+  background: var(--bg);
+}
+
+.addNewIcon {
+  font-weight: 700;
+}

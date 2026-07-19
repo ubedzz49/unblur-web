@@ -3,6 +3,10 @@
 import { useMemo, useRef, useState } from "react";
 import { useExpertiseOptions } from "@/lib/queries/expertise";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useAuth } from "@/lib/auth-context";
+import { useToast } from "@/components/ui/Toast";
+import { createCustomExpertise } from "@/lib/api";
+import { formatExpertiseLabel, parseCustomSubjectQuery } from "@/lib/expertise-format";
 import styles from "./ExpertisePicker.module.css";
 
 const MAX_RESULTS = 8;
@@ -28,9 +32,12 @@ interface SingleExpertisePickerProps {
 
 export function SingleExpertisePicker({ value, onChange }: SingleExpertisePickerProps) {
   const options = useExpertiseOptions();
+  const { token } = useAuth();
+  const { showToast } = useToast();
 
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
+  const [addingCustom, setAddingCustom] = useState(false);
   const blurTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const flatOptions = useMemo<FlatOption[]>(() => {
@@ -45,13 +52,15 @@ export function SingleExpertisePicker({ value, onChange }: SingleExpertisePicker
     );
   }, [options.data]);
 
+  const trimmedQuery = query.trim();
+
   const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return flatOptions.slice(0, MAX_RESULTS);
+    const q = trimmedQuery.toLowerCase();
+    if (!q) return [];
     return flatOptions
       .filter((o) => `${o.typeName} ${o.levelName}`.toLowerCase().includes(q))
       .slice(0, MAX_RESULTS);
-  }, [flatOptions, query]);
+  }, [flatOptions, trimmedQuery]);
 
   function handleSelect(option: FlatOption) {
     onChange(option);
@@ -59,17 +68,40 @@ export function SingleExpertisePicker({ value, onChange }: SingleExpertisePicker
     setFocused(false);
   }
 
+  async function handleAddCustom() {
+    if (!token) return;
+    const { subjectName, levelName } = parseCustomSubjectQuery(trimmedQuery);
+    if (!subjectName) return;
+
+    setAddingCustom(true);
+    try {
+      const created = await createCustomExpertise(token, subjectName, levelName);
+      onChange({
+        typeId: created.expertiseTypeId,
+        typeName: created.typeName,
+        levelId: created.expertiseLevelId,
+        levelName: created.levelName,
+      });
+      setQuery("");
+      setFocused(false);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't add that — try again.", "error");
+    } finally {
+      setAddingCustom(false);
+    }
+  }
+
   if (options.isLoading) {
     return <Skeleton width="100%" height={44} />;
   }
+
+  const showAddNew = trimmedQuery.length > 0 && results.length === 0;
 
   return (
     <div>
       {value && (
         <div className={styles.chips}>
-          <span className={styles.chip}>
-            {value.typeName} — {value.levelName}
-          </span>
+          <span className={styles.chip}>{formatExpertiseLabel(value.typeName, value.levelName)}</span>
         </div>
       )}
 
@@ -89,9 +121,9 @@ export function SingleExpertisePicker({ value, onChange }: SingleExpertisePicker
           }}
           aria-label="Search expertise"
         />
-        {focused && (
+        {focused && trimmedQuery.length > 0 && (
           <div className={styles.results}>
-            {results.length === 0 ? (
+            {results.length === 0 && !showAddNew ? (
               <p className={styles.noResults}>No matches.</p>
             ) : (
               results.map((option) => (
@@ -102,9 +134,26 @@ export function SingleExpertisePicker({ value, onChange }: SingleExpertisePicker
                   className={styles.resultItem}
                   onClick={() => handleSelect(option)}
                 >
-                  <b>{option.typeName}</b> <span className={styles.resultLevel}>— {option.levelName}</span>
+                  <b>{option.typeName}</b>{" "}
+                  {option.levelName.trim().toLowerCase() !== "general" && (
+                    <span className={styles.resultLevel}>({option.levelName})</span>
+                  )}
                 </button>
               ))
+            )}
+            {showAddNew && (
+              <button
+                type="button"
+                data-testid="add-new-expertise"
+                className={styles.addNewItem}
+                onClick={handleAddCustom}
+                disabled={addingCustom}
+              >
+                <span className={styles.addNewIcon} aria-hidden="true">
+                  +
+                </span>
+                Add &quot;{trimmedQuery}&quot; as a new subject
+              </button>
             )}
           </div>
         )}
