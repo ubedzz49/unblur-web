@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { ProfileCardSkeleton } from "@/components/ui/Skeleton";
 import { PageTransition } from "@/components/ui/PageTransition";
+import { ExpertisePicker } from "@/components/ExpertisePicker";
 import shared from "../../shared.module.css";
 
 export default function ProfilePage() {
@@ -139,6 +140,13 @@ export default function ProfilePage() {
               Log out
             </Button>
           </form>
+        </Card>
+
+        <h2 style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--muted)", margin: "32px 0 14px" }}>
+          Your expertise
+        </h2>
+        <Card style={{ maxWidth: 440 }}>
+          <ExpertisePicker />
         </Card>
       </section>
     </PageTransition>
