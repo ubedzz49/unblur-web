@@ -80,3 +80,50 @@ export async function uploadFileToPresignedUrl(uploadUrl: string, file: File): P
     throw new Error(`upload failed with status ${res.status}`);
   }
 }
+
+export interface ExpertiseLevelOption {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface ExpertiseTypeOption {
+  id: string;
+  type: string;
+  name: string;
+  slug: string;
+  levels: ExpertiseLevelOption[];
+}
+
+export interface UserExpertiseEntry {
+  id: string;
+  expertiseTypeId: string;
+  expertiseTypeName: string;
+  expertiseLevelId: string;
+  expertiseLevelName: string;
+}
+
+export function getExpertiseOptions() {
+  return request<ExpertiseTypeOption[]>("/expertise-options");
+}
+
+export function getMyExpertise(token: string) {
+  return request<UserExpertiseEntry[]>("/users/me/expertise", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function addMyExpertise(token: string, expertiseTypeId: string, expertiseLevelId: string) {
+  return request<UserExpertiseEntry>("/users/me/expertise", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ expertiseTypeId, expertiseLevelId }),
+  });
+}
+
+export async function removeMyExpertise(token: string, userExpertiseId: string): Promise<void> {
+  await request(`/users/me/expertise/${userExpertiseId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}

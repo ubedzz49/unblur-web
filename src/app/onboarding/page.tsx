@@ -9,11 +9,11 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Avatar } from "@/components/ui/Avatar";
 import { PageTransition } from "@/components/ui/PageTransition";
+import { ExpertisePicker } from "@/components/ExpertisePicker";
 import shared from "../shared.module.css";
 import styles from "./onboarding.module.css";
 
-// name and photo now; first-expertise step is added here when expertise lands in V2
-const TOTAL_STEPS = 2;
+const TOTAL_STEPS = 3;
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -110,14 +110,30 @@ export default function OnboardingPage() {
               />
             </div>
             <div className={styles.actions}>
-              <Button type="button" onClick={finish}>
-                {me.data?.photoUrl ? "All set — take me in" : "Done"}
+              <Button type="button" onClick={() => setStep(3)}>
+                Continue
               </Button>
-              {!me.data?.photoUrl && (
-                <button type="button" className={styles.skip} onClick={finish}>
-                  Skip for now
-                </button>
-              )}
+              <button type="button" className={styles.skip} onClick={() => setStep(3)}>
+                Skip for now
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div>
+            <h1 className={styles.stepTitle}>What do you know?</h1>
+            <p className={styles.stepHint}>
+              Add a subject, exam, or skill so the feed can match doubts to you. You can add more later.
+            </p>
+            <ExpertisePicker />
+            <div className={styles.actions}>
+              <Button type="button" onClick={finish}>
+                Take me in
+              </Button>
+              <button type="button" className={styles.skip} onClick={finish}>
+                Skip for now
+              </button>
             </div>
           </div>
         )}
