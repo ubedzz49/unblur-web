@@ -7,16 +7,12 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { createCustomExpertise } from "@/lib/api";
 import { formatExpertiseLabel, parseCustomSubjectQuery } from "@/lib/expertise-format";
+import { flattenExpertiseOptions, searchExpertiseOptions, FlatExpertiseOption } from "@/lib/expertise-search";
 import styles from "./ExpertisePicker.module.css";
 
 const MAX_RESULTS = 8;
 
-interface FlatOption {
-  typeId: string;
-  typeName: string;
-  levelId: string;
-  levelName: string;
-}
+type FlatOption = FlatExpertiseOption;
 
 export function ExpertisePicker() {
   const { showToast } = useToast();
@@ -36,28 +32,14 @@ export function ExpertisePicker() {
     [mine.data],
   );
 
-  const flatOptions = useMemo<FlatOption[]>(() => {
-    if (!options.data) return [];
-    return options.data.flatMap((type) =>
-      type.levels.map((level) => ({
-        typeId: type.id,
-        typeName: type.name,
-        levelId: level.id,
-        levelName: level.name,
-      })),
-    );
-  }, [options.data]);
+  const flatOptions = useMemo<FlatOption[]>(() => flattenExpertiseOptions(options.data), [options.data]);
 
   const trimmedQuery = query.trim();
 
-  const results = useMemo(() => {
-    const q = trimmedQuery.toLowerCase();
-    const available = flatOptions.filter((o) => !alreadyAddedLevelIds.has(o.levelId));
-    if (!q) return [];
-    return available
-      .filter((o) => `${o.typeName} ${o.levelName}`.toLowerCase().includes(q))
-      .slice(0, MAX_RESULTS);
-  }, [flatOptions, alreadyAddedLevelIds, trimmedQuery]);
+  const results = useMemo(
+    () => searchExpertiseOptions(flatOptions, trimmedQuery, { excludeLevelIds: alreadyAddedLevelIds, limit: MAX_RESULTS }),
+    [flatOptions, alreadyAddedLevelIds, trimmedQuery],
+  );
 
   async function handleSelect(option: FlatOption) {
     try {

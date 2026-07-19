@@ -158,6 +158,21 @@ export function createCustomExpertise(token: string, subjectName: string, levelN
   });
 }
 
+export interface SuggestedExpertise {
+  expertiseLevelId: string;
+  expertiseTypeId: string;
+  label: string;
+  similarity: number;
+}
+
+export function getSuggestedExpertise(token: string, title: string, description?: string, limit?: number) {
+  return request<{ suggestions: SuggestedExpertise[] }>("/match/suggest-expertise", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ title, description, limit }),
+  }).then((body) => body.suggestions);
+}
+
 export type DoubtStatus = "open" | "resolved" | "closed";
 export type DoubtMatchType = "exact" | "related";
 
@@ -166,13 +181,12 @@ export interface Doubt {
   authorUserId: string;
   title: string;
   description: string;
-  expertiseLevelId: string;
+  expertiseLevelIds: string[];
   status: DoubtStatus;
   createdAt: string;
   updatedAt: string;
   resolvedAt: string | null;
   matchType: DoubtMatchType;
-  autoDetected: boolean;
 }
 
 export function getFeed(token: string, expertiseLevelIds: string[], limit?: number) {
@@ -187,8 +201,7 @@ export interface CreateDoubtInput {
   authorUserId: string;
   title: string;
   description?: string;
-  expertiseLevelId?: string;
-  autoDetect?: boolean;
+  expertiseLevelIds: string[];
 }
 
 export function createDoubt(token: string, input: CreateDoubtInput) {

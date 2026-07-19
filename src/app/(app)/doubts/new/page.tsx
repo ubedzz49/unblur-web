@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Button, ButtonStatus } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { SingleExpertisePicker, SelectedExpertise } from "@/components/SingleExpertisePicker";
+import { DoubtExpertisePicker, SelectedExpertise } from "@/components/DoubtExpertisePicker";
 import { useToast } from "@/components/ui/Toast";
 import { useMe } from "@/lib/queries/users";
 import { useCreateDoubt } from "@/lib/queries/doubts";
@@ -21,11 +21,10 @@ export default function NewDoubtPage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [expertise, setExpertise] = useState<SelectedExpertise | null>(null);
-  const [autoDetect, setAutoDetect] = useState(false);
+  const [expertise, setExpertise] = useState<SelectedExpertise[]>([]);
   const [submitStatus, setSubmitStatus] = useState<ButtonStatus>("idle");
 
-  const isValid = title.trim().length > 0 && (autoDetect || expertise !== null);
+  const isValid = title.trim().length > 0 && expertise.length > 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,21 +33,12 @@ export default function NewDoubtPage() {
     setSubmitStatus("loading");
     try {
       const trimmedDescription = description.trim();
-      await createDoubt.mutateAsync(
-        autoDetect
-          ? {
-              authorUserId: me.data.id,
-              title: title.trim(),
-              description: trimmedDescription || undefined,
-              autoDetect: true,
-            }
-          : {
-              authorUserId: me.data.id,
-              title: title.trim(),
-              description: trimmedDescription || undefined,
-              expertiseLevelId: expertise!.levelId,
-            },
-      );
+      await createDoubt.mutateAsync({
+        authorUserId: me.data.id,
+        title: title.trim(),
+        description: trimmedDescription || undefined,
+        expertiseLevelIds: expertise.map((e) => e.levelId),
+      });
       setSubmitStatus("success");
       showToast("Doubt posted");
       router.push("/feed");
@@ -85,49 +75,29 @@ export default function NewDoubtPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add any extra detail that might help (optional)."
               />
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  fontSize: 14,
-                  marginBottom: 16,
-                  cursor: "pointer",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={autoDetect}
-                  onChange={(e) => setAutoDetect(e.target.checked)}
+              <div style={{ marginBottom: 16 }}>
+                <label
+                  style={{
+                    fontSize: 12,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                    color: "var(--muted)",
+                    marginBottom: 6,
+                    display: "block",
+                  }}
+                >
+                  Subject / level
+                </label>
+                <DoubtExpertisePicker
+                  title={title}
+                  description={description}
+                  value={expertise}
+                  onChange={setExpertise}
                 />
-                I&apos;m not sure what subject this is — figure it out for me
-              </label>
-              {!autoDetect && (
-                <div style={{ marginBottom: 16 }}>
-                  <label
-                    style={{
-                      fontSize: 12,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.1em",
-                      color: "var(--muted)",
-                      marginBottom: 6,
-                      display: "block",
-                    }}
-                  >
-                    Subject / level
-                  </label>
-                  <SingleExpertisePicker value={expertise} onChange={setExpertise} />
-                </div>
-              )}
+              </div>
             </fieldset>
 
-            <Button
-              type="submit"
-              status={submitStatus}
-              loadingLabel={autoDetect ? "Figuring out the subject…" : "Posting…"}
-              successLabel="Posted"
-              disabled={!isValid}
-            >
+            <Button type="submit" status={submitStatus} loadingLabel="Posting…" successLabel="Posted" disabled={!isValid}>
               Post doubt
             </Button>
           </form>

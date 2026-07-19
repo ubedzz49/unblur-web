@@ -1,5 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { screen, fireEvent, waitFor, act } from "@testing-library/react";
 import NewDoubtPage from "./page";
 import { renderWithProviders } from "@/test-utils";
 import * as api from "@/lib/api";
@@ -38,9 +38,14 @@ describe("NewDoubtPage", () => {
     saveToken("test-token");
     vi.spyOn(api, "getMe").mockResolvedValue(baseUser);
     vi.spyOn(api, "getExpertiseOptions").mockResolvedValue(options);
+    vi.spyOn(api, "getSuggestedExpertise").mockResolvedValue([]);
   });
 
-  it("keeps submit disabled until title and expertise are filled in (description is optional)", async () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("keeps submit disabled until title and a subject are picked (description is optional)", async () => {
     renderWithProviders(<NewDoubtPage />);
 
     const submitButton = await screen.findByRole("button", { name: /post doubt/i });
@@ -57,31 +62,94 @@ describe("NewDoubtPage", () => {
     expect(submitButton).not.toBeDisabled();
   });
 
-  it("is valid with just a title when auto-detect is checked, with no expertise or description", async () => {
+  it("does not show an auto-detect option anywhere on the page", async () => {
     renderWithProviders(<NewDoubtPage />);
+    await screen.findByRole("button", { name: /post doubt/i });
 
-    const submitButton = await screen.findByRole("button", { name: /post doubt/i });
-    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Help with limits" } });
-    expect(submitButton).toBeDisabled();
-
-    fireEvent.click(screen.getByLabelText(/figure it out for me/i));
-    expect(submitButton).not.toBeDisabled();
-    expect(screen.queryByLabelText(/search expertise/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/figure it out for me/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   });
 
-  it("submits the doubt and navigates to the feed on success", async () => {
+  it("shows suggested subjects after the user pauses typing a title, and clicking one selects it", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.spyOn(api, "getSuggestedExpertise").mockResolvedValue([
+      { expertiseLevelId: "level-eng", expertiseTypeId: "type-maths", label: "Mathematics (Engineering (B.Tech))", similarity: 0.92 },
+    ]);
+
+    renderWithProviders(<NewDoubtPage />);
+    await screen.findByRole("button", { name: /post doubt/i });
+
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Help with limits" } });
+
+    expect(api.getSuggestedExpertise).not.toHaveBeenCalled();
+
+    await act(async () => {
+      vi.advanceTimersByTime(500);
+    });
+
+    await waitFor(() => expect(api.getSuggestedExpertise).toHaveBeenCalledWith("test-token", "Help with limits", undefined, 5));
+
+    const suggestion = await screen.findByTestId("expertise-suggestion");
+    expect(suggestion).toHaveTextContent(/mathematics/i);
+
+    fireEvent.click(suggestion);
+
+    expect(screen.getByRole("button", { name: /post doubt/i })).not.toBeDisabled();
+    expect(screen.queryByTestId("expertise-suggestion")).not.toBeInTheDocument();
+  });
+
+  it("does not fetch suggestions until the title has a minimum length", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    renderWithProviders(<NewDoubtPage />);
+    await screen.findByRole("button", { name: /post doubt/i });
+
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Hi" } });
+
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(api.getSuggestedExpertise).not.toHaveBeenCalled();
+  });
+
+  it("still allows finding any subject via full search, not just suggestions", async () => {
+    renderWithProviders(<NewDoubtPage />);
+    fireEvent.change(await screen.findByLabelText(/title/i), { target: { value: "Help with limits" } });
+
+    const search = screen.getByLabelText(/search expertise/i);
+    fireEvent.focus(search);
+    fireEvent.change(search, { target: { value: "mathematics" } });
+
+    const result = await screen.findByTestId("expertise-result");
+    expect(result).toHaveTextContent(/mathematics/i);
+    fireEvent.click(result);
+
+    expect(screen.getByRole("button", { name: /post doubt/i })).not.toBeDisabled();
+  });
+
+  it("stays disabled with zero subjects selected even when title and description are filled in", async () => {
+    renderWithProviders(<NewDoubtPage />);
+
+    fireEvent.change(await screen.findByLabelText(/title/i), { target: { value: "Help with limits" } });
+    fireEvent.change(screen.getByLabelText(/description/i), {
+      target: { value: "I don't understand epsilon-delta proofs." },
+    });
+
+    expect(screen.getByRole("button", { name: /post doubt/i })).toBeDisabled();
+  });
+
+  it("submits the doubt with expertiseLevelIds and navigates to the feed on success", async () => {
     vi.spyOn(api, "createDoubt").mockResolvedValue({
       id: "doubt-1",
       authorUserId: "user-1",
       title: "Help with limits",
       description: "I don't understand epsilon-delta proofs.",
-      expertiseLevelId: "level-eng",
+      expertiseLevelIds: ["level-eng"],
       status: "open",
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-01T00:00:00.000Z",
       resolvedAt: null,
       matchType: "exact",
-      autoDetected: false,
     });
 
     renderWithProviders(<NewDoubtPage />);
@@ -102,25 +170,24 @@ describe("NewDoubtPage", () => {
         authorUserId: "user-1",
         title: "Help with limits",
         description: "I don't understand epsilon-delta proofs.",
-        expertiseLevelId: "level-eng",
+        expertiseLevelIds: ["level-eng"],
       }),
     );
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/feed"));
   });
 
-  it("submits without a description, still passing expertiseLevelId", async () => {
+  it("submits without a description, still passing expertiseLevelIds", async () => {
     vi.spyOn(api, "createDoubt").mockResolvedValue({
       id: "doubt-1",
       authorUserId: "user-1",
       title: "Help with limits",
       description: "",
-      expertiseLevelId: "level-eng",
+      expertiseLevelIds: ["level-eng"],
       status: "open",
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-01T00:00:00.000Z",
       resolvedAt: null,
       matchType: "exact",
-      autoDetected: false,
     });
 
     renderWithProviders(<NewDoubtPage />);
@@ -138,42 +205,9 @@ describe("NewDoubtPage", () => {
         authorUserId: "user-1",
         title: "Help with limits",
         description: undefined,
-        expertiseLevelId: "level-eng",
+        expertiseLevelIds: ["level-eng"],
       }),
     );
-  });
-
-  it("submits with autoDetect: true and omits expertiseLevelId when auto-detect is checked", async () => {
-    vi.spyOn(api, "createDoubt").mockResolvedValue({
-      id: "doubt-1",
-      authorUserId: "user-1",
-      title: "Help with limits",
-      description: "",
-      expertiseLevelId: "",
-      status: "open",
-      createdAt: "2026-01-01T00:00:00.000Z",
-      updatedAt: "2026-01-01T00:00:00.000Z",
-      resolvedAt: null,
-      matchType: "exact",
-      autoDetected: true,
-    });
-
-    renderWithProviders(<NewDoubtPage />);
-
-    fireEvent.change(await screen.findByLabelText(/title/i), { target: { value: "Help with limits" } });
-    fireEvent.click(screen.getByLabelText(/figure it out for me/i));
-
-    fireEvent.click(screen.getByRole("button", { name: /post doubt/i }));
-
-    await waitFor(() =>
-      expect(api.createDoubt).toHaveBeenCalledWith("test-token", {
-        authorUserId: "user-1",
-        title: "Help with limits",
-        description: undefined,
-        autoDetect: true,
-      }),
-    );
-    await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/feed"));
   });
 
   it("shows an error toast and does not navigate when the mutation fails", async () => {
