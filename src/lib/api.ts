@@ -144,10 +144,12 @@ export interface Doubt {
   matchType: DoubtMatchType;
 }
 
-export function getFeed(expertiseLevelIds: string[], limit?: number) {
+export function getFeed(token: string, expertiseLevelIds: string[], limit?: number) {
   const params = new URLSearchParams({ expertiseLevelIds: expertiseLevelIds.join(",") });
   if (limit) params.set("limit", String(limit));
-  return request<Doubt[]>(`/feed?${params.toString()}`);
+  return request<Doubt[]>(`/feed?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }
 
 export interface CreateDoubtInput {
@@ -157,14 +159,17 @@ export interface CreateDoubtInput {
   expertiseLevelId: string;
 }
 
-export function createDoubt(input: CreateDoubtInput) {
+export function createDoubt(token: string, input: CreateDoubtInput) {
   return request<Doubt>("/doubts", {
     method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify(input),
   });
 }
 
-export function getMyDoubts(authorUserId: string) {
+export function getMyDoubts(token: string, authorUserId: string) {
   const params = new URLSearchParams({ authorUserId });
-  return request<Doubt[]>(`/doubts?${params.toString()}`);
+  return request<Doubt[]>(`/doubts?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }
