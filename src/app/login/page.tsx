@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { useSendOtp, useVerifyOtp } from "@/lib/queries/auth";
+import { useSendOtp, useVerifyOtp, useLoginWithPassword } from "@/lib/queries/auth";
+import { savePendingToken } from "@/lib/auth";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -11,6 +12,9 @@ import { Card } from "@/components/ui/Card";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { SiteHeader } from "../site-header";
 import shared from "../shared.module.css";
+import styles from "./login.module.css";
+
+type Mode = "otp" | "password";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,11 +22,17 @@ export default function LoginPage() {
   const { showToast } = useToast();
   const sendOtp = useSendOtp();
   const verifyOtp = useVerifyOtp();
+  const loginWithPassword = useLoginWithPassword();
+
+  const [mode, setMode] = useState<Mode>("otp");
 
   const [step, setStep] = useState<"identifier" | "otp">("identifier");
   const [identifier, setIdentifier] = useState("");
   const [otp, setOtp] = useState("");
   const [devOtp, setDevOtp] = useState<string | null>(null);
+
+  const [passwordIdentifier, setPasswordIdentifier] = useState("");
+  const [password, setPassword] = useState("");
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -52,6 +62,29 @@ export default function LoginPage() {
     }
   }
 
+  async function handlePasswordLogin(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const res = await loginWithPassword.mutateAsync({
+        identifier: passwordIdentifier,
+        password,
+      });
+      if (res.mustResetPassword) {
+        // Don't finalize login yet -- hold the token for the one authenticated call the
+        // change-password screen needs to make, and force the user through that screen
+        // before they can reach anything under the app shell.
+        savePendingToken(res.token);
+        router.push("/change-password");
+      } else {
+        login(res.token);
+        showToast("Logged in");
+        router.push("/home");
+      }
+    } catch {
+      showToast("That email/phone or password didn't work — check it and try again.", "error");
+    }
+  }
+
   return (
     <PageTransition className={shared.wrap}>
       <SiteHeader />
@@ -61,8 +94,31 @@ export default function LoginPage() {
           Use the email or phone you post doubts with.
         </p>
 
+        <div className={styles.tabs} role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "otp"}
+            className={styles.tab}
+            data-active={mode === "otp"}
+            onClick={() => setMode("otp")}
+          >
+            Email code
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "password"}
+            className={styles.tab}
+            data-active={mode === "password"}
+            onClick={() => setMode("password")}
+          >
+            Password
+          </button>
+        </div>
+
         <Card style={{ maxWidth: 380 }}>
-          {step === "identifier" && (
+          {mode === "otp" && step === "identifier" && (
             <form onSubmit={handleSend}>
               <Input
                 id="identifier"
@@ -79,7 +135,7 @@ export default function LoginPage() {
             </form>
           )}
 
-          {step === "otp" && (
+          {mode === "otp" && step === "otp" && (
             <form onSubmit={handleVerify}>
               <p className={shared.muted} style={{ marginBottom: 14 }}>
                 Code sent to {identifier}.
@@ -116,6 +172,36 @@ export default function LoginPage() {
                 }}
               >
                 Use a different email or phone
+              </Button>
+            </form>
+          )}
+
+          {mode === "password" && (
+            <form onSubmit={handlePasswordLogin}>
+              <Input
+                id="password-identifier"
+                label="Email or phone"
+                placeholder="you@school.edu"
+                value={passwordIdentifier}
+                onChange={(e) => setPasswordIdentifier(e.target.value)}
+                autoComplete="username"
+                required
+              />
+              <Input
+                id="password"
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+              <Button
+                type="submit"
+                status={loginWithPassword.isPending ? "loading" : "idle"}
+                loadingLabel="Logging in…"
+              >
+                Log in
               </Button>
             </form>
           )}

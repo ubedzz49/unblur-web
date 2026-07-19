@@ -30,6 +30,21 @@ export function verifyOtp(identifier: string, otp: string) {
   });
 }
 
+export function loginWithPassword(identifier: string, password: string) {
+  return request<{ token: string; mustResetPassword: boolean }>("/auth/password/login", {
+    method: "POST",
+    body: JSON.stringify({ identifier, password }),
+  });
+}
+
+export function changePassword(token: string, newPassword: string, currentPassword?: string) {
+  return request<{ ok: boolean }>("/users/me/password", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
 export interface UserProfile {
   id: string;
   email: string | null;
