@@ -18,6 +18,17 @@ export function Skeleton({ width = "100%", height = 16, radius, style }: Skeleto
   );
 }
 
+export function DoubtCardSkeleton() {
+  return (
+    <div style={{ padding: 16 }}>
+      <Skeleton width="70%" height={18} style={{ marginBottom: 12 }} />
+      <Skeleton width="100%" height={14} style={{ marginBottom: 8 }} />
+      <Skeleton width="90%" height={14} style={{ marginBottom: 14 }} />
+      <Skeleton width="30%" height={12} />
+    </div>
+  );
+}
+
 export function ProfileCardSkeleton() {
   return (
     <div style={{ maxWidth: 440 }}>
