@@ -40,7 +40,7 @@ describe("NewDoubtPage", () => {
     vi.spyOn(api, "getExpertiseOptions").mockResolvedValue(options);
   });
 
-  it("keeps submit disabled until title, description, and expertise are all filled in", async () => {
+  it("keeps submit disabled until title and expertise are filled in (description is optional)", async () => {
     renderWithProviders(<NewDoubtPage />);
 
     const submitButton = await screen.findByRole("button", { name: /post doubt/i });
@@ -49,17 +49,24 @@ describe("NewDoubtPage", () => {
     fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Help with limits" } });
     expect(submitButton).toBeDisabled();
 
-    fireEvent.change(screen.getByLabelText(/description/i), {
-      target: { value: "I don't understand epsilon-delta proofs." },
-    });
-    expect(submitButton).toBeDisabled();
-
     const search = screen.getByLabelText(/search expertise/i);
     fireEvent.focus(search);
     fireEvent.change(search, { target: { value: "mathematics" } });
     fireEvent.click(await screen.findByTestId("expertise-result"));
 
     expect(submitButton).not.toBeDisabled();
+  });
+
+  it("is valid with just a title when auto-detect is checked, with no expertise or description", async () => {
+    renderWithProviders(<NewDoubtPage />);
+
+    const submitButton = await screen.findByRole("button", { name: /post doubt/i });
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Help with limits" } });
+    expect(submitButton).toBeDisabled();
+
+    fireEvent.click(screen.getByLabelText(/figure it out for me/i));
+    expect(submitButton).not.toBeDisabled();
+    expect(screen.queryByLabelText(/search expertise/i)).not.toBeInTheDocument();
   });
 
   it("submits the doubt and navigates to the feed on success", async () => {
@@ -74,6 +81,7 @@ describe("NewDoubtPage", () => {
       updatedAt: "2026-01-01T00:00:00.000Z",
       resolvedAt: null,
       matchType: "exact",
+      autoDetected: false,
     });
 
     renderWithProviders(<NewDoubtPage />);
@@ -95,6 +103,74 @@ describe("NewDoubtPage", () => {
         title: "Help with limits",
         description: "I don't understand epsilon-delta proofs.",
         expertiseLevelId: "level-eng",
+      }),
+    );
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/feed"));
+  });
+
+  it("submits without a description, still passing expertiseLevelId", async () => {
+    vi.spyOn(api, "createDoubt").mockResolvedValue({
+      id: "doubt-1",
+      authorUserId: "user-1",
+      title: "Help with limits",
+      description: "",
+      expertiseLevelId: "level-eng",
+      status: "open",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      resolvedAt: null,
+      matchType: "exact",
+      autoDetected: false,
+    });
+
+    renderWithProviders(<NewDoubtPage />);
+
+    fireEvent.change(await screen.findByLabelText(/title/i), { target: { value: "Help with limits" } });
+    const search = screen.getByLabelText(/search expertise/i);
+    fireEvent.focus(search);
+    fireEvent.change(search, { target: { value: "mathematics" } });
+    fireEvent.click(await screen.findByTestId("expertise-result"));
+
+    fireEvent.click(screen.getByRole("button", { name: /post doubt/i }));
+
+    await waitFor(() =>
+      expect(api.createDoubt).toHaveBeenCalledWith("test-token", {
+        authorUserId: "user-1",
+        title: "Help with limits",
+        description: undefined,
+        expertiseLevelId: "level-eng",
+      }),
+    );
+  });
+
+  it("submits with autoDetect: true and omits expertiseLevelId when auto-detect is checked", async () => {
+    vi.spyOn(api, "createDoubt").mockResolvedValue({
+      id: "doubt-1",
+      authorUserId: "user-1",
+      title: "Help with limits",
+      description: "",
+      expertiseLevelId: "",
+      status: "open",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      resolvedAt: null,
+      matchType: "exact",
+      autoDetected: true,
+    });
+
+    renderWithProviders(<NewDoubtPage />);
+
+    fireEvent.change(await screen.findByLabelText(/title/i), { target: { value: "Help with limits" } });
+    fireEvent.click(screen.getByLabelText(/figure it out for me/i));
+
+    fireEvent.click(screen.getByRole("button", { name: /post doubt/i }));
+
+    await waitFor(() =>
+      expect(api.createDoubt).toHaveBeenCalledWith("test-token", {
+        authorUserId: "user-1",
+        title: "Help with limits",
+        description: undefined,
+        autoDetect: true,
       }),
     );
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/feed"));
