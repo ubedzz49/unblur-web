@@ -9,6 +9,8 @@ import { DoubtCardSkeleton } from "@/components/ui/Skeleton";
 import { useMyExpertise, useExpertiseOptions } from "@/lib/queries/expertise";
 import { useFeed, useMyDoubts } from "@/lib/queries/doubts";
 import { useMe } from "@/lib/queries/users";
+import { useResolutionRequestsForDoubt } from "@/lib/queries/resolution";
+import { DoubtRequestsModal } from "@/components/DoubtRequestsModal";
 import { Doubt } from "@/lib/api";
 import { formatExpertiseLabel } from "@/lib/expertise-format";
 import { relativeTime } from "@/lib/relative-time";
@@ -38,11 +40,20 @@ function DoubtCard({
   doubt,
   subjectLabels,
   showOfferAction,
+  showRequestsBadge,
+  onOpenRequests,
 }: {
   doubt: Doubt;
   subjectLabels: string[];
   showOfferAction?: boolean;
+  showRequestsBadge?: boolean;
+  onOpenRequests?: (doubtId: string) => void;
 }) {
+  // only fetch when the badge is actually shown (the "My doubts" tab) -- no point
+  // firing a requests query per card on the main Feed tab where this isn't shown
+  const requests = useResolutionRequestsForDoubt(showRequestsBadge ? doubt.id : undefined);
+  const requestCount = requests.data?.length ?? 0;
+
   return (
     <Card className={styles.doubtCard} tabIndex={0}>
       <div className={styles.doubtHeader}>
@@ -59,6 +70,18 @@ function DoubtCard({
       <div className={styles.doubtDetails}>
         {subjectLabels.length > 0 && <p className={styles.subjectLabel}>{subjectLabels.join(" · ")}</p>}
         {doubt.description && <p className={styles.doubtDescription}>{doubt.description}</p>}
+        {showRequestsBadge && requestCount > 0 && (
+          <button
+            type="button"
+            className={styles.requestsBadge}
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenRequests?.(doubt.id);
+            }}
+          >
+            {requestCount} {requestCount === 1 ? "offer" : "offers"}
+          </button>
+        )}
         {showOfferAction && doubt.status === "open" && (
           <Link
             href={`/doubts/${doubt.id}/resolve`}
@@ -84,6 +107,7 @@ type Tab = "feed" | "mine";
 
 export default function FeedPage() {
   const [tab, setTab] = useState<Tab>("feed");
+  const [requestsModalDoubtId, setRequestsModalDoubtId] = useState<string | null>(null);
   const me = useMe();
   const myExpertise = useMyExpertise();
   const labelLookup = useExpertiseLabelLookup();
@@ -255,6 +279,8 @@ export default function FeedPage() {
                   <DoubtCard
                     key={doubt.id}
                     doubt={doubt}
+                    showRequestsBadge
+                    onOpenRequests={setRequestsModalDoubtId}
                     subjectLabels={doubt.expertiseLevelIds.map((id) => labelLookup.get(id)).filter((l): l is string => Boolean(l))}
                   />
                 ))}
@@ -263,6 +289,10 @@ export default function FeedPage() {
           </>
         )}
       </section>
+
+      {requestsModalDoubtId && (
+        <DoubtRequestsModal doubtId={requestsModalDoubtId} onClose={() => setRequestsModalDoubtId(null)} />
+      )}
     </PageTransition>
   );
 }

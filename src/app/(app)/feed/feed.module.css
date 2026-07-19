@@ -105,6 +105,21 @@
   margin-top: 10px;
 }
 
+.requestsBadge {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 8px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: none;
+  background: var(--bg-alt);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 44px;
+}
+
 .doubtMeta {
   display: flex;
   align-items: center;
