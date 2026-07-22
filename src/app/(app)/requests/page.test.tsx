@@ -70,6 +70,7 @@ const POSTER_BOOKING: api.Booking = {
   status: "scheduled",
   completedAt: null,
   createdAt: new Date().toISOString(),
+  joinUrl: null,
 };
 
 const RESOLVER_BOOKING: api.Booking = {
@@ -230,5 +231,120 @@ describe("RequestsPage", () => {
     fireEvent.click(screen.getByRole("tab", { name: /bookings/i }));
 
     expect(await screen.findByText(/no bookings yet/i)).toBeInTheDocument();
+  });
+
+  it("shows a Join meeting link for a scheduled booking once joinUrl is populated", async () => {
+    vi.spyOn(api, "getMyDoubts").mockResolvedValue([]);
+    vi.spyOn(api, "getResolutionRequests").mockResolvedValue([]);
+    vi.spyOn(api, "getMyBookings").mockImplementation((token, role) => {
+      if (role === "poster") return Promise.resolve([{ ...POSTER_BOOKING, joinUrl: "https://meet.example.com/room-1" }]);
+      return Promise.resolve([]);
+    });
+
+    renderWithProviders(<RequestsPage />);
+    fireEvent.click(screen.getByRole("tab", { name: /bookings/i }));
+
+    const joinLink = await screen.findByRole("link", { name: /join meeting/i });
+    expect(joinLink).toHaveAttribute("href", "https://meet.example.com/room-1");
+    expect(joinLink).toHaveAttribute("target", "_blank");
+    expect(joinLink).toHaveAttribute("rel", expect.stringContaining("noopener"));
+    expect(joinLink).toHaveAttribute("rel", expect.stringContaining("noreferrer"));
+  });
+
+  it("shows a disabled pending state instead of a broken link when joinUrl isn't ready yet", async () => {
+    vi.spyOn(api, "getMyDoubts").mockResolvedValue([]);
+    vi.spyOn(api, "getResolutionRequests").mockResolvedValue([]);
+    vi.spyOn(api, "getMyBookings").mockImplementation((token, role) => {
+      if (role === "poster") return Promise.resolve([POSTER_BOOKING]); // joinUrl: null
+      return Promise.resolve([]);
+    });
+
+    renderWithProviders(<RequestsPage />);
+    fireEvent.click(screen.getByRole("tab", { name: /bookings/i }));
+
+    await screen.findByText(/as poster/i);
+    expect(screen.queryByRole("link", { name: /join meeting/i })).not.toBeInTheDocument();
+    const pendingButton = screen.getByRole("button", { name: /join meeting \(pending\)/i });
+    expect(pendingButton).toBeDisabled();
+  });
+
+  it("shows a rating prompt for a completed booking where I'm the poster, not the resolver", async () => {
+    vi.spyOn(api, "getMyDoubts").mockResolvedValue([]);
+    vi.spyOn(api, "getResolutionRequests").mockResolvedValue([]);
+    vi.spyOn(api, "getMyBookings").mockImplementation((token, role) => {
+      if (role === "poster") return Promise.resolve([{ ...POSTER_BOOKING, status: "completed" }]);
+      return Promise.resolve([{ ...RESOLVER_BOOKING, status: "completed" }]);
+    });
+
+    renderWithProviders(<RequestsPage />);
+    fireEvent.click(screen.getByRole("tab", { name: /bookings/i }));
+
+    await screen.findByText(/as poster/i);
+    // only one rating prompt -- the poster row, not the resolver row
+    expect(screen.getAllByText(/rate this session/i)).toHaveLength(1);
+  });
+
+  it("disables submit until a star rating between 1 and 5 is picked", async () => {
+    vi.spyOn(api, "getMyDoubts").mockResolvedValue([]);
+    vi.spyOn(api, "getResolutionRequests").mockResolvedValue([]);
+    vi.spyOn(api, "getMyBookings").mockImplementation((token, role) => {
+      if (role === "poster") return Promise.resolve([{ ...POSTER_BOOKING, status: "completed" }]);
+      return Promise.resolve([]);
+    });
+
+    renderWithProviders(<RequestsPage />);
+    fireEvent.click(screen.getByRole("tab", { name: /bookings/i }));
+    await screen.findByText(/rate this session/i);
+
+    const submit = screen.getByRole("button", { name: /submit rating/i });
+    expect(submit).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: /^3 stars$/i }));
+    expect(submit).not.toBeDisabled();
+  });
+
+  it("submits the picked rating and shows a confirmation on success", async () => {
+    vi.spyOn(api, "getMyDoubts").mockResolvedValue([]);
+    vi.spyOn(api, "getResolutionRequests").mockResolvedValue([]);
+    vi.spyOn(api, "getMyBookings").mockImplementation((token, role) => {
+      if (role === "poster") return Promise.resolve([{ ...POSTER_BOOKING, status: "completed" }]);
+      return Promise.resolve([]);
+    });
+    const rateSpy = vi.spyOn(api, "submitRating").mockResolvedValue({
+      id: "rating-1",
+      bookingId: POSTER_BOOKING.id,
+      rating: 4,
+      feedbackText: null,
+      createdAt: new Date().toISOString(),
+    });
+
+    renderWithProviders(<RequestsPage />);
+    fireEvent.click(screen.getByRole("tab", { name: /bookings/i }));
+    await screen.findByText(/rate this session/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /^4 stars$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /submit rating/i }));
+
+    await waitFor(() => expect(rateSpy).toHaveBeenCalledWith("test-token", POSTER_BOOKING.id, 4, undefined));
+    expect(await screen.findByText(/you rated this session 4★/i)).toBeInTheDocument();
+  });
+
+  it("shows an 'already rated' toast and message on a 409 instead of a generic error", async () => {
+    vi.spyOn(api, "getMyDoubts").mockResolvedValue([]);
+    vi.spyOn(api, "getResolutionRequests").mockResolvedValue([]);
+    vi.spyOn(api, "getMyBookings").mockImplementation((token, role) => {
+      if (role === "poster") return Promise.resolve([{ ...POSTER_BOOKING, status: "completed" }]);
+      return Promise.resolve([]);
+    });
+    vi.spyOn(api, "submitRating").mockRejectedValue(new api.ApiError("already rated", 409));
+
+    renderWithProviders(<RequestsPage />);
+    fireEvent.click(screen.getByRole("tab", { name: /bookings/i }));
+    await screen.findByText(/rate this session/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /^2 stars$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /submit rating/i }));
+
+    await waitFor(() => expect(screen.getAllByText(/you.ve already rated this session/i).length).toBeGreaterThan(0));
   });
 });

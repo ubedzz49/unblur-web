@@ -13,7 +13,47 @@ import { Avatar } from "@/components/ui/Avatar";
 import { ProfileCardSkeleton } from "@/components/ui/Skeleton";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { ExpertisePicker } from "@/components/ExpertisePicker";
+import { Eligibility } from "@/lib/api";
 import shared from "../../shared.module.css";
+
+const ELIGIBILITY_LABELS: Record<keyof Eligibility, string> = {
+  canHostSeminar: "Can host a seminar",
+  canOrganizeGD: "Can organize a GD",
+  canAttendGD: "Can attend a GD",
+};
+
+// only show pills for what's unlocked -- a list of things you can't do yet isn't a badge, it's a nag
+function EligibilityBadges({ eligibility }: { eligibility: Eligibility }) {
+  const unlocked = (Object.keys(ELIGIBILITY_LABELS) as (keyof Eligibility)[]).filter((key) => eligibility[key]);
+
+  if (unlocked.length === 0) {
+    return (
+      <p className={shared.muted} style={{ marginTop: 16 }}>
+        Keep helping out to unlock seminar and GD badges.
+      </p>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 16 }}>
+      {unlocked.map((key) => (
+        <span
+          key={key}
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            padding: "4px 10px",
+            borderRadius: 999,
+            background: "var(--bg-alt)",
+            color: "var(--ink)",
+          }}
+        >
+          {ELIGIBILITY_LABELS[key]}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -184,6 +224,9 @@ export default function ProfilePage() {
                 <p className={shared.muted}>Minutes as listener</p>
               </div>
             </div>
+          )}
+          {myStats.isSuccess && (
+            <EligibilityBadges eligibility={myStats.data.eligibility} />
           )}
         </Card>
       </section>

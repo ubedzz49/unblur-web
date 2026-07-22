@@ -60,4 +60,40 @@ describe("ProfilePage", () => {
     expect(await screen.findByText(/jpeg, png, or webp/i)).toBeInTheDocument();
     expect(uploadSpy).not.toHaveBeenCalled();
   });
+
+  it("only shows eligibility badges that are true, not the ones that are false", async () => {
+    vi.spyOn(api, "getMyStats").mockResolvedValue({
+      minutesResolved: 120,
+      avgRating: 4.5,
+      ratingCount: 3,
+      minutesListener: 30,
+      updatedAt: new Date().toISOString(),
+      eligibility: { canHostSeminar: true, canOrganizeGD: false, canAttendGD: true },
+    });
+
+    renderWithProviders(<ProfilePage />);
+
+    expect(await screen.findByText(/can host a seminar/i)).toBeInTheDocument();
+    expect(screen.getByText(/can attend a gd/i)).toBeInTheDocument();
+    expect(screen.queryByText(/can organize a gd/i)).not.toBeInTheDocument();
+  });
+
+  it("shows no badges section when nothing is eligible yet", async () => {
+    vi.spyOn(api, "getMyStats").mockResolvedValue({
+      minutesResolved: 0,
+      avgRating: 0,
+      ratingCount: 0,
+      minutesListener: 0,
+      updatedAt: new Date().toISOString(),
+      eligibility: { canHostSeminar: false, canOrganizeGD: false, canAttendGD: false },
+    });
+
+    renderWithProviders(<ProfilePage />);
+
+    await screen.findByText(/your stats/i);
+    expect(screen.queryByText(/can host a seminar/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/can organize a gd/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/can attend a gd/i)).not.toBeInTheDocument();
+    expect(await screen.findByText(/keep helping/i)).toBeInTheDocument();
+  });
 });

@@ -1,5 +1,16 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
+// carries the HTTP status alongside the message so callers can branch on e.g. 409 without re-parsing
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
@@ -11,7 +22,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(body.error ?? `request to ${path} failed with status ${res.status}`);
+    throw new ApiError(body.error ?? `request to ${path} failed with status ${res.status}`, res.status);
   }
   return body as T;
 }
@@ -279,6 +290,7 @@ export interface Booking {
   status: BookingStatus;
   completedAt: string | null;
   createdAt: string;
+  joinUrl: string | null;
 }
 
 export function acceptResolutionRequest(token: string, requestId: string, chosenSlot: string) {
@@ -323,6 +335,22 @@ export function cancelBooking(token: string, bookingId: string) {
   return request<Booking>(`/bookings/${bookingId}/cancel`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export interface Rating {
+  id: string;
+  bookingId: string;
+  rating: number;
+  feedbackText: string | null;
+  createdAt: string;
+}
+
+export function submitRating(token: string, bookingId: string, rating: number, feedbackText?: string) {
+  return request<Rating>(`/bookings/${bookingId}/rate`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ rating, feedbackText }),
   });
 }
 
@@ -381,11 +409,18 @@ export function getMyPayouts(token: string) {
   });
 }
 
+export interface Eligibility {
+  canHostSeminar: boolean;
+  canOrganizeGD: boolean;
+  canAttendGD: boolean;
+}
+
 export interface PublicUserStats {
   minutesResolved: number;
   avgRating: number;
   ratingCount: number;
   minutesListener: number;
+  eligibility: Eligibility;
 }
 
 export interface PublicUserExpertiseEntry {
@@ -415,10 +450,59 @@ export interface UserStats {
   ratingCount: number;
   minutesListener: number;
   updatedAt: string;
+  eligibility: Eligibility;
 }
 
 export function getMyStats(token: string) {
   return request<UserStats>("/users/me/stats", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export type NotificationReferenceType = "booking" | "resolution_request" | "doubt" | string;
+
+export interface AppNotification {
+  id: string;
+  type: string;
+  referenceType: NotificationReferenceType;
+  referenceId: string;
+  title: string;
+  body: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface GetNotificationsOptions {
+  unread?: boolean;
+  limit?: number;
+}
+
+export function getNotifications(token: string, opts: GetNotificationsOptions = {}) {
+  const params = new URLSearchParams();
+  if (opts.unread) params.set("unread", "true");
+  if (opts.limit) params.set("limit", String(opts.limit));
+  const qs = params.toString();
+  return request<AppNotification[]>(`/notifications${qs ? `?${qs}` : ""}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function getUnreadNotificationCount(token: string) {
+  return request<{ count: number }>("/notifications/unread-count", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function markNotificationRead(token: string, id: string) {
+  return request<{ ok: boolean }>(`/notifications/${id}/read`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function markAllNotificationsRead(token: string) {
+  return request<{ markedCount: number }>("/notifications/read-all", {
+    method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });
 }

@@ -115,9 +115,15 @@ export default function BookingPaymentPage() {
           <p style={{ fontWeight: 800, marginBottom: 20 }}>{formatAmount(payment.data.amountCents)}</p>
 
           {isCompleted ? (
-            <p style={{ fontWeight: 700 }}>
-              Booking confirmed — you&apos;ll get the meeting link here once available.
-            </p>
+            booking.data.joinUrl ? (
+              <a href={booking.data.joinUrl} target="_blank" rel="noopener noreferrer">
+                <Button type="button">Join meeting</Button>
+              </a>
+            ) : (
+              <p style={{ fontWeight: 700 }}>
+                Booking confirmed — you&apos;ll get the meeting link here once available.
+              </p>
+            )
           ) : (
             <>
               <p className={shared.muted} style={{ marginBottom: 12 }}>
