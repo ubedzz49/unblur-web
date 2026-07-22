@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/app/theme-toggle";
+import { NotificationBell } from "@/components/NotificationBell";
 import styles from "./app-nav.module.css";
 
 const TABS = [
@@ -32,6 +33,7 @@ export function AppHeader() {
             </Link>
           ))}
         </nav>
+        <NotificationBell />
         <ThemeToggle />
       </div>
     </header>

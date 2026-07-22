@@ -13,6 +13,7 @@ import {
   getResolutionRequests,
   rejectResolutionRequest,
   ResolutionRequestFilters,
+  submitRating,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 
@@ -98,6 +99,20 @@ export function useCompleteBooking() {
     mutationFn: (bookingId: string) => completeBooking(token!, bookingId),
     onSuccess: (booking: Booking) => {
       queryClient.setQueryData([...BOOKING_KEY, booking.id], booking);
+      queryClient.invalidateQueries({ queryKey: MY_BOOKINGS_KEY });
+    },
+  });
+}
+
+export function useSubmitRating() {
+  const { token } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ bookingId, rating, feedbackText }: { bookingId: string; rating: number; feedbackText?: string }) =>
+      submitRating(token!, bookingId, rating, feedbackText),
+    onSuccess: (_rating, variables) => {
+      queryClient.invalidateQueries({ queryKey: [...BOOKING_KEY, variables.bookingId] });
       queryClient.invalidateQueries({ queryKey: MY_BOOKINGS_KEY });
     },
   });

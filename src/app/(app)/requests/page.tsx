@@ -15,9 +15,10 @@ import {
   useMyBookings,
   useResolutionRequests,
   useResolutionRequestsForDoubt,
+  useSubmitRating,
 } from "@/lib/queries/resolution";
 import { ResolutionRequestCard } from "@/components/ResolutionRequestCard";
-import { Booking, BookingStatus, Doubt, ResolutionRequest } from "@/lib/api";
+import { ApiError, Booking, BookingStatus, Doubt, ResolutionRequest } from "@/lib/api";
 import { relativeTime } from "@/lib/relative-time";
 import shared from "../../shared.module.css";
 
@@ -78,6 +79,81 @@ function SentRequestRow({ request }: { request: ResolutionRequest }) {
   );
 }
 
+// poster rates 1-5 stars after a session completes. the API has no "already rated" flag on the
+// booking, so we just show the form whenever the booking is completed and handle a 409 (duplicate
+// rate attempt) as its own case rather than trying to guess client-side whether it's been rated.
+function RatingPrompt({ bookingId }: { bookingId: string }) {
+  const { showToast } = useToast();
+  const submitRating = useSubmitRating();
+  const [rating, setRating] = useState(0);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [outcome, setOutcome] = useState<"pending" | "rated" | "already-rated">("pending");
+
+  async function handleSubmit() {
+    if (rating < 1 || rating > 5) return;
+    try {
+      await submitRating.mutateAsync({ bookingId, rating, feedbackText: feedbackText || undefined });
+      setOutcome("rated");
+      showToast("Thanks for rating this session");
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setOutcome("already-rated");
+        showToast("You've already rated this session");
+      } else {
+        showToast(err instanceof Error ? err.message : "Couldn't submit that rating — try again.", "error");
+      }
+    }
+  }
+
+  if (outcome === "rated") {
+    return <p style={{ fontWeight: 700, marginTop: 10 }}>You rated this session {rating}★</p>;
+  }
+  if (outcome === "already-rated") {
+    return <p className={shared.muted} style={{ marginTop: 10 }}>You&apos;ve already rated this session.</p>;
+  }
+
+  return (
+    <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
+      <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>Rate this session</p>
+      <div role="group" aria-label="Rating" style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            aria-pressed={rating >= n}
+            aria-label={`${n} star${n === 1 ? "" : "s"}`}
+            onClick={() => setRating(n)}
+            style={{
+              fontSize: 20,
+              lineHeight: 1,
+              color: rating >= n ? "var(--accent)" : "var(--muted)",
+              padding: 4,
+            }}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+      <textarea
+        aria-label="Feedback (optional)"
+        placeholder="Feedback (optional)"
+        value={feedbackText}
+        onChange={(e) => setFeedbackText(e.target.value)}
+        rows={2}
+        style={{ width: "100%", marginBottom: 8, fontFamily: "inherit", fontSize: 13, padding: 8 }}
+      />
+      <Button
+        type="button"
+        style={{ width: "auto" }}
+        disabled={rating < 1 || rating > 5 || submitRating.isPending}
+        onClick={handleSubmit}
+      >
+        Submit rating
+      </Button>
+    </div>
+  );
+}
+
 function BookingRow({ booking, role }: { booking: Booking; role: "poster" | "resolver" }) {
   const { showToast } = useToast();
   const completeBooking = useCompleteBooking();
@@ -128,6 +204,18 @@ function BookingRow({ booking, role }: { booking: Booking; role: "poster" | "res
             </Button>
           </Link>
         )}
+        {booking.status === "scheduled" &&
+          (booking.joinUrl ? (
+            <a href={booking.joinUrl} target="_blank" rel="noopener noreferrer">
+              <Button type="button" style={{ width: "auto" }}>
+                Join meeting
+              </Button>
+            </a>
+          ) : (
+            <Button type="button" style={{ width: "auto" }} disabled title="Meeting link isn't ready yet">
+              Join meeting (pending)
+            </Button>
+          ))}
         {canAct && (
           <>
             <Button type="button" style={{ width: "auto" }} disabled={busy} onClick={handleComplete}>
@@ -139,6 +227,8 @@ function BookingRow({ booking, role }: { booking: Booking; role: "poster" | "res
           </>
         )}
       </div>
+
+      {booking.status === "completed" && role === "poster" && <RatingPrompt bookingId={booking.id} />}
     </Card>
   );
 }
