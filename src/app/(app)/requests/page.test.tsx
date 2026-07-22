@@ -9,6 +9,16 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/requests",
 }));
 
+vi.mock("@daily-co/daily-js", () => ({
+  default: {
+    createFrame: () => ({
+      join: vi.fn(),
+      on: vi.fn(),
+      destroy: vi.fn(),
+    }),
+  },
+}));
+
 const ME: api.UserProfile = {
   id: "user-1",
   email: "me@example.com",
@@ -233,7 +243,7 @@ describe("RequestsPage", () => {
     expect(await screen.findByText(/no bookings yet/i)).toBeInTheDocument();
   });
 
-  it("shows a Join meeting link for a scheduled booking once joinUrl is populated", async () => {
+  it("opens the embedded meeting modal for a scheduled booking once joinUrl is populated", async () => {
     vi.spyOn(api, "getMyDoubts").mockResolvedValue([]);
     vi.spyOn(api, "getResolutionRequests").mockResolvedValue([]);
     vi.spyOn(api, "getMyBookings").mockImplementation((token, role) => {
@@ -244,11 +254,12 @@ describe("RequestsPage", () => {
     renderWithProviders(<RequestsPage />);
     fireEvent.click(screen.getByRole("tab", { name: /bookings/i }));
 
-    const joinLink = await screen.findByRole("link", { name: /join meeting/i });
-    expect(joinLink).toHaveAttribute("href", "https://meet.example.com/room-1");
-    expect(joinLink).toHaveAttribute("target", "_blank");
-    expect(joinLink).toHaveAttribute("rel", expect.stringContaining("noopener"));
-    expect(joinLink).toHaveAttribute("rel", expect.stringContaining("noreferrer"));
+    // no more anchor tag to daily.co's own domain -- the call is embedded in-page via a modal
+    const joinButton = await screen.findByRole("button", { name: /^join meeting$/i });
+    expect(joinButton.closest("a")).toBeNull();
+
+    fireEvent.click(joinButton);
+    expect(await screen.findByRole("dialog", { name: /meeting/i })).toBeInTheDocument();
   });
 
   it("shows a disabled pending state instead of a broken link when joinUrl isn't ready yet", async () => {
