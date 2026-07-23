@@ -12,7 +12,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@daily-co/daily-js", () => ({
   default: {
     createFrame: () => ({
-      join: vi.fn(),
+      join: vi.fn().mockResolvedValue(undefined),
       on: vi.fn(),
       destroy: vi.fn(),
     }),
