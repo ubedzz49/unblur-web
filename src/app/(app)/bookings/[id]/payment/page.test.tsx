@@ -19,6 +19,7 @@ const BOOKING: api.Booking = {
   durationMins: 30,
   amountCents: 15000,
   paymentId: "payment-1",
+  joinUrl: "https://unblur.daily.co/resolution-booking-1-abc123",
   status: "scheduled",
   completedAt: null,
   createdAt: new Date().toISOString(),
@@ -70,7 +71,7 @@ describe("BookingPaymentPage", () => {
   });
 
   it("shows a confirmed state without fabricating a meeting link when confirm succeeds", async () => {
-    vi.spyOn(api, "getBooking").mockResolvedValue(BOOKING);
+    vi.spyOn(api, "getBooking").mockResolvedValue({ ...BOOKING, joinUrl: null });
     vi.spyOn(api, "getPayment").mockResolvedValue(PENDING_PAYMENT);
     vi.spyOn(api, "confirmPayment").mockResolvedValue({ ...PENDING_PAYMENT, status: "completed" });
 
@@ -113,7 +114,7 @@ describe("BookingPaymentPage", () => {
   });
 
   it("does not show the pay button when the payment is already completed", async () => {
-    vi.spyOn(api, "getBooking").mockResolvedValue(BOOKING);
+    vi.spyOn(api, "getBooking").mockResolvedValue({ ...BOOKING, joinUrl: null });
     vi.spyOn(api, "getPayment").mockResolvedValue({ ...PENDING_PAYMENT, status: "completed" });
 
     renderWithProviders(<BookingPaymentPage />);

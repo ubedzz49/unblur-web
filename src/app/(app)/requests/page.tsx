@@ -18,6 +18,7 @@ import {
   useSubmitRating,
 } from "@/lib/queries/resolution";
 import { ResolutionRequestCard } from "@/components/ResolutionRequestCard";
+import { MeetingModal } from "@/components/MeetingModal";
 import { ApiError, Booking, BookingStatus, Doubt, ResolutionRequest } from "@/lib/api";
 import { relativeTime } from "@/lib/relative-time";
 import shared from "../../shared.module.css";
@@ -159,6 +160,7 @@ function BookingRow({ booking, role }: { booking: Booking; role: "poster" | "res
   const completeBooking = useCompleteBooking();
   const cancelBooking = useCancelBooking();
   const [busy, setBusy] = useState(false);
+  const [showMeeting, setShowMeeting] = useState(false);
 
   const canAct = booking.status === "scheduled";
 
@@ -206,11 +208,14 @@ function BookingRow({ booking, role }: { booking: Booking; role: "poster" | "res
         )}
         {booking.status === "scheduled" &&
           (booking.joinUrl ? (
-            <a href={booking.joinUrl} target="_blank" rel="noopener noreferrer">
-              <Button type="button" style={{ width: "auto" }}>
+            <>
+              <Button type="button" style={{ width: "auto" }} onClick={() => setShowMeeting(true)}>
                 Join meeting
               </Button>
-            </a>
+              {showMeeting && (
+                <MeetingModal joinUrl={booking.joinUrl} onClose={() => setShowMeeting(false)} />
+              )}
+            </>
           ) : (
             <Button type="button" style={{ width: "auto" }} disabled title="Meeting link isn't ready yet">
               Join meeting (pending)

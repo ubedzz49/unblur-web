@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { useBooking } from "@/lib/queries/resolution";
 import { useConfirmPayment, usePayment } from "@/lib/queries/payments";
+import { MeetingModal } from "@/components/MeetingModal";
 import shared from "../../../../shared.module.css";
 
 function formatAmount(amountCents: number): string {
@@ -34,6 +35,7 @@ export default function BookingPaymentPage() {
   const payment = usePayment(booking.data?.paymentId);
   const confirmPayment = useConfirmPayment();
   const [payStatus, setPayStatus] = useState<ButtonStatus>("idle");
+  const [showMeeting, setShowMeeting] = useState(false);
 
   async function handlePay() {
     if (!payment.data || payStatus === "loading") return;
@@ -116,9 +118,14 @@ export default function BookingPaymentPage() {
 
           {isCompleted ? (
             booking.data.joinUrl ? (
-              <a href={booking.data.joinUrl} target="_blank" rel="noopener noreferrer">
-                <Button type="button">Join meeting</Button>
-              </a>
+              <>
+                <Button type="button" onClick={() => setShowMeeting(true)}>
+                  Join meeting
+                </Button>
+                {showMeeting && (
+                  <MeetingModal joinUrl={booking.data.joinUrl} onClose={() => setShowMeeting(false)} />
+                )}
+              </>
             ) : (
               <p style={{ fontWeight: 700 }}>
                 Booking confirmed — you&apos;ll get the meeting link here once available.

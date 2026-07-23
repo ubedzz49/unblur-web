@@ -231,7 +231,13 @@ describe("FeedPage", () => {
       name: "Rohan Kumar",
       photoUrl: null,
       bio: "Physics tutor",
-      stats: { minutesResolved: 0, avgRating: 0, ratingCount: 0, minutesListener: 0 },
+      stats: {
+        minutesResolved: 0,
+        avgRating: 0,
+        ratingCount: 0,
+        minutesListener: 0,
+        eligibility: { canHostSeminar: false, canOrganizeGD: false, canAttendGD: false },
+      },
       expertise: [{ id: "e-1", expertiseTypeName: "Physics", expertiseLevelName: "General" }],
     });
 

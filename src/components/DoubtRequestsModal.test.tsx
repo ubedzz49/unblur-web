@@ -10,7 +10,13 @@ const REQUESTER: api.PublicUser = {
   name: "Asha Rao",
   photoUrl: null,
   bio: "Loves teaching calculus",
-  stats: { minutesResolved: 120, avgRating: 4.8, ratingCount: 10, minutesListener: 30 },
+  stats: {
+    minutesResolved: 120,
+    avgRating: 4.8,
+    ratingCount: 10,
+    minutesListener: 30,
+    eligibility: { canHostSeminar: false, canOrganizeGD: true, canAttendGD: true },
+  },
   expertise: [{ id: "ux-1", expertiseTypeName: "Mathematics", expertiseLevelName: "Engineering" }],
 };
 
@@ -87,6 +93,7 @@ describe("DoubtRequestsModal", () => {
       durationMins: 30,
       amountCents: 15000,
       paymentId: "payment-1",
+      joinUrl: "https://unblur.daily.co/resolution-booking-1-abc123",
       status: "scheduled",
       completedAt: null,
       createdAt: new Date().toISOString(),
