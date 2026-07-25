@@ -243,23 +243,45 @@ describe("RequestsPage", () => {
     expect(await screen.findByText(/no bookings yet/i)).toBeInTheDocument();
   });
 
-  it("opens the embedded meeting modal for a scheduled booking once joinUrl is populated", async () => {
+  it("opens the meeting link in a new tab for a scheduled booking once joinUrl is populated", async () => {
     vi.spyOn(api, "getMyDoubts").mockResolvedValue([]);
     vi.spyOn(api, "getResolutionRequests").mockResolvedValue([]);
     vi.spyOn(api, "getMyBookings").mockImplementation((token, role) => {
       if (role === "poster") return Promise.resolve([{ ...POSTER_BOOKING, joinUrl: "https://meet.example.com/room-1" }]);
       return Promise.resolve([]);
     });
+    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
 
     renderWithProviders(<RequestsPage />);
     fireEvent.click(screen.getByRole("tab", { name: /bookings/i }));
 
-    // no more anchor tag to daily.co's own domain -- the call is embedded in-page via a modal
     const joinButton = await screen.findByRole("button", { name: /^join meeting$/i });
-    expect(joinButton.closest("a")).toBeNull();
-
     fireEvent.click(joinButton);
-    expect(await screen.findByRole("dialog", { name: /meeting/i })).toBeInTheDocument();
+    expect(openSpy).toHaveBeenCalledWith("https://meet.example.com/room-1", "_blank", "noopener,noreferrer");
+  });
+
+  it("shows a disabled 'meeting ended' state once the slot plus grace window has passed", async () => {
+    vi.spyOn(api, "getMyDoubts").mockResolvedValue([]);
+    vi.spyOn(api, "getResolutionRequests").mockResolvedValue([]);
+    vi.spyOn(api, "getMyBookings").mockImplementation((token, role) => {
+      if (role === "poster") {
+        return Promise.resolve([
+          {
+            ...POSTER_BOOKING,
+            joinUrl: "https://meet.example.com/room-1",
+            slotAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+            durationMins: 30,
+          },
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+
+    renderWithProviders(<RequestsPage />);
+    fireEvent.click(screen.getByRole("tab", { name: /bookings/i }));
+
+    const endedButton = await screen.findByRole("button", { name: /meeting ended/i });
+    expect(endedButton).toBeDisabled();
   });
 
   it("shows a disabled pending state instead of a broken link when joinUrl isn't ready yet", async () => {
