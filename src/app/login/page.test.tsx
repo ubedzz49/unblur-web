@@ -96,6 +96,24 @@ describe("LoginPage", () => {
     expect(pushMock).toHaveBeenCalledWith("/home");
   });
 
+  it("routes an admin login straight to the admin dashboard, skipping the reset check", async () => {
+    vi.spyOn(api, "loginWithPassword").mockResolvedValue({
+      token: "test-token",
+      mustResetPassword: false,
+      isAdmin: true,
+    });
+
+    renderWithProviders(<LoginPage />);
+
+    fireEvent.click(screen.getByRole("tab", { name: /password/i }));
+    fireEvent.change(screen.getByLabelText(/email or phone/i), { target: { value: "admin" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "correct-admin-pass" } });
+    fireEvent.click(screen.getByRole("button", { name: /^log in$/i }));
+
+    await waitFor(() => expect(getToken()).toBe("test-token"));
+    expect(pushMock).toHaveBeenCalledWith("/admin");
+  });
+
   it("routes to the forced password-change screen when a reset is required", async () => {
     vi.spyOn(api, "loginWithPassword").mockResolvedValue({
       token: "test-token",

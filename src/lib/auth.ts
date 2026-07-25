@@ -51,3 +51,28 @@ export function useIsLoggedIn(): boolean {
     () => false,
   );
 }
+
+// reads the JWT's role claim purely for client-side routing decisions (which shell/nav to
+// show) -- never trusted for anything security-relevant, the gateway and every backend service
+// independently verify/re-check role on every actual request. No signature verification here,
+// just a base64 decode of the payload.
+function getRoleFromToken(token: string): string | undefined {
+  try {
+    const payload = token.split(".")[1];
+    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+    return (JSON.parse(json) as { role?: string }).role;
+  } catch {
+    return undefined;
+  }
+}
+
+export function useIsAdmin(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => {
+      const token = getToken();
+      return token !== null && getRoleFromToken(token) === "admin";
+    },
+    () => false,
+  );
+}

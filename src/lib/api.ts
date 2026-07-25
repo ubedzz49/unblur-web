@@ -42,7 +42,7 @@ export function verifyOtp(identifier: string, otp: string) {
 }
 
 export function loginWithPassword(identifier: string, password: string) {
-  return request<{ token: string; mustResetPassword: boolean }>("/auth/password/login", {
+  return request<{ token: string; mustResetPassword: boolean; isAdmin?: boolean }>("/auth/password/login", {
     method: "POST",
     body: JSON.stringify({ identifier, password }),
   });
@@ -539,5 +539,113 @@ export function markAllNotificationsRead(token: string) {
   return request<{ markedCount: number }>("/notifications/read-all", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+// ---- Admin dashboard ----
+
+export interface AdminUser {
+  id: string;
+  email: string | null;
+  phone: string | null;
+  name: string | null;
+  photoUrl: string | null;
+  bio: string | null;
+  aiNotesAndTranscriptsEnabled: boolean;
+  blockedAt: string | null;
+  createdAt: string;
+}
+
+export function getAdminUsers(token: string, limit = 50, offset = 0) {
+  const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+  return request<AdminUser[]>(`/admin/users?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function blockAdminUser(token: string, email: string) {
+  return request<AdminUser>("/admin/users/block", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function unblockAdminUser(token: string, email: string) {
+  return request<AdminUser>("/admin/users/unblock", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ email }),
+  });
+}
+
+export interface AdminExpertiseResult {
+  expertiseTypeId: string;
+  expertiseLevelId: string;
+  typeName: string;
+  levelName: string;
+}
+
+export function addAdminExpertise(token: string, subjectName: string, levelName?: string) {
+  return request<AdminExpertiseResult>("/admin/expertise", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ subjectName, levelName }),
+  });
+}
+
+export interface AdminExpertiseImportResult {
+  created: AdminExpertiseResult[];
+  failed: { subjectName?: string; error: string }[];
+}
+
+export function importAdminExpertise(token: string, nodes: { subjectName: string; levelName?: string }[]) {
+  return request<AdminExpertiseImportResult>("/admin/expertise/import", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ nodes }),
+  });
+}
+
+export async function removeAdminExpertise(token: string, expertiseLevelId: string): Promise<void> {
+  await request(`/admin/expertise/${expertiseLevelId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function getAdminComplaints(token: string, status?: ComplaintStatus) {
+  const qs = status ? `?status=${status}` : "";
+  return request<Complaint[]>(`/admin/complaints${qs}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function resolveAdminComplaint(token: string, complaintId: string, outcome: ComplaintOutcome) {
+  return request<Complaint>(`/admin/complaints/${complaintId}/resolve`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ outcome }),
+  });
+}
+
+export function getAdminComplaintRecording(token: string, complaintId: string) {
+  return request<{ url: string }>(`/admin/complaints/${complaintId}/recording`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function refundBookingAsAdmin(token: string, bookingId: string) {
+  return request<{ ok: boolean; paymentId: string }>(`/admin/payments/refund-by-booking/${bookingId}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function sendAdminNotification(token: string, userId: string, title: string, body?: string) {
+  return request<AppNotification>("/admin/notifications", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ userId, title, body }),
   });
 }
