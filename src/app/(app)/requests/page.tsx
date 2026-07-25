@@ -21,6 +21,7 @@ import { ResolutionRequestCard } from "@/components/ResolutionRequestCard";
 import { ApiError, Booking, BookingStatus, Doubt, ResolutionRequest } from "@/lib/api";
 import { relativeTime } from "@/lib/relative-time";
 import { isMeetingWindowOver } from "@/lib/meeting-window";
+import { useComplaint, useFileComplaint } from "@/lib/queries/complaints";
 import shared from "../../shared.module.css";
 
 type Tab = "forMyDoubts" | "sentByMe" | "bookings";
@@ -155,6 +156,81 @@ function RatingPrompt({ bookingId }: { bookingId: string }) {
   );
 }
 
+// poster-only: the payout for a completed session is held for 30 minutes so this stays
+// available as a real action, not just a notice, for that whole window. Filing is idempotent
+// server-side (re-filing shows the existing complaint), so this just always checks first.
+function ComplaintPrompt({ bookingId }: { bookingId: string }) {
+  const { showToast } = useToast();
+  const complaint = useComplaint(bookingId);
+  const fileComplaint = useFileComplaint();
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+
+  async function handleSubmit() {
+    if (reason.trim().length === 0) return;
+    try {
+      await fileComplaint.mutateAsync({ bookingId, reason: reason.trim() });
+      setOpen(false);
+      showToast("Issue reported — the payout stays held until it's reviewed.");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't report that issue — try again.", "error");
+    }
+  }
+
+  if (complaint.isLoading) return null;
+
+  if (complaint.data) {
+    const statusText =
+      complaint.data.status === "open"
+        ? "Reported — under review"
+        : complaint.data.outcome === "upheld"
+          ? "Reported — payout withheld"
+          : "Reported — no issue found, payout released";
+    return (
+      <p className={shared.muted} style={{ marginTop: 10 }}>
+        {statusText}
+      </p>
+    );
+  }
+
+  if (!open) {
+    return (
+      <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
+        <Button type="button" variant="secondary" style={{ width: "auto" }} onClick={() => setOpen(true)}>
+          Report an issue
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
+      <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>What went wrong?</p>
+      <textarea
+        aria-label="Issue description"
+        placeholder="Describe the issue with this session"
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        rows={2}
+        style={{ width: "100%", marginBottom: 8, fontFamily: "inherit", fontSize: 13, padding: 8 }}
+      />
+      <div style={{ display: "flex", gap: 8 }}>
+        <Button
+          type="button"
+          style={{ width: "auto" }}
+          disabled={reason.trim().length === 0 || fileComplaint.isPending}
+          onClick={handleSubmit}
+        >
+          Submit report
+        </Button>
+        <Button type="button" variant="secondary" style={{ width: "auto" }} onClick={() => setOpen(false)}>
+          Cancel
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function BookingRow({ booking, role }: { booking: Booking; role: "poster" | "resolver" }) {
   const { showToast } = useToast();
   const completeBooking = useCompleteBooking();
@@ -236,7 +312,26 @@ function BookingRow({ booking, role }: { booking: Booking; role: "poster" | "res
         )}
       </div>
 
-      {booking.status === "completed" && role === "poster" && <RatingPrompt bookingId={booking.id} />}
+      {booking.status === "scheduled" && !meetingEnded && booking.joinUrl && (
+        <p className={shared.muted} style={{ marginTop: 8, fontSize: 12 }}>
+          This session is recorded for quality and safety. The recording is kept for 15 minutes
+          after the session ends, then deleted.
+        </p>
+      )}
+
+      {booking.status === "completed" && role === "resolver" && (
+        <p className={shared.muted} style={{ marginTop: 10, fontSize: 12 }}>
+          Your payout is held for up to 30 minutes after the session, then released automatically
+          unless the poster reports an issue.
+        </p>
+      )}
+
+      {booking.status === "completed" && role === "poster" && (
+        <>
+          <RatingPrompt bookingId={booking.id} />
+          <ComplaintPrompt bookingId={booking.id} />
+        </>
+      )}
     </Card>
   );
 }
