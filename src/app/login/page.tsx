@@ -69,7 +69,10 @@ export default function LoginPage() {
         identifier: passwordIdentifier,
         password,
       });
-      if (res.mustResetPassword) {
+      if (res.isAdmin) {
+        login(res.token);
+        router.push("/admin");
+      } else if (res.mustResetPassword) {
         // Don't finalize login yet -- hold the token for the one authenticated call the
         // change-password screen needs to make, and force the user through that screen
         // before they can reach anything under the app shell.
