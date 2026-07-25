@@ -122,4 +122,31 @@ describe("BookingPaymentPage", () => {
     await screen.findByText(/booking confirmed/i);
     expect(screen.queryByRole("button", { name: /pay/i })).not.toBeInTheDocument();
   });
+
+  it("opens the meeting link in a new tab instead of embedding it", async () => {
+    vi.spyOn(api, "getBooking").mockResolvedValue(BOOKING);
+    vi.spyOn(api, "getPayment").mockResolvedValue({ ...PENDING_PAYMENT, status: "completed" });
+    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+
+    renderWithProviders(<BookingPaymentPage />);
+
+    const joinButton = await screen.findByRole("button", { name: /^join meeting$/i });
+    fireEvent.click(joinButton);
+    expect(openSpy).toHaveBeenCalledWith(BOOKING.joinUrl, "_blank", "noopener,noreferrer");
+    expect(screen.queryByRole("dialog", { name: /meeting/i })).not.toBeInTheDocument();
+  });
+
+  it("shows 'meeting has ended' once the slot plus grace window has passed", async () => {
+    vi.spyOn(api, "getBooking").mockResolvedValue({
+      ...BOOKING,
+      slotAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      durationMins: 30,
+    });
+    vi.spyOn(api, "getPayment").mockResolvedValue({ ...PENDING_PAYMENT, status: "completed" });
+
+    renderWithProviders(<BookingPaymentPage />);
+
+    expect(await screen.findByText(/this meeting has ended/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^join meeting$/i })).not.toBeInTheDocument();
+  });
 });

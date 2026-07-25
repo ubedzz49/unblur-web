@@ -18,9 +18,9 @@ import {
   useSubmitRating,
 } from "@/lib/queries/resolution";
 import { ResolutionRequestCard } from "@/components/ResolutionRequestCard";
-import { MeetingModal } from "@/components/MeetingModal";
 import { ApiError, Booking, BookingStatus, Doubt, ResolutionRequest } from "@/lib/api";
 import { relativeTime } from "@/lib/relative-time";
+import { isMeetingWindowOver } from "@/lib/meeting-window";
 import shared from "../../shared.module.css";
 
 type Tab = "forMyDoubts" | "sentByMe" | "bookings";
@@ -160,9 +160,9 @@ function BookingRow({ booking, role }: { booking: Booking; role: "poster" | "res
   const completeBooking = useCompleteBooking();
   const cancelBooking = useCancelBooking();
   const [busy, setBusy] = useState(false);
-  const [showMeeting, setShowMeeting] = useState(false);
 
   const canAct = booking.status === "scheduled";
+  const meetingEnded = isMeetingWindowOver(booking.slotAt, booking.durationMins);
 
   async function handleComplete() {
     setBusy(true);
@@ -207,15 +207,18 @@ function BookingRow({ booking, role }: { booking: Booking; role: "poster" | "res
           </Link>
         )}
         {booking.status === "scheduled" &&
-          (booking.joinUrl ? (
-            <>
-              <Button type="button" style={{ width: "auto" }} onClick={() => setShowMeeting(true)}>
-                Join meeting
-              </Button>
-              {showMeeting && (
-                <MeetingModal joinUrl={booking.joinUrl} onClose={() => setShowMeeting(false)} />
-              )}
-            </>
+          (meetingEnded ? (
+            <Button type="button" style={{ width: "auto" }} disabled title="This meeting has ended">
+              Meeting ended
+            </Button>
+          ) : booking.joinUrl ? (
+            <Button
+              type="button"
+              style={{ width: "auto" }}
+              onClick={() => window.open(booking.joinUrl!, "_blank", "noopener,noreferrer")}
+            >
+              Join meeting
+            </Button>
           ) : (
             <Button type="button" style={{ width: "auto" }} disabled title="Meeting link isn't ready yet">
               Join meeting (pending)
