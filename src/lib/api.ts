@@ -354,6 +354,41 @@ export function submitRating(token: string, bookingId: string, rating: number, f
   });
 }
 
+export type ComplaintStatus = "open" | "resolved";
+export type ComplaintOutcome = "upheld" | "dismissed";
+
+export interface Complaint {
+  id: string;
+  bookingId: string;
+  complainantUserId: string;
+  reason: string;
+  status: ComplaintStatus;
+  outcome: ComplaintOutcome | null;
+  createdAt: string;
+  resolvedAt: string | null;
+}
+
+export function fileComplaint(token: string, bookingId: string, reason: string) {
+  return request<Complaint>("/complaints", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ bookingId, reason }),
+  });
+}
+
+// null when this booking has no complaint filed yet -- a 404 here is a normal, expected state,
+// not an error
+export async function getComplaint(token: string, bookingId: string): Promise<Complaint | null> {
+  try {
+    return await request<Complaint>(`/complaints/${bookingId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) return null;
+    throw err;
+  }
+}
+
 export type PaymentStatus = "pending" | "completed" | "failed" | "refunded";
 
 export interface Payment {

@@ -136,6 +136,15 @@ describe("BookingPaymentPage", () => {
     expect(screen.queryByRole("dialog", { name: /meeting/i })).not.toBeInTheDocument();
   });
 
+  it("shows a recording notice next to the join button", async () => {
+    vi.spyOn(api, "getBooking").mockResolvedValue(BOOKING);
+    vi.spyOn(api, "getPayment").mockResolvedValue({ ...PENDING_PAYMENT, status: "completed" });
+
+    renderWithProviders(<BookingPaymentPage />);
+
+    expect(await screen.findByText(/this session is recorded/i)).toBeInTheDocument();
+  });
+
   it("shows 'meeting has ended' once the slot plus grace window has passed", async () => {
     vi.spyOn(api, "getBooking").mockResolvedValue({
       ...BOOKING,

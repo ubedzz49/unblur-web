@@ -120,9 +120,15 @@ export default function BookingPaymentPage() {
             meetingEnded ? (
               <p style={{ fontWeight: 700 }}>This meeting has ended.</p>
             ) : booking.data.joinUrl ? (
-              <Button type="button" onClick={() => window.open(booking.data!.joinUrl!, "_blank", "noopener,noreferrer")}>
-                Join meeting
-              </Button>
+              <>
+                <Button type="button" onClick={() => window.open(booking.data!.joinUrl!, "_blank", "noopener,noreferrer")}>
+                  Join meeting
+                </Button>
+                <p className={shared.muted} style={{ marginTop: 8, fontSize: 12 }}>
+                  This session is recorded for quality and safety. The recording is kept for 15
+                  minutes after the session ends, then deleted.
+                </p>
+              </>
             ) : (
               <p style={{ fontWeight: 700 }}>
                 Booking confirmed — you&apos;ll get the meeting link here once available.

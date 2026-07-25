@@ -324,6 +324,7 @@ describe("RequestsPage", () => {
       if (role === "poster") return Promise.resolve([{ ...POSTER_BOOKING, status: "completed" }]);
       return Promise.resolve([]);
     });
+    vi.spyOn(api, "getComplaint").mockResolvedValue(null);
 
     renderWithProviders(<RequestsPage />);
     fireEvent.click(screen.getByRole("tab", { name: /bookings/i }));
@@ -343,6 +344,7 @@ describe("RequestsPage", () => {
       if (role === "poster") return Promise.resolve([{ ...POSTER_BOOKING, status: "completed" }]);
       return Promise.resolve([]);
     });
+    vi.spyOn(api, "getComplaint").mockResolvedValue(null);
     const rateSpy = vi.spyOn(api, "submitRating").mockResolvedValue({
       id: "rating-1",
       bookingId: POSTER_BOOKING.id,
@@ -369,6 +371,7 @@ describe("RequestsPage", () => {
       if (role === "poster") return Promise.resolve([{ ...POSTER_BOOKING, status: "completed" }]);
       return Promise.resolve([]);
     });
+    vi.spyOn(api, "getComplaint").mockResolvedValue(null);
     vi.spyOn(api, "submitRating").mockRejectedValue(new api.ApiError("already rated", 409));
 
     renderWithProviders(<RequestsPage />);
@@ -379,5 +382,66 @@ describe("RequestsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /submit rating/i }));
 
     await waitFor(() => expect(screen.getAllByText(/you.ve already rated this session/i).length).toBeGreaterThan(0));
+  });
+
+  it("lets the poster report an issue on a completed booking, and shows the resulting status", async () => {
+    vi.spyOn(api, "getMyDoubts").mockResolvedValue([]);
+    vi.spyOn(api, "getResolutionRequests").mockResolvedValue([]);
+    vi.spyOn(api, "getMyBookings").mockImplementation((token, role) => {
+      if (role === "poster") return Promise.resolve([{ ...POSTER_BOOKING, status: "completed" }]);
+      return Promise.resolve([]);
+    });
+    vi.spyOn(api, "getComplaint").mockResolvedValue(null);
+    const fileSpy = vi.spyOn(api, "fileComplaint").mockResolvedValue({
+      id: "complaint-1",
+      bookingId: POSTER_BOOKING.id,
+      complainantUserId: ME.id,
+      reason: "resolver left early",
+      status: "open",
+      outcome: null,
+      createdAt: new Date().toISOString(),
+      resolvedAt: null,
+    });
+
+    renderWithProviders(<RequestsPage />);
+    fireEvent.click(screen.getByRole("tab", { name: /bookings/i }));
+
+    const reportButton = await screen.findByRole("button", { name: /report an issue/i });
+    fireEvent.click(reportButton);
+
+    const textarea = screen.getByLabelText(/issue description/i);
+    fireEvent.change(textarea, { target: { value: "resolver left early" } });
+    fireEvent.click(screen.getByRole("button", { name: /submit report/i }));
+
+    await waitFor(() => expect(fileSpy).toHaveBeenCalledWith("test-token", POSTER_BOOKING.id, "resolver left early"));
+  });
+
+  it("shows the resolver a payout-hold note instead of a report-an-issue action", async () => {
+    vi.spyOn(api, "getMyDoubts").mockResolvedValue([]);
+    vi.spyOn(api, "getResolutionRequests").mockResolvedValue([]);
+    vi.spyOn(api, "getMyBookings").mockImplementation((token, role) => {
+      if (role === "resolver") return Promise.resolve([{ ...RESOLVER_BOOKING, status: "completed" }]);
+      return Promise.resolve([]);
+    });
+
+    renderWithProviders(<RequestsPage />);
+    fireEvent.click(screen.getByRole("tab", { name: /bookings/i }));
+
+    expect(await screen.findByText(/payout is held for up to 30 minutes/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /report an issue/i })).not.toBeInTheDocument();
+  });
+
+  it("shows a recording notice next to an active join link, but not once the meeting has ended", async () => {
+    vi.spyOn(api, "getMyDoubts").mockResolvedValue([]);
+    vi.spyOn(api, "getResolutionRequests").mockResolvedValue([]);
+    vi.spyOn(api, "getMyBookings").mockImplementation((token, role) => {
+      if (role === "poster") return Promise.resolve([{ ...POSTER_BOOKING, joinUrl: "https://meet.example.com/room-1" }]);
+      return Promise.resolve([]);
+    });
+
+    renderWithProviders(<RequestsPage />);
+    fireEvent.click(screen.getByRole("tab", { name: /bookings/i }));
+
+    expect(await screen.findByText(/this session is recorded/i)).toBeInTheDocument();
   });
 });
