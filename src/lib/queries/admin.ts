@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addAdminExpertise,
+  AiNotesDeliveryStatus,
   blockAdminUser,
   ComplaintOutcome,
   ComplaintStatus,
+  getAdminAiNotes,
   getAdminComplaints,
   getAdminComplaintRecording,
   getAdminUsers,
@@ -12,6 +14,7 @@ import {
   refundBookingAsAdmin,
   removeAdminExpertise,
   resolveAdminComplaint,
+  retryAdminAiNotes,
   sendAdminNotification,
   unblockAdminUser,
 } from "@/lib/api";
@@ -19,6 +22,7 @@ import { useAuth } from "@/lib/auth-context";
 
 const ADMIN_USERS_KEY = ["admin", "users"];
 const ADMIN_COMPLAINTS_KEY = ["admin", "complaints"];
+const ADMIN_AI_NOTES_KEY = ["admin", "ai-notes"];
 
 export function useAdminUsers() {
   const { token } = useAuth();
@@ -113,6 +117,24 @@ export function useImportAdminExpertise() {
   return useMutation({
     mutationFn: (nodes: { subjectName: string; levelName?: string }[]) => importAdminExpertise(token!, nodes),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["expertise-options"] }),
+  });
+}
+
+export function useAdminAiNotes(status?: AiNotesDeliveryStatus) {
+  const { token } = useAuth();
+  return useQuery({
+    queryKey: [...ADMIN_AI_NOTES_KEY, status],
+    queryFn: () => getAdminAiNotes(token!, status),
+    enabled: token !== null,
+  });
+}
+
+export function useRetryAdminAiNotes() {
+  const { token } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => retryAdminAiNotes(token!, id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ADMIN_AI_NOTES_KEY }),
   });
 }
 

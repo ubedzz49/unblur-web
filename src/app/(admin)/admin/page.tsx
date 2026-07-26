@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/Toast";
 import { ApiError, ComplaintOutcome } from "@/lib/api";
 import {
   useAddAdminExpertise,
+  useAdminAiNotes,
   useAdminComplaintRecording,
   useAdminComplaints,
   useAdminExpertiseOptions,
@@ -17,12 +18,13 @@ import {
   useRefundBookingAsAdmin,
   useRemoveAdminExpertise,
   useResolveAdminComplaint,
+  useRetryAdminAiNotes,
   useSendAdminNotification,
   useUnblockAdminUser,
 } from "@/lib/queries/admin";
 import shared from "../../shared.module.css";
 
-type Tab = "users" | "complaints" | "notifications" | "expertise";
+type Tab = "users" | "complaints" | "notifications" | "expertise" | "aiNotes";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
@@ -431,6 +433,83 @@ function ExpertiseTab() {
   );
 }
 
+function AiNotesTab() {
+  const { showToast } = useToast();
+  // only failed deliveries are actionable here -- support doesn't need to browse
+  // pending/generated/sent rows, just the ones that need a manual retry
+  const deliveries = useAdminAiNotes("failed");
+  const retryDelivery = useRetryAdminAiNotes();
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function handleRetry(id: string) {
+    setBusyId(id);
+    try {
+      await retryDelivery.mutateAsync(id);
+      showToast("Delivery re-queued");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't retry that delivery — try again.", "error");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  if (deliveries.isLoading) return <Skeleton height={200} />;
+  if (deliveries.isError) {
+    return (
+      <Card>
+        <h3>Couldn&apos;t load AI notes deliveries</h3>
+        <Button type="button" onClick={() => deliveries.refetch()}>
+          Try again
+        </Button>
+      </Card>
+    );
+  }
+  if (deliveries.data?.length === 0) {
+    return (
+      <Card>
+        <p className={shared.muted}>No failed deliveries.</p>
+      </Card>
+    );
+  }
+
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+        <thead>
+          <tr style={{ textAlign: "left", borderBottom: "1px solid var(--line)" }}>
+            <th style={{ padding: 8 }}>Reference</th>
+            <th style={{ padding: 8 }}>User</th>
+            <th style={{ padding: 8 }}>Created</th>
+            <th style={{ padding: 8 }} />
+          </tr>
+        </thead>
+        <tbody>
+          {deliveries.data?.map((d) => (
+            <tr key={d.id} style={{ borderBottom: "1px solid var(--line)" }}>
+              <td style={{ padding: 8 }}>
+                {d.referenceType} {d.referenceId.slice(0, 8)}
+              </td>
+              <td style={{ padding: 8 }}>{d.userId.slice(0, 8)}</td>
+              <td style={{ padding: 8 }}>{formatDate(d.createdAt)}</td>
+              <td style={{ padding: 8 }}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  style={{ width: "auto" }}
+                  disabled={busyId === d.id}
+                  onClick={() => handleRetry(d.id)}
+                >
+                  Retry
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function AdminDashboardPage() {
   const [tab, setTab] = useState<Tab>("users");
 
@@ -439,6 +518,7 @@ export default function AdminDashboardPage() {
     { key: "complaints", label: "Complaints" },
     { key: "notifications", label: "Notifications" },
     { key: "expertise", label: "Topics" },
+    { key: "aiNotes", label: "AI Notes" },
   ];
 
   return (
@@ -471,6 +551,7 @@ export default function AdminDashboardPage() {
       {tab === "complaints" && <ComplaintsTab />}
       {tab === "notifications" && <NotificationsTab />}
       {tab === "expertise" && <ExpertiseTab />}
+      {tab === "aiNotes" && <AiNotesTab />}
     </section>
   );
 }

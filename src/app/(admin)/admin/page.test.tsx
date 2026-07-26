@@ -86,4 +86,30 @@ describe("AdminDashboardPage", () => {
 
     await waitFor(() => expect(sendSpy).toHaveBeenCalledWith("admin-test-token", "user-2", "Heads up", undefined));
   });
+
+  it("switches to the AI Notes tab and can retry a failed delivery", async () => {
+    vi.spyOn(api, "getAdminUsers").mockResolvedValue([]);
+    vi.spyOn(api, "getAdminAiNotes").mockResolvedValue([
+      {
+        id: "delivery-1",
+        userId: "user-1",
+        referenceType: "booking",
+        referenceId: "aaaaaaaa-1111-1111-1111-111111111111",
+        transcriptText: null,
+        notesText: null,
+        status: "failed",
+        sentAt: null,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    const retrySpy = vi.spyOn(api, "retryAdminAiNotes").mockResolvedValue({ deliveryId: "delivery-1" });
+
+    renderWithProviders(<AdminDashboardPage />);
+    fireEvent.click(screen.getByRole("tab", { name: /ai notes/i }));
+
+    expect(await screen.findByText(/aaaaaaaa/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry/i }));
+
+    await waitFor(() => expect(retrySpy).toHaveBeenCalledWith("admin-test-token", "delivery-1"));
+  });
 });
