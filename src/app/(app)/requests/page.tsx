@@ -22,6 +22,7 @@ import { ApiError, Booking, BookingStatus, Doubt, ResolutionRequest } from "@/li
 import { relativeTime } from "@/lib/relative-time";
 import { isMeetingWindowOver } from "@/lib/meeting-window";
 import { useComplaint, useFileComplaint } from "@/lib/queries/complaints";
+import { useMyAiNotes } from "@/lib/queries/ai-notes";
 import shared from "../../shared.module.css";
 
 type Tab = "forMyDoubts" | "sentByMe" | "bookings";
@@ -240,6 +241,13 @@ function BookingRow({ booking, role }: { booking: Booking; role: "poster" | "res
   const canAct = booking.status === "scheduled";
   const meetingEnded = isMeetingWindowOver(booking.slotAt, booking.durationMins);
 
+  // filtered client-side -- the list is small (one row per session with the toggle on), not
+  // worth a per-booking backend lookup
+  const aiNotes = useMyAiNotes();
+  const aiNotesDelivery = aiNotes.data?.find(
+    (d) => d.referenceType === "booking" && d.referenceId === booking.id,
+  );
+
   async function handleComplete() {
     setBusy(true);
     try {
@@ -324,6 +332,16 @@ function BookingRow({ booking, role }: { booking: Booking; role: "poster" | "res
           Your payout is held for up to 30 minutes after the session, then released automatically
           unless the poster reports an issue.
         </p>
+      )}
+
+      {booking.status === "completed" && aiNotesDelivery && (
+        <div style={{ marginTop: 10 }}>
+          <Link href={`/ai-notes/${aiNotesDelivery.id}`}>
+            <Button type="button" variant="secondary" style={{ width: "auto" }}>
+              View AI notes
+            </Button>
+          </Link>
+        </div>
       )}
 
       {booking.status === "completed" && role === "poster" && (

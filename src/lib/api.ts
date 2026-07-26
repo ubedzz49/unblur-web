@@ -614,6 +614,54 @@ export async function removeAdminExpertise(token: string, expertiseLevelId: stri
   });
 }
 
+export type AiNotesReferenceType = "booking" | "seminar" | "gd";
+export type AiNotesDeliveryStatus = "pending" | "generated" | "sent" | "failed";
+
+export interface AiNotesDelivery {
+  id: string;
+  userId: string;
+  referenceType: AiNotesReferenceType;
+  referenceId: string;
+  transcriptText: string | null;
+  notesText: string | null;
+  status: AiNotesDeliveryStatus;
+  sentAt: string | null;
+  createdAt: string;
+}
+
+export function getMyAiNotes(token: string) {
+  return request<AiNotesDelivery[]>("/ai-notes/my", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+// null when the delivery doesn't exist or isn't the caller's own -- ai-notes-service collapses
+// both to a plain 404/403, treated the same way here as getComplaint treats a missing complaint
+export async function getAiNotesDelivery(token: string, id: string): Promise<AiNotesDelivery | null> {
+  try {
+    return await request<AiNotesDelivery>(`/ai-notes/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err) {
+    if (err instanceof ApiError && (err.status === 404 || err.status === 403)) return null;
+    throw err;
+  }
+}
+
+export function getAdminAiNotes(token: string, status?: AiNotesDeliveryStatus) {
+  const qs = status ? `?status=${status}` : "";
+  return request<AiNotesDelivery[]>(`/admin/ai-notes${qs}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function retryAdminAiNotes(token: string, id: string) {
+  return request<{ deliveryId: string }>(`/admin/ai-notes/${id}/retry`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 export function getAdminComplaints(token: string, status?: ComplaintStatus) {
   const qs = status ? `?status=${status}` : "";
   return request<Complaint[]>(`/admin/complaints${qs}`, {
