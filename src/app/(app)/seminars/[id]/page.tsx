@@ -68,7 +68,7 @@ export default function SeminarDetailPage() {
             {seminar.data.status === "live" && <LiveDot />}
             {seminar.data.status}
           </Pill>
-          <h1 className="mt-2 text-pretty text-2xl font-black leading-tight">{seminar.data.title}</h1>
+          <h1 className="mt-2 text-pretty text-2xl font-semibold leading-tight">{seminar.data.title}</h1>
         </div>
 
         {seminar.data.description && (

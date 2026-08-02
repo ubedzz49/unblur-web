@@ -26,7 +26,7 @@ export function Avatar({
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 select-none items-center justify-center rounded-full bg-elevated font-extrabold tracking-tight text-foreground',
+        'inline-flex shrink-0 select-none items-center justify-center rounded-full bg-elevated font-semibold tracking-tight text-foreground',
         ring && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
         sizes[size],
         className,
@@ -52,16 +52,16 @@ export function Pill({
 }) {
   const tones = {
     neutral: 'bg-elevated text-muted-foreground',
-    gold: 'bg-primary/15 text-primary',
-    danger: 'bg-destructive/15 text-destructive',
-    success: 'bg-primary/15 text-primary',
+    gold: 'bg-primary/10 text-primary',
+    danger: 'bg-destructive/10 text-destructive',
+    success: 'bg-primary/10 text-primary',
     outline: 'border border-border text-muted-foreground',
     live: 'bg-destructive text-destructive-foreground',
   }
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide',
+        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium',
         tones[tone],
         className,
       )}
@@ -120,7 +120,7 @@ export function SectionLabel({
 }) {
   return (
     <div className={cn('mb-3 flex items-center justify-between', className)}>
-      <h2 className="text-xs font-extrabold uppercase tracking-[0.14em] text-muted-foreground">
+      <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         {children}
       </h2>
       {action}
@@ -158,12 +158,12 @@ export function StatTile({
     >
       <div className="mb-3 flex items-center gap-1.5 text-muted-foreground">
         {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
-        <span className="text-[0.7rem] font-bold uppercase tracking-wide">{label}</span>
+        <span className="text-[0.7rem] font-medium uppercase tracking-wide">{label}</span>
       </div>
       <div>
         <div
           className={cn(
-            'num text-3xl font-black leading-none',
+            'num text-2xl font-semibold leading-none',
             accent ? 'text-primary' : 'text-foreground',
           )}
         >

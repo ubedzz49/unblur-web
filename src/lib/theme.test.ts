@@ -44,8 +44,12 @@ describe("validateAccentColor", () => {
     expect(validateAccentColor("banana", "Primary").valid).toBe(false);
   });
 
-  it("accepts the shipped default amber", () => {
+  it("accepts the amber preset color", () => {
     expect(validateAccentColor("#c47f00", "Primary").valid).toBe(true);
+  });
+
+  it("accepts the default lavender accent", () => {
+    expect(validateAccentColor("#6d5fe8", "Primary").valid).toBe(true);
   });
 });
 

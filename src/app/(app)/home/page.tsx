@@ -56,7 +56,7 @@ export default function HomePage() {
                   <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                     <Trophy className="h-3.5 w-3.5 text-primary" /> Your score
                   </div>
-                  <div className="num text-2xl font-black leading-none text-primary">{myStats.data.gdPoints.toFixed(1)}</div>
+                  <div className="num text-2xl font-semibold leading-none text-primary">{myStats.data.gdPoints.toFixed(1)}</div>
                 </div>
               </Link>
               <div className="text-right">
@@ -81,7 +81,7 @@ export default function HomePage() {
                     >
                       <Icon className="h-5 w-5" />
                     </span>
-                    <div className="mt-3 text-sm font-black">{a.label}</div>
+                    <div className="mt-3 text-sm font-semibold">{a.label}</div>
                     <div className="mt-0.5 text-xs leading-snug text-muted-foreground">{a.desc}</div>
                   </Card>
                 </Link>
@@ -97,7 +97,7 @@ export default function HomePage() {
               <Card interactive className="overflow-hidden">
                 <div className="flex items-center gap-2 border-b border-border bg-destructive/10 px-4 py-2 text-destructive">
                   <LiveDot />
-                  <span className="text-xs font-black uppercase tracking-wide">Live GD</span>
+                  <span className="text-xs font-semibold uppercase tracking-wide">Live GD</span>
                 </div>
                 <div className="flex items-center justify-between gap-3 p-4">
                   <div>

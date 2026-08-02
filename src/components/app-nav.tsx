@@ -30,9 +30,9 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-40 -mx-5 border-b border-border bg-background/85 px-5 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-3xl items-center gap-3">
-        <Link href="/home" className="flex items-center gap-2 font-black tracking-tight">
+        <Link href="/home" className="flex items-center gap-2 font-semibold tracking-tight">
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <span className="text-sm font-black">U</span>
+            <span className="text-sm font-semibold">U</span>
           </span>
           <span className="text-base">Unblur</span>
         </Link>

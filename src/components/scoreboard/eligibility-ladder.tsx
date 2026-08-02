@@ -47,7 +47,7 @@ export function EligibilityLadder({ stats }: { stats: UserStats }) {
             <div className="flex flex-col items-center">
               <span
                 className={cn(
-                  "z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 font-black",
+                  "z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 font-semibold",
                   unlocked ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground",
                 )}
               >
@@ -59,16 +59,16 @@ export function EligibilityLadder({ stats }: { stats: UserStats }) {
             <div className={cn("mb-1 flex-1 rounded-2xl border p-4", unlocked ? "border-primary/25 bg-primary/5" : "border-border bg-card")}>
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="text-sm font-black tracking-tight">{rung.title}</h3>
+                  <h3 className="text-sm font-semibold tracking-tight">{rung.title}</h3>
                   <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{rung.blurb}</p>
                 </div>
                 {unlocked ? (
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/15 px-2 py-1 text-[0.65rem] font-black uppercase tracking-wide text-primary">
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/15 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-wide text-primary">
                     <Sparkles className="h-3 w-3" />
                     Unlocked
                   </span>
                 ) : (
-                  <span className="shrink-0 rounded-full border border-border px-2 py-1 text-[0.65rem] font-black uppercase tracking-wide text-muted-foreground">
+                  <span className="shrink-0 rounded-full border border-border px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
                     Locked
                   </span>
                 )}
@@ -99,7 +99,7 @@ export function EligibilityLadder({ stats }: { stats: UserStats }) {
                       <span />
                     )}
                     {remaining > 0 ? (
-                      <span className="num rounded-full bg-elevated px-2 py-0.5 text-[0.7rem] font-black text-foreground">{remaining} to go</span>
+                      <span className="num rounded-full bg-elevated px-2 py-0.5 text-[0.7rem] font-semibold text-foreground">{remaining} to go</span>
                     ) : null}
                   </div>
                 </div>
