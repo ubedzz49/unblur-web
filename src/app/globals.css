@@ -63,14 +63,14 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0a1626;
-    --bg-alt: #0f2038;
+    --bg-alt: #1a3665;
     --ink: #eef4ff;
     --muted: #7d93b8;
     --accent: #ffb703;
     --accent-2: #ff3d5a;
-    --line: #1c3252;
-    --card: #0d1c33;
-    --elevated: #0f2038;
+    --line: #33517d;
+    --card: #152a4d;
+    --elevated: #1a3665;
     --gold: #ffb703;
     --gold-foreground: #1a1200;
     --danger: #ff3d5a;
@@ -80,14 +80,14 @@
 
 :root[data-theme="dark"] {
   --bg: #0a1626;
-  --bg-alt: #0f2038;
+  --bg-alt: #1a3665;
   --ink: #eef4ff;
   --muted: #7d93b8;
   --accent: #ffb703;
   --accent-2: #ff3d5a;
-  --line: #1c3252;
-  --card: #0d1c33;
-  --elevated: #0f2038;
+  --line: #33517d;
+  --card: #152a4d;
+  --elevated: #1a3665;
   --gold: #ffb703;
   --gold-foreground: #1a1200;
   --danger: #ff3d5a;

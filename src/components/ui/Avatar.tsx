@@ -43,7 +43,15 @@ export function Avatar({ photoUrl, name, uploading, onFileSelected, onInvalidFil
   return (
     <div className={styles.wrap}>
       {photoUrl ? (
-        <Image src={photoUrl} alt="" width={88} height={88} className={styles.circle} unoptimized />
+        <Image
+          src={photoUrl}
+          alt=""
+          width={88}
+          height={88}
+          className={styles.circle}
+          style={{ width: 88, height: 88, objectFit: "cover", borderRadius: "50%" }}
+          unoptimized
+        />
       ) : (
         <div className={styles.circle}>{initialsFor(name)}</div>
       )}
