@@ -66,12 +66,31 @@ function getRoleFromToken(token: string): string | undefined {
   }
 }
 
+// superadmin is a strictly higher tier than admin (Version 9 RBAC) -- anywhere "admin" gets
+// into the admin shell, "superadmin" does too
+function isAdminTierRole(role: string | undefined): boolean {
+  return role === "admin" || role === "superadmin";
+}
+
 export function useIsAdmin(): boolean {
   return useSyncExternalStore(
     subscribe,
     () => {
       const token = getToken();
-      return token !== null && getRoleFromToken(token) === "admin";
+      return token !== null && isAdminTierRole(getRoleFromToken(token));
+    },
+    () => false,
+  );
+}
+
+// gates the RBAC (manage other admins) and gateway-route-management tabs -- strictly narrower
+// than useIsAdmin
+export function useIsSuperadmin(): boolean {
+  return useSyncExternalStore(
+    subscribe,
+    () => {
+      const token = getToken();
+      return token !== null && getRoleFromToken(token) === "superadmin";
     },
     () => false,
   );

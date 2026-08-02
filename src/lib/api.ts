@@ -870,3 +870,71 @@ export function cancelGdAsAdmin(token: string, id: string) {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+
+// --- Admin: RBAC, audit log, gateway routes (Version 9) ---
+
+export type AdminRole = "admin" | "superadmin";
+
+export interface AdminUserSummary {
+  id: string;
+  username: string;
+  role: AdminRole;
+  createdAt: string;
+}
+
+export function getAdminUsersList(token: string) {
+  return request<AdminUserSummary[]>("/admin/admin-users", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function createAdminUser(token: string, username: string, password: string, role: AdminRole) {
+  return request<AdminUserSummary>("/admin/admin-users", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ username, password, role }),
+  });
+}
+
+export async function revokeAdminUser(token: string, id: string): Promise<void> {
+  await request(`/admin/admin-users/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export interface AuditLogEntry {
+  id: string;
+  adminUserId: string;
+  adminUsername: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
+export function getAuditLog(token: string, limit = 100) {
+  return request<AuditLogEntry[]>(`/admin/audit-log?limit=${limit}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export interface GatewayRoute {
+  prefix: string;
+  upstream: string;
+}
+
+export function getGatewayRoutes(token: string) {
+  return request<GatewayRoute[]>("/admin/gateway-routes", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function updateGatewayRoutes(token: string, routes: GatewayRoute[]) {
+  return request<GatewayRoute[]>("/admin/gateway-routes", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(routes),
+  });
+}
