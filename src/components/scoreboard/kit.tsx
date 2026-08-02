@@ -95,7 +95,7 @@ export function Card({
   return (
     <div
       className={cn(
-        'rounded-2xl border border-border bg-card text-card-foreground',
+        'rounded-2xl border border-border bg-card text-card-foreground shadow-sm',
         interactive &&
           'transition-all duration-150 hover:border-primary/40 active:translate-y-px',
         className,
