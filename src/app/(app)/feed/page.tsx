@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Pill } from "@/components/ui/Pill";
 import { DoubtCardSkeleton } from "@/components/ui/Skeleton";
 import { useMyExpertise, useExpertiseOptions } from "@/lib/queries/expertise";
 import { useFeed, useMyDoubts } from "@/lib/queries/doubts";
@@ -21,6 +22,24 @@ const STATUS_LABEL: Record<Doubt["status"], string> = {
   open: "Open",
   resolved: "Resolved",
   closed: "Closed",
+};
+
+// tone per status pill -- resolved reads as a "win" (gold), closed is just neutral/archived
+const STATUS_TONE: Record<Doubt["status"], "neutral" | "gold" | "danger" | "outline"> = {
+  open: "outline",
+  resolved: "gold",
+  closed: "neutral",
+};
+
+// exact vs related feed matches get visually distinct pill tones so the difference
+// reads at a glance, without a literal standalone "Related" label
+const MATCH_LABEL: Record<Doubt["matchType"], string> = {
+  exact: "Exact match",
+  related: "Related match",
+};
+const MATCH_TONE: Record<Doubt["matchType"], "gold" | "outline"> = {
+  exact: "gold",
+  related: "outline",
 };
 
 function useExpertiseLabelLookup(): Map<string, string> {
@@ -41,12 +60,14 @@ function DoubtCard({
   subjectLabels,
   showOfferAction,
   showRequestsBadge,
+  showMatchType,
   onOpenRequests,
 }: {
   doubt: Doubt;
   subjectLabels: string[];
   showOfferAction?: boolean;
   showRequestsBadge?: boolean;
+  showMatchType?: boolean;
   onOpenRequests?: (doubtId: string) => void;
 }) {
   // only fetch when the badge is actually shown (the "My doubts" tab) -- no point
@@ -60,11 +81,14 @@ function DoubtCard({
         <h3 className={styles.doubtTitle} title={doubt.title}>
           {doubt.title}
         </h3>
-        {doubt.status !== "open" && (
-          <span className={styles.statusPill} data-status={doubt.status}>
-            {STATUS_LABEL[doubt.status]}
-          </span>
-        )}
+        <div className={styles.headerPills}>
+          {showMatchType && (
+            <Pill tone={MATCH_TONE[doubt.matchType]}>{MATCH_LABEL[doubt.matchType]}</Pill>
+          )}
+          {doubt.status !== "open" && (
+            <Pill tone={STATUS_TONE[doubt.status]}>{STATUS_LABEL[doubt.status]}</Pill>
+          )}
+        </div>
       </div>
 
       <div className={styles.doubtDetails}>
@@ -79,7 +103,7 @@ function DoubtCard({
               onOpenRequests?.(doubt.id);
             }}
           >
-            {requestCount} {requestCount === 1 ? "offer" : "offers"}
+            <span className="num">{requestCount}</span> {requestCount === 1 ? "offer" : "offers"}
           </button>
         )}
         {showOfferAction && doubt.status === "open" && (
@@ -232,6 +256,7 @@ export default function FeedPage() {
                     key={doubt.id}
                     doubt={doubt}
                     showOfferAction
+                    showMatchType
                     subjectLabels={doubt.expertiseLevelIds.map((id) => labelLookup.get(id)).filter((l): l is string => Boolean(l))}
                   />
                 ))}

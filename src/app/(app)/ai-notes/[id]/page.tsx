@@ -5,8 +5,11 @@ import { PageTransition } from "@/components/ui/PageTransition";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Pill } from "@/components/ui/Pill";
+import { SectionLabel } from "@/components/ui/SectionLabel";
 import { useAiNotesDelivery } from "@/lib/queries/ai-notes";
 import shared from "../../../shared.module.css";
+import styles from "./page.module.css";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
@@ -36,7 +39,7 @@ export default function AiNotesDeliveryPage() {
       <PageTransition>
         <div className={shared.wrap} style={{ padding: "16px 0" }}>
           <Card>
-            <h3>Couldn&apos;t load your notes</h3>
+            <h3 style={{ marginBottom: 12 }}>Couldn&apos;t load your notes</h3>
             <Button type="button" onClick={() => delivery.refetch()}>
               Try again
             </Button>
@@ -71,6 +74,9 @@ export default function AiNotesDeliveryPage() {
 
         {(status === "pending" || status === "generated") && (
           <Card style={{ marginBottom: 12 }}>
+            <div className={styles.meta}>
+              <Pill tone="outline">{status === "pending" ? "Generating" : "Finishing up"}</Pill>
+            </div>
             <p className={shared.muted}>
               {status === "pending"
                 ? "Your notes are still being generated — this page updates automatically once they're ready."
@@ -81,6 +87,9 @@ export default function AiNotesDeliveryPage() {
 
         {status === "failed" && (
           <Card style={{ marginBottom: 12 }}>
+            <div className={styles.meta}>
+              <Pill tone="danger">Failed</Pill>
+            </div>
             <p className={shared.error}>
               Something went wrong generating your notes for this session. Support has been
               notified — check back later or reach out if this persists.
@@ -90,22 +99,26 @@ export default function AiNotesDeliveryPage() {
 
         {status === "sent" && (
           <>
-            {sentAt && (
-              <p className={shared.muted} style={{ marginBottom: 12, fontSize: 12 }}>
-                Delivered {formatDate(sentAt)}
-              </p>
-            )}
+            <div className={styles.meta}>
+              <Pill tone="success">Delivered</Pill>
+              {sentAt && <span className={shared.muted} style={{ fontSize: 12 }}>{formatDate(sentAt)}</span>}
+            </div>
+
             {notesText && (
-              <Card style={{ marginBottom: 12 }}>
-                <h3 style={{ marginBottom: 8 }}>Notes</h3>
-                <p style={{ whiteSpace: "pre-wrap" }}>{notesText}</p>
-              </Card>
+              <>
+                <SectionLabel>Notes</SectionLabel>
+                <Card style={{ marginBottom: 16 }}>
+                  <p className={styles.body}>{notesText}</p>
+                </Card>
+              </>
             )}
             {transcriptText && (
-              <Card>
-                <h3 style={{ marginBottom: 8 }}>Transcript</h3>
-                <p style={{ whiteSpace: "pre-wrap" }}>{transcriptText}</p>
-              </Card>
+              <>
+                <SectionLabel>Transcript</SectionLabel>
+                <Card>
+                  <p className={styles.body}>{transcriptText}</p>
+                </Card>
+              </>
             )}
           </>
         )}

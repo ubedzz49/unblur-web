@@ -61,7 +61,7 @@ describe("ProfilePage", () => {
     expect(uploadSpy).not.toHaveBeenCalled();
   });
 
-  it("only shows eligibility badges that are true, not the ones that are false", async () => {
+  it("shows the eligibility ladder with unlocked rungs marked and locked ones showing progress", async () => {
     vi.spyOn(api, "getMyStats").mockResolvedValue({
       minutesResolved: 120,
       avgRating: 4.5,
@@ -74,12 +74,15 @@ describe("ProfilePage", () => {
 
     renderWithProviders(<ProfilePage />);
 
-    expect(await screen.findByText(/can host a seminar/i)).toBeInTheDocument();
-    expect(screen.getByText(/can attend a gd/i)).toBeInTheDocument();
-    expect(screen.queryByText(/can organize a gd/i)).not.toBeInTheDocument();
+    expect(await screen.findByText(/host a seminar/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/unlocked/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/organize a gd/i)).toBeInTheDocument();
+    // organize a GD is still locked even though minutesResolved cleared the 100min bar --
+    // the ladder shows the server's eligibility flag, not a client-recomputed guess
+    expect(screen.getByText(/120\/100 min resolved/i)).toBeInTheDocument();
   });
 
-  it("shows no badges section when nothing is eligible yet", async () => {
+  it("shows every rung locked with zero progress when the user has no stats yet", async () => {
     vi.spyOn(api, "getMyStats").mockResolvedValue({
       minutesResolved: 0,
       avgRating: 0,
@@ -93,9 +96,7 @@ describe("ProfilePage", () => {
     renderWithProviders(<ProfilePage />);
 
     await screen.findByText(/your stats/i);
-    expect(screen.queryByText(/can host a seminar/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/can organize a gd/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/can attend a gd/i)).not.toBeInTheDocument();
-    expect(await screen.findByText(/keep helping/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/locked/i).length).toBe(3);
+    expect(screen.queryByText(/unlocked/i)).not.toBeInTheDocument();
   });
 });

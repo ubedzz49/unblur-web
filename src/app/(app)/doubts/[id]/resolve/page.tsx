@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Button, ButtonStatus } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { DateTimePicker } from "@/components/ui/DateTimePicker";
+import { SectionLabel } from "@/components/ui/SectionLabel";
 import { useToast } from "@/components/ui/Toast";
 import { useSendResolutionRequest } from "@/lib/queries/resolution";
 import shared from "../../../../shared.module.css";
@@ -143,18 +144,7 @@ export default function ResolveRequestPage() {
           <form onSubmit={handleSubmit}>
             <fieldset disabled={submitStatus === "loading"} style={{ border: "none", padding: 0, margin: 0 }}>
               <div style={{ marginBottom: 16 }}>
-                <label
-                  style={{
-                    fontSize: 12,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                    color: "var(--muted)",
-                    marginBottom: 6,
-                    display: "block",
-                  }}
-                >
-                  Duration
-                </label>
+                <SectionLabel>Duration</SectionLabel>
                 <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
                   {DURATION_PRESETS.map((preset) => (
                     <Button
@@ -164,7 +154,7 @@ export default function ResolveRequestPage() {
                       style={{ width: "auto" }}
                       onClick={() => selectDurationPreset(preset)}
                     >
-                      {preset} min
+                      <span className="num">{preset}</span> min
                     </Button>
                   ))}
                 </div>
@@ -190,18 +180,7 @@ export default function ResolveRequestPage() {
               />
 
               <div style={{ marginBottom: 16 }}>
-                <label
-                  style={{
-                    fontSize: 12,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                    color: "var(--muted)",
-                    marginBottom: 6,
-                    display: "block",
-                  }}
-                >
-                  Proposed time slots
-                </label>
+                <SectionLabel>Proposed time slots</SectionLabel>
 
                 <div style={{ marginBottom: 14 }}>
                   <span

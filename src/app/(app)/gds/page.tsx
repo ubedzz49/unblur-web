@@ -4,11 +4,22 @@ import Link from "next/link";
 import { useGdEligibility, useGds } from "@/lib/queries/gds";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Pill } from "@/components/ui/Pill";
+import { LiveDot } from "@/components/ui/LiveDot";
 import { PageTransition } from "@/components/ui/PageTransition";
 import shared from "../../shared.module.css";
+import styles from "./page.module.css";
+import type { Gd } from "@/lib/api";
 
 function formatFee(cents: number): string {
   return cents === 0 ? "Free" : `₹${(cents / 100).toFixed(0)}`;
+}
+
+function statusTone(status: Gd["status"]): "outline" | "live" | "neutral" | "danger" {
+  if (status === "live") return "live";
+  if (status === "cancelled") return "danger";
+  if (status === "completed") return "neutral";
+  return "outline";
 }
 
 export default function GdsPage() {
@@ -18,7 +29,7 @@ export default function GdsPage() {
   return (
     <PageTransition>
       <section style={{ padding: "32px 0" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div className={styles.header}>
           <h1 className={shared.heading}>Group discussions</h1>
           {eligibility.data?.canOrganizeGD && (
             <Link href="/gds/new">
@@ -37,18 +48,29 @@ export default function GdsPage() {
         {gds.isError && <p className={shared.muted}>Couldn&apos;t load GDs.</p>}
         {gds.isSuccess && gds.data.length === 0 && <p className={shared.muted}>No upcoming GDs yet.</p>}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div className={styles.list}>
           {gds.data?.map((gd) => (
-            <Link key={gd.id} href={`/gds/${gd.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+            <Link key={gd.id} href={`/gds/${gd.id}`} className={styles.link}>
               <Card>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div className={styles.statusRow}>
+                  <Pill tone={statusTone(gd.status)}>
+                    {gd.status === "live" && <LiveDot />}
+                    {gd.status.replace("_", " ")}
+                  </Pill>
+                </div>
+                <div className={styles.row}>
                   <div>
-                    <p style={{ fontWeight: 700 }}>{gd.topic}</p>
-                    <p className={shared.muted}>
-                      {new Date(gd.scheduledAt).toLocaleString()} · {gd.durationMins} min
+                    <p className={styles.topic}>{gd.topic}</p>
+                    <p className={styles.meta}>
+                      {new Date(gd.scheduledAt).toLocaleString()} ·{" "}
+                      <span className="num">{gd.durationMins}</span> min
                     </p>
                   </div>
-                  <p style={{ fontWeight: 700 }}>{formatFee(gd.entryFeeCents)}</p>
+                  <div className={styles.feeCol}>
+                    <Pill tone={gd.entryFeeCents === 0 ? "neutral" : "gold"}>
+                      <span className="num">{formatFee(gd.entryFeeCents)}</span>
+                    </Pill>
+                  </div>
                 </div>
               </Card>
             </Link>

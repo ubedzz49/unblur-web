@@ -6,10 +6,12 @@ import { useCreateGd, useGdEligibility } from "@/lib/queries/gds";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Pill } from "@/components/ui/Pill";
 import { DateTimePicker } from "@/components/ui/DateTimePicker";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { useToast } from "@/components/ui/Toast";
 import shared from "../../../shared.module.css";
+import styles from "./page.module.css";
 
 const ORGANIZER_FEE_RUPEES = 300; // matches GD_ORGANIZER_FEE_CENTS default on the service
 
@@ -59,11 +61,14 @@ export default function NewGdPage() {
     <PageTransition>
       <section style={{ padding: "32px 0" }}>
         <h1 className={shared.heading}>Organize a GD</h1>
-        <p className={shared.muted} style={{ marginBottom: 16 }}>
-          Organizing charges you a fixed ₹{ORGANIZER_FEE_RUPEES} platform fee (sandbox). Entry fees from participants go to you.
-        </p>
+        <div className={styles.feeNotice}>
+          <Pill tone="gold">
+            <span className="num">₹{ORGANIZER_FEE_RUPEES}</span> platform fee
+          </Pill>
+          <p className={styles.feeNoticeText}>Charged up front (sandbox). Entry fees from participants go to you.</p>
+        </div>
         <Card>
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <form onSubmit={handleSubmit} className={styles.form}>
             <Input label="Topic" value={topic} onChange={(e) => setTopic(e.target.value)} required />
             <DateTimePicker label="Scheduled at" value={scheduledAt} onChange={setScheduledAt} />
             <Input
@@ -84,6 +89,13 @@ export default function NewGdPage() {
               Create GD
             </Button>
           </form>
+        </Card>
+
+        <Card className={styles.rulesCard}>
+          <div className={styles.rulesList}>
+            <p>Up to 3 people can speak at once.</p>
+            <p>Each participant gets at most 1/10th of the total duration to speak.</p>
+          </div>
         </Card>
       </section>
     </PageTransition>
