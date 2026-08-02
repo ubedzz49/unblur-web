@@ -7,47 +7,38 @@ import { useResolutionRequestsForDoubt } from "@/lib/queries/resolution";
 import { usePublicUser } from "@/lib/queries/users";
 import { ResolutionRequest } from "@/lib/api";
 import { ResolutionRequestCard } from "@/components/ResolutionRequestCard";
-import styles from "./DoubtRequestsModal.module.css";
+import { Avatar } from "@/components/scoreboard/kit";
 
 function RequesterRow({ request }: { request: ResolutionRequest }) {
   const user = usePublicUser(request.resolverUserId);
 
   if (user.isLoading) return <Skeleton height={60} style={{ marginBottom: 12 }} />;
   if (user.isError || !user.data) {
-    return <p style={{ marginBottom: 12 }}>Couldn&apos;t load this requester&apos;s profile.</p>;
+    return <p className="mb-3">Couldn&apos;t load this requester&apos;s profile.</p>;
   }
 
+  const initials = (user.data.name ?? "?").trim().charAt(0).toUpperCase() || "?";
+
   return (
-    <div style={{ marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid var(--line)" }}>
-      <div className={styles.requesterRow}>
+    <div className="mb-5 border-b border-border pb-5 last:mb-0 last:border-b-0 last:pb-0">
+      <div className="mb-2.5 flex items-center gap-3">
         {user.data.photoUrl ? (
-          <Image src={user.data.photoUrl} alt="" width={44} height={44} style={{ borderRadius: "50%" }} unoptimized />
+          <Image src={user.data.photoUrl} alt="" width={44} height={44} className="rounded-full" unoptimized />
         ) : (
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: "50%",
-              background: "var(--elevated, var(--bg-alt))",
-              color: "var(--ink)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 800,
-            }}
-          >
-            {(user.data.name ?? "?").trim().charAt(0).toUpperCase() || "?"}
-          </div>
+          <Avatar initials={initials} size="md" />
         )}
-        <span className={styles.requesterName}>{user.data.name ?? "Someone"}</span>
+        <span className="text-[15px] font-extrabold">{user.data.name ?? "Someone"}</span>
       </div>
 
-      {user.data.bio && <p className={styles.bio}>{user.data.bio}</p>}
+      {user.data.bio && <p className="mb-2.5 text-[13px] text-muted-foreground">{user.data.bio}</p>}
 
       {user.data.expertise.length > 0 && (
-        <div className={styles.skillList}>
+        <div className="mb-3.5 flex flex-wrap gap-1.5">
           {user.data.expertise.map((e) => (
-            <span key={e.id} className={styles.skillPill}>
+            <span
+              key={e.id}
+              className="rounded-full bg-elevated px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground"
+            >
               {e.expertiseTypeName}
               {e.expertiseLevelName && e.expertiseLevelName.toLowerCase() !== "general"
                 ? ` (${e.expertiseLevelName})`
@@ -75,17 +66,26 @@ export function DoubtRequestsModal({ doubtId, onClose }: { doubtId: string; onCl
   }, [onClose]);
 
   return (
-    <div className={styles.overlay} onClick={onClose} role="presentation">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-5"
+      onClick={onClose}
+      role="presentation"
+    >
       <div
-        className={styles.panel}
+        className="max-h-[88vh] w-full max-w-xl overflow-y-auto rounded-t-[20px] border border-border bg-card p-5 sm:rounded-[20px]"
         role="dialog"
         aria-modal="true"
         aria-label="Offers for this doubt"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className={styles.header}>
-          <h2 className={styles.title}>Offers to help</h2>
-          <button type="button" className={styles.closeButton} onClick={onClose} aria-label="Close">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-[17px] font-extrabold">Offers to help</h2>
+          <button
+            type="button"
+            className="flex min-h-11 min-w-11 items-center justify-center text-xl text-muted-foreground"
+            onClick={onClose}
+            aria-label="Close"
+          >
             ×
           </button>
         </div>

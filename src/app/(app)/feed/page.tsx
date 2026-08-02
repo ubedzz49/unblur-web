@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { PageTransition } from "@/components/ui/PageTransition";
-import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Pill } from "@/components/ui/Pill";
+import { Card, Pill } from "@/components/scoreboard/kit";
 import { DoubtCardSkeleton } from "@/components/ui/Skeleton";
 import { useMyExpertise, useExpertiseOptions } from "@/lib/queries/expertise";
 import { useFeed, useMyDoubts } from "@/lib/queries/doubts";
@@ -15,8 +14,8 @@ import { DoubtRequestsModal } from "@/components/DoubtRequestsModal";
 import { Doubt } from "@/lib/api";
 import { formatExpertiseLabel } from "@/lib/expertise-format";
 import { relativeTime } from "@/lib/relative-time";
+import { cn } from "@/lib/utils";
 import shared from "../../shared.module.css";
-import styles from "./feed.module.css";
 
 const STATUS_LABEL: Record<Doubt["status"], string> = {
   open: "Open",
@@ -76,52 +75,54 @@ function DoubtCard({
   const requestCount = requests.data?.length ?? 0;
 
   return (
-    <Card className={styles.doubtCard} tabIndex={0}>
-      <div className={styles.doubtHeader}>
-        <h3 className={styles.doubtTitle} title={doubt.title}>
-          {doubt.title}
-        </h3>
-        <div className={styles.headerPills}>
-          {showMatchType && (
-            <Pill tone={MATCH_TONE[doubt.matchType]}>{MATCH_LABEL[doubt.matchType]}</Pill>
-          )}
-          {doubt.status !== "open" && (
-            <Pill tone={STATUS_TONE[doubt.status]}>{STATUS_LABEL[doubt.status]}</Pill>
-          )}
+    <Card className="p-4">
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <h3 className="text-pretty text-[0.95rem] font-bold leading-snug">{doubt.title}</h3>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {showMatchType && <Pill tone={MATCH_TONE[doubt.matchType]}>{MATCH_LABEL[doubt.matchType]}</Pill>}
+          {doubt.status !== "open" && <Pill tone={STATUS_TONE[doubt.status]}>{STATUS_LABEL[doubt.status]}</Pill>}
         </div>
       </div>
 
-      <div className={styles.doubtDetails}>
-        {subjectLabels.length > 0 && <p className={styles.subjectLabel}>{subjectLabels.join(" · ")}</p>}
-        {doubt.description && <p className={styles.doubtDescription}>{doubt.description}</p>}
-        {showRequestsBadge && requestCount > 0 && (
-          <button
-            type="button"
-            className={styles.requestsBadge}
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenRequests?.(doubt.id);
-            }}
-          >
-            <span className="num">{requestCount}</span> {requestCount === 1 ? "offer" : "offers"}
-          </button>
-        )}
+      {subjectLabels.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {subjectLabels.map((label) => (
+            <span
+              key={label}
+              className="rounded-md bg-elevated px-2 py-0.5 text-xs font-semibold text-foreground"
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {doubt.description && (
+        <p className="mt-2 line-clamp-2 text-sm leading-snug text-muted-foreground">{doubt.description}</p>
+      )}
+
+      {showRequestsBadge && requestCount > 0 && (
+        <button
+          type="button"
+          className="mt-3 inline-flex min-h-11 items-center rounded-full bg-elevated px-3.5 text-xs font-bold text-primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenRequests?.(doubt.id);
+          }}
+        >
+          <span className="num">{requestCount}</span> {requestCount === 1 ? "offer" : "offers"}
+        </button>
+      )}
+
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-border pt-3">
+        <span className="text-xs text-muted-foreground">{relativeTime(doubt.createdAt)}</span>
         {showOfferAction && doubt.status === "open" && (
-          <Link
-            href={`/doubts/${doubt.id}/resolve`}
-            className={styles.offerLink}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <Link href={`/doubts/${doubt.id}/resolve`} onClick={(e) => e.stopPropagation()}>
             <Button type="button" variant="secondary" style={{ width: "auto" }}>
               Offer to help
             </Button>
           </Link>
         )}
-      </div>
-
-      <div className={styles.doubtMeta}>
-        <span className={styles.timestamp}>{relativeTime(doubt.createdAt)}</span>
-        <span className={styles.hoverHint}>Hover for details</span>
       </div>
     </Card>
   );
@@ -154,23 +155,27 @@ export default function FeedPage() {
 
   return (
     <PageTransition>
-      <section className={styles.page}>
-        <div className={styles.headerRow}>
+      <section className="py-8">
+        <div className="mb-6 flex items-center justify-between gap-4">
           <h1 className={shared.heading}>Feed</h1>
-          <Link href="/doubts/new" className={styles.postLink}>
+          <Link href="/doubts/new" className="shrink-0">
             <Button type="button" style={{ width: "auto" }}>
               Post a doubt
             </Button>
           </Link>
         </div>
 
-        <div className={styles.tabs} role="tablist">
+        <div role="tablist" className="mb-5 flex items-center gap-1.5">
           <button
             type="button"
             role="tab"
             aria-selected={tab === "feed"}
-            className={styles.tab}
-            data-active={tab === "feed"}
+            className={cn(
+              "min-h-11 rounded-full border px-3.5 text-sm font-bold transition-colors",
+              tab === "feed"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border bg-card text-muted-foreground hover:text-foreground",
+            )}
             onClick={() => setTab("feed")}
           >
             Feed
@@ -179,8 +184,12 @@ export default function FeedPage() {
             type="button"
             role="tab"
             aria-selected={tab === "mine"}
-            className={styles.tab}
-            data-active={tab === "mine"}
+            className={cn(
+              "min-h-11 rounded-full border px-3.5 text-sm font-bold transition-colors",
+              tab === "mine"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border bg-card text-muted-foreground hover:text-foreground",
+            )}
             onClick={() => setTab("mine")}
           >
             My doubts
@@ -190,7 +199,7 @@ export default function FeedPage() {
         {tab === "feed" && (
           <>
             {myExpertise.isLoading && (
-              <div className={styles.list}>
+              <div className="space-y-3">
                 <Card>
                   <DoubtCardSkeleton />
                 </Card>
@@ -204,8 +213,8 @@ export default function FeedPage() {
             )}
 
             {hasNoExpertise && (
-              <Card className={styles.emptyState}>
-                <h3>Add your expertise to see doubts</h3>
+              <Card className="flex max-w-[440px] flex-col items-start gap-3 p-4">
+                <h3 className="text-[1.05rem] font-extrabold">Add your expertise to see doubts</h3>
                 <p className={shared.muted}>
                   Your feed shows doubts that match what you know. Tag your first subject or skill
                   to start seeing matches.
@@ -217,7 +226,7 @@ export default function FeedPage() {
             )}
 
             {!hasNoExpertise && !myExpertise.isLoading && feed.isLoading && (
-              <div className={styles.list}>
+              <div className="space-y-3">
                 <Card>
                   <DoubtCardSkeleton />
                 </Card>
@@ -231,8 +240,8 @@ export default function FeedPage() {
             )}
 
             {!hasNoExpertise && feed.isError && (
-              <Card className={styles.emptyState}>
-                <h3>Couldn&apos;t load your feed</h3>
+              <Card className="flex max-w-[440px] flex-col items-start gap-3 p-4">
+                <h3 className="text-[1.05rem] font-extrabold">Couldn&apos;t load your feed</h3>
                 <p className={shared.muted}>Something went wrong reaching the server.</p>
                 <Button type="button" onClick={() => feed.refetch()}>
                   Try again
@@ -241,8 +250,8 @@ export default function FeedPage() {
             )}
 
             {!hasNoExpertise && feed.isSuccess && othersFeed.length === 0 && (
-              <Card className={styles.emptyState}>
-                <h3>No open doubts in your areas right now</h3>
+              <Card className="flex max-w-[440px] flex-col items-start gap-3 p-4">
+                <h3 className="text-[1.05rem] font-extrabold">No open doubts in your areas right now</h3>
                 <p className={shared.muted}>
                   Check back soon — we&apos;ll show you doubts as they come in for your expertise.
                 </p>
@@ -250,7 +259,7 @@ export default function FeedPage() {
             )}
 
             {!hasNoExpertise && feed.isSuccess && othersFeed.length > 0 && (
-              <div className={styles.list}>
+              <div className="space-y-3">
                 {othersFeed.map((doubt) => (
                   <DoubtCard
                     key={doubt.id}
@@ -268,7 +277,7 @@ export default function FeedPage() {
         {tab === "mine" && (
           <>
             {myDoubts.isLoading && (
-              <div className={styles.list}>
+              <div className="space-y-3">
                 <Card>
                   <DoubtCardSkeleton />
                 </Card>
@@ -279,8 +288,8 @@ export default function FeedPage() {
             )}
 
             {myDoubts.isError && (
-              <Card className={styles.emptyState}>
-                <h3>Couldn&apos;t load your doubts</h3>
+              <Card className="flex max-w-[440px] flex-col items-start gap-3 p-4">
+                <h3 className="text-[1.05rem] font-extrabold">Couldn&apos;t load your doubts</h3>
                 <p className={shared.muted}>Something went wrong reaching the server.</p>
                 <Button type="button" onClick={() => myDoubts.refetch()}>
                   Try again
@@ -289,8 +298,8 @@ export default function FeedPage() {
             )}
 
             {myDoubts.isSuccess && myDoubts.data.length === 0 && (
-              <Card className={styles.emptyState}>
-                <h3>You haven&apos;t posted a doubt yet</h3>
+              <Card className="flex max-w-[440px] flex-col items-start gap-3 p-4">
+                <h3 className="text-[1.05rem] font-extrabold">You haven&apos;t posted a doubt yet</h3>
                 <p className={shared.muted}>Doubts you post show up here so you can track them.</p>
                 <Link href="/doubts/new">
                   <Button type="button">Post a doubt</Button>
@@ -299,7 +308,7 @@ export default function FeedPage() {
             )}
 
             {myDoubts.isSuccess && myDoubts.data.length > 0 && (
-              <div className={styles.list}>
+              <div className="space-y-3">
                 {myDoubts.data.map((doubt) => (
                   <DoubtCard
                     key={doubt.id}

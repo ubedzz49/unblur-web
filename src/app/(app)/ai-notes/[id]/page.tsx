@@ -2,14 +2,11 @@
 
 import { useParams } from "next/navigation";
 import { PageTransition } from "@/components/ui/PageTransition";
-import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Pill } from "@/components/ui/Pill";
-import { SectionLabel } from "@/components/ui/SectionLabel";
+import { Card, Pill, SectionLabel } from "@/components/scoreboard/kit";
 import { useAiNotesDelivery } from "@/lib/queries/ai-notes";
 import shared from "../../../shared.module.css";
-import styles from "./page.module.css";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
@@ -27,7 +24,7 @@ export default function AiNotesDeliveryPage() {
   if (delivery.isLoading) {
     return (
       <PageTransition>
-        <div className={shared.wrap} style={{ padding: "16px 0" }}>
+        <div className="mx-auto max-w-2xl px-4 py-6">
           <Skeleton height={200} />
         </div>
       </PageTransition>
@@ -37,9 +34,9 @@ export default function AiNotesDeliveryPage() {
   if (delivery.isError) {
     return (
       <PageTransition>
-        <div className={shared.wrap} style={{ padding: "16px 0" }}>
-          <Card>
-            <h3 style={{ marginBottom: 12 }}>Couldn&apos;t load your notes</h3>
+        <div className="mx-auto max-w-2xl px-4 py-6">
+          <Card className="p-5">
+            <h3 className="mb-3 text-lg font-bold">Couldn&apos;t load your notes</h3>
             <Button type="button" onClick={() => delivery.refetch()}>
               Try again
             </Button>
@@ -52,9 +49,9 @@ export default function AiNotesDeliveryPage() {
   if (!delivery.data) {
     return (
       <PageTransition>
-        <div className={shared.wrap} style={{ padding: "16px 0" }}>
-          <Card>
-            <p className={shared.muted}>
+        <div className="mx-auto max-w-2xl px-4 py-6">
+          <Card className="p-5">
+            <p className="text-sm text-muted-foreground">
               This delivery doesn&apos;t exist, or isn&apos;t yours to view.
             </p>
           </Card>
@@ -67,17 +64,17 @@ export default function AiNotesDeliveryPage() {
 
   return (
     <PageTransition>
-      <div className={shared.wrap} style={{ padding: "16px 0" }}>
-        <h1 className={shared.heading} style={{ fontSize: "clamp(22px, 5vw, 32px)" }}>
+      <div className="mx-auto max-w-2xl px-4 py-6">
+        <h1 className="mb-4 text-2xl font-extrabold leading-tight sm:text-3xl">
           AI notes and transcript
         </h1>
 
         {(status === "pending" || status === "generated") && (
-          <Card style={{ marginBottom: 12 }}>
-            <div className={styles.meta}>
+          <Card className="p-5">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
               <Pill tone="outline">{status === "pending" ? "Generating" : "Finishing up"}</Pill>
             </div>
-            <p className={shared.muted}>
+            <p className="text-sm text-muted-foreground">
               {status === "pending"
                 ? "Your notes are still being generated — this page updates automatically once they're ready."
                 : "Notes are generated — finishing up delivery now."}
@@ -86,8 +83,8 @@ export default function AiNotesDeliveryPage() {
         )}
 
         {status === "failed" && (
-          <Card style={{ marginBottom: 12 }}>
-            <div className={styles.meta}>
+          <Card className="p-5">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
               <Pill tone="danger">Failed</Pill>
             </div>
             <p className={shared.error}>
@@ -98,29 +95,29 @@ export default function AiNotesDeliveryPage() {
         )}
 
         {status === "sent" && (
-          <>
-            <div className={styles.meta}>
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-center gap-2">
               <Pill tone="success">Delivered</Pill>
-              {sentAt && <span className={shared.muted} style={{ fontSize: 12 }}>{formatDate(sentAt)}</span>}
+              {sentAt && <span className="text-xs text-muted-foreground">{formatDate(sentAt)}</span>}
             </div>
 
             {notesText && (
-              <>
+              <section>
                 <SectionLabel>Notes</SectionLabel>
-                <Card style={{ marginBottom: 16 }}>
-                  <p className={styles.body}>{notesText}</p>
+                <Card className="p-5">
+                  <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">{notesText}</p>
                 </Card>
-              </>
+              </section>
             )}
             {transcriptText && (
-              <>
+              <section>
                 <SectionLabel>Transcript</SectionLabel>
-                <Card>
-                  <p className={styles.body}>{transcriptText}</p>
+                <Card className="p-5">
+                  <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">{transcriptText}</p>
                 </Card>
-              </>
+              </section>
             )}
-          </>
+          </div>
         )}
       </div>
     </PageTransition>

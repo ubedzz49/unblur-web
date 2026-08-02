@@ -3,11 +3,10 @@
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { PageTransition } from "@/components/ui/PageTransition";
-import { Card } from "@/components/ui/Card";
 import { Button, ButtonStatus } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { DateTimePicker } from "@/components/ui/DateTimePicker";
-import { SectionLabel } from "@/components/ui/SectionLabel";
+import { Card, SectionLabel } from "@/components/scoreboard/kit";
 import { useToast } from "@/components/ui/Toast";
 import { useSendResolutionRequest } from "@/lib/queries/resolution";
 import shared from "../../../../shared.module.css";
@@ -133,19 +132,19 @@ export default function ResolveRequestPage() {
 
   return (
     <PageTransition>
-      <section style={{ padding: "32px 0" }}>
+      <section className="py-8">
         <h1 className={shared.heading}>Offer to help</h1>
-        <p className={shared.muted} style={{ marginBottom: 24, maxWidth: "44ch" }}>
+        <p className="mb-6 max-w-[44ch] text-sm text-muted-foreground">
           Propose a duration, price, and a few time slots. The poster can pick whichever slot
           works for them.
         </p>
 
-        <Card style={{ maxWidth: 480 }}>
+        <Card className="max-w-[480px] p-4">
           <form onSubmit={handleSubmit}>
-            <fieldset disabled={submitStatus === "loading"} style={{ border: "none", padding: 0, margin: 0 }}>
-              <div style={{ marginBottom: 16 }}>
+            <fieldset disabled={submitStatus === "loading"} className="m-0 border-0 p-0">
+              <div className="mb-4">
                 <SectionLabel>Duration</SectionLabel>
-                <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+                <div className="mb-2.5 flex flex-wrap gap-2">
                   {DURATION_PRESETS.map((preset) => (
                     <Button
                       key={preset}
@@ -179,22 +178,15 @@ export default function ResolveRequestPage() {
                 placeholder="e.g. 200"
               />
 
-              <div style={{ marginBottom: 16 }}>
+              <div className="mb-4">
                 <SectionLabel>Proposed time slots</SectionLabel>
 
-                <div style={{ marginBottom: 14 }}>
-                  <span
-                    style={{
-                      fontSize: 12,
-                      color: "var(--muted)",
-                      marginBottom: 6,
-                      display: "block",
-                    }}
-                  >
+                <div className="mb-3.5">
+                  <span className="mb-1.5 block text-xs text-muted-foreground">
                     In a hurry? Send for right now, in a few minutes
                   </span>
-                  <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-                    <div style={{ flex: 1, maxWidth: 160 }}>
+                  <div className="flex items-end gap-2">
+                    <div className="max-w-[160px] flex-1">
                       <Input
                         id="quick-pick-minutes"
                         label={`Minutes from now (${MIN_QUICK_PICK_MINUTES}–${MAX_QUICK_PICK_MINUTES})`}
@@ -208,7 +200,8 @@ export default function ResolveRequestPage() {
                     <Button
                       type="button"
                       variant="secondary"
-                      style={{ width: "auto", marginBottom: 16 }}
+                      style={{ width: "auto" }}
+                      className="mb-4"
                       disabled={!quickPickValid}
                       onClick={handleQuickPickApply}
                     >
@@ -220,8 +213,8 @@ export default function ResolveRequestPage() {
                 {slots.map((slot, index) => {
                   const showError = slot.trim().length > 0 && !isInFuture(slot);
                   return (
-                    <div key={index} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
-                      <div style={{ flex: 1 }}>
+                    <div key={index} className="mb-2 flex items-start gap-2">
+                      <div className="flex-1">
                         <DateTimePicker
                           label={`Slot ${index + 1}`}
                           value={slot}

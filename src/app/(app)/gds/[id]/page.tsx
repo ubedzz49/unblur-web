@@ -3,19 +3,25 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
+import { Mic, Timer, Users, Vote } from "lucide-react";
 import { useMe } from "@/lib/queries/users";
 import { useGd, useGdJoinUrl, useGdResults, useJoinGd, useVoteInGd } from "@/lib/queries/gds";
-import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Pill } from "@/components/ui/Pill";
-import { LiveDot } from "@/components/ui/LiveDot";
-import { ProgressMeter } from "@/components/ui/ProgressMeter";
+import { Card, Pill, LiveDot, ProgressMeter } from "@/components/scoreboard/kit";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { useToast } from "@/components/ui/Toast";
+import { RegisterPanel } from "@/components/scoreboard/register-panel";
 import { confirmPayment } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import shared from "../../../shared.module.css";
+
+const RULES = [
+  { icon: Users, title: "Max 3 speakers", desc: "Only three people hold the mic at once." },
+  { icon: Timer, title: "Equal speaking time", desc: "Everyone gets up to 1/10th of the duration to speak." },
+  { icon: Mic, title: "Overtime = mute", desc: "Go past your limit and you're muted for a short penalty." },
+  { icon: Vote, title: "Vote at the end", desc: "Rank your top 3 speakers. Points build your score." },
+];
 
 interface SpeakingState {
   speakers: { userId: string; spokenSeconds: number; limitSeconds: number }[];
@@ -118,8 +124,8 @@ export default function GdDetailPage() {
     <PageTransition>
       <section style={{ padding: "32px 0" }}>
         <h1 className={shared.heading}>{gd.data.topic}</h1>
-        <Card>
-          <div style={{ marginBottom: 12 }}>
+        <Card className="p-5">
+          <div className="mb-3">
             <Pill tone={gd.data.status === "live" ? "live" : gd.data.status === "cancelled" ? "danger" : "outline"}>
               {gd.data.status === "live" && <LiveDot />}
               {gd.data.status.replace("_", " ")}
@@ -127,17 +133,12 @@ export default function GdDetailPage() {
           </div>
           <p className={shared.muted}>{new Date(gd.data.scheduledAt).toLocaleString()}</p>
           <p className={shared.muted}>{gd.data.durationMins} minutes</p>
-          <p className={shared.muted} style={{ marginBottom: 16 }}>
+          <p className={`${shared.muted} mb-4`}>
             {gd.data.entryFeeCents === 0 ? "Free" : `₹${(gd.data.entryFeeCents / 100).toFixed(0)} entry fee`}
           </p>
 
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            {!isOrganizer && gd.data.status === "scheduled" && (
-              <Button onClick={handleJoin} status={join.isPending ? "loading" : "idle"} loadingLabel="Joining…">
-                Join{gd.data.entryFeeCents > 0 ? " and pay (sandbox)" : ""}
-              </Button>
-            )}
-            {gd.data.status !== "cancelled" && (
+          {isOrganizer && gd.data.status !== "cancelled" && (
+            <div className="flex flex-wrap gap-3">
               <Button
                 variant="secondary"
                 onClick={handleGetJoinUrl}
@@ -146,34 +147,59 @@ export default function GdDetailPage() {
               >
                 {gd.data.joinUrl ? "Join meeting" : "Get join link"}
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </Card>
 
+        <div className="my-4 grid grid-cols-2 gap-3">
+          {RULES.map((r) => {
+            const Icon = r.icon;
+            return (
+              <div key={r.title} className="rounded-2xl border border-border bg-card p-4">
+                <Icon className="h-5 w-5 text-primary" />
+                <div className="mt-2 text-sm font-black">{r.title}</div>
+                <div className="mt-0.5 text-xs leading-snug text-muted-foreground">{r.desc}</div>
+              </div>
+            );
+          })}
+        </div>
+
+        {!isOrganizer && gd.data.status === "scheduled" && (
+          <RegisterPanel
+            fee={gd.data.entryFeeCents / 100}
+            cta={gd.data.entryFeeCents > 0 ? "Join and pay (sandbox)" : "Join"}
+            payeeNote="Your entry fee goes directly to the organizer. Sandbox payment — no real charge."
+            status={join.isSuccess ? "joined" : join.isPending ? "paying" : "idle"}
+            onPay={handleJoin}
+            joinUrl={gd.data.joinUrl}
+            onGetJoinUrl={handleGetJoinUrl}
+          />
+        )}
+
         {gd.data.status !== "completed" && gd.data.status !== "cancelled" && (
-          <Card style={{ marginTop: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <p style={{ fontWeight: 900 }}>Speaking</p>
+          <Card className="mt-4 p-5">
+            <div className="mb-3 flex items-center gap-2">
+              <p className="font-black">Speaking</p>
               {speaking.speakers.length > 0 && <Pill tone="live"><LiveDot /> Live</Pill>}
             </div>
             {!GD_SERVICE_WS_URL && (
               <p className={shared.muted}>Real-time speaking controls aren&apos;t configured for this environment.</p>
             )}
             {isMuted && (
-              <div style={{ marginBottom: 12 }}>
+              <div className="mb-3">
                 <Pill tone="danger">Muted for exceeding your speaking time</Pill>
               </div>
             )}
             {speaking.speakers.length === 0 && <p className={shared.muted}>No one is speaking right now.</p>}
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className="flex flex-col gap-3">
               {speaking.speakers.map((s) => {
                 const isSelf = s.userId === me.data?.id;
                 const overLimit = s.spokenSeconds >= s.limitSeconds;
                 return (
-                  <div key={s.userId} className={overLimit ? undefined : "animate-speaking"} style={{ borderRadius: 12, padding: 8 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
-                      <span style={{ fontWeight: 700 }}>{isSelf ? "You" : s.userId}</span>
-                      <span className="num" style={{ color: overLimit ? "var(--accent-2)" : "var(--muted)" }}>
+                  <div key={s.userId} className={`rounded-xl p-2 ${overLimit ? "" : "animate-speaking"}`}>
+                    <div className="mb-1.5 flex justify-between text-[13px]">
+                      <span className="font-bold">{isSelf ? "You" : s.userId}</span>
+                      <span className={`num ${overLimit ? "text-destructive" : "text-muted-foreground"}`}>
                         {s.spokenSeconds}s / {s.limitSeconds}s
                       </span>
                     </div>
@@ -183,7 +209,7 @@ export default function GdDetailPage() {
               })}
             </div>
             {socket && !isMuted && (
-              <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+              <div className="mt-4 flex gap-2">
                 <Button variant="secondary" onClick={() => socket.emit("speak_start", { gdId: id })}>
                   Start speaking
                 </Button>
@@ -196,9 +222,9 @@ export default function GdDetailPage() {
         )}
 
         {gd.data.status === "completed" && (
-          <Card style={{ marginTop: 16 }}>
-            <p style={{ fontWeight: 700, marginBottom: 8 }}>Vote for the best 3 speakers</p>
-            <form onSubmit={handleVote} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <Card className="mt-4 p-5">
+            <p className="mb-2 font-bold">Vote for the best 3 speakers</p>
+            <form onSubmit={handleVote} className="flex flex-col gap-3">
               <Input label="1st place (user id)" value={firstUserId} onChange={(e) => setFirstUserId(e.target.value)} />
               <Input label="2nd place (user id)" value={secondUserId} onChange={(e) => setSecondUserId(e.target.value)} />
               <Input label="3rd place (user id)" value={thirdUserId} onChange={(e) => setThirdUserId(e.target.value)} />
@@ -208,18 +234,16 @@ export default function GdDetailPage() {
             </form>
 
             {results.data && results.data.results.length > 0 && (
-              <div style={{ marginTop: 16 }}>
-                <p style={{ fontWeight: 900, marginBottom: 8 }}>Current results</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div className="mt-4">
+                <p className="mb-2 font-black">Current results</p>
+                <div className="flex flex-col gap-2">
                   {results.data.results.map((r, i) => (
-                    <div key={r.userId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontWeight: 700 }}>
+                    <div key={r.userId} className="flex items-center justify-between">
+                      <span className="font-bold">
                         {i === 0 ? <Pill tone="gold">#1</Pill> : <span className={shared.muted}>#{i + 1}</span>}{" "}
                         {r.userId === me.data?.id ? "You" : r.userId}
                       </span>
-                      <span className="num" style={{ fontWeight: 900 }}>
-                        {r.points.toFixed(1)} pts
-                      </span>
+                      <span className="num font-black">{r.points.toFixed(1)} pts</span>
                     </div>
                   ))}
                 </div>

@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Pill } from "@/components/ui/Pill";
+import { Card, Pill } from "@/components/scoreboard/kit";
 import { useToast } from "@/components/ui/Toast";
 import { useAcceptResolutionRequest, useRejectResolutionRequest } from "@/lib/queries/resolution";
 import { ResolutionRequest, ResolutionRequestStatus } from "@/lib/api";
@@ -77,32 +76,20 @@ export function ResolutionRequestCard({
 
   const body = (
     <>
-      <p className="num" style={{ color: "var(--muted)", fontSize: 14, marginBottom: 10 }}>
+      <p className="num mb-2.5 text-sm text-muted-foreground">
         {request.durationMins} min · {formatAmount(request.amountCents)}
       </p>
 
       {isPending && (
-        <div style={{ marginBottom: 10 }}>
-          <label
-            style={{ fontSize: 12, color: "var(--muted)", display: "block", marginBottom: 6 }}
-            htmlFor={`slot-choice-${request.id}`}
-          >
+        <div className="mb-2.5">
+          <label className="mb-1.5 block text-xs text-muted-foreground" htmlFor={`slot-choice-${request.id}`}>
             Choose a time
           </label>
           <select
             id={`slot-choice-${request.id}`}
             value={chosenSlot}
             onChange={(e) => setChosenSlot(e.target.value)}
-            style={{
-              width: "100%",
-              minHeight: 44,
-              padding: "10px 12px",
-              borderRadius: "var(--radius, 12px)",
-              border: "1px solid var(--line)",
-              fontSize: 16,
-              background: "var(--card)",
-              color: "var(--ink)",
-            }}
+            className="w-full min-h-[44px] rounded-xl border border-border bg-card px-3 py-2.5 text-base text-foreground"
           >
             {request.proposedSlots.map((slot) => (
               <option key={slot} value={slot}>
@@ -114,13 +101,13 @@ export function ResolutionRequestCard({
       )}
 
       {!isPending && (
-        <div style={{ marginBottom: 10 }}>
+        <div className="mb-2.5">
           <Pill tone={STATUS_TONE[request.status]}>{request.status}</Pill>
         </div>
       )}
 
       {isPending && (
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="flex gap-2">
           <Button type="button" style={{ width: "auto" }} disabled={busy} onClick={handleAccept}>
             Accept
           </Button>
@@ -133,5 +120,5 @@ export function ResolutionRequestCard({
   );
 
   if (bare) return body;
-  return <Card style={{ marginBottom: 12 }}>{body}</Card>;
+  return <Card className="mb-3 p-4">{body}</Card>;
 }
