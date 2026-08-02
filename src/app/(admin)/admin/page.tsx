@@ -12,8 +12,12 @@ import {
   useAdminComplaintRecording,
   useAdminComplaints,
   useAdminExpertiseOptions,
+  useAdminGds,
+  useAdminSeminars,
   useAdminUsers,
   useBlockAdminUser,
+  useCancelGdAsAdmin,
+  useCancelSeminarAsAdmin,
   useImportAdminExpertise,
   useRefundBookingAsAdmin,
   useRemoveAdminExpertise,
@@ -24,7 +28,7 @@ import {
 } from "@/lib/queries/admin";
 import shared from "../../shared.module.css";
 
-type Tab = "users" | "complaints" | "notifications" | "expertise" | "aiNotes";
+type Tab = "users" | "complaints" | "notifications" | "expertise" | "aiNotes" | "seminars" | "gds";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
@@ -510,6 +514,107 @@ function AiNotesTab() {
   );
 }
 
+// shared by both tabs below -- a completed/cancelled session's cancel button is a no-op, so
+// only "scheduled"/"live" ones get one
+function CancelReferenceButton({
+  status,
+  busy,
+  onCancel,
+}: {
+  status: string;
+  busy: boolean;
+  onCancel: () => void;
+}) {
+  if (status === "completed" || status === "cancelled") return null;
+  return (
+    <Button variant="secondary" onClick={onCancel} status={busy ? "loading" : "idle"} loadingLabel="Cancelling…">
+      Cancel &amp; refund
+    </Button>
+  );
+}
+
+function SeminarsTab() {
+  const { showToast } = useToast();
+  const seminars = useAdminSeminars();
+  const cancelSeminar = useCancelSeminarAsAdmin();
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function handleCancel(id: string) {
+    setBusyId(id);
+    try {
+      await cancelSeminar.mutateAsync(id);
+      showToast("Seminar cancelled, every registrant refunded");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't cancel that seminar — try again.", "error");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  if (seminars.isLoading) return <Skeleton />;
+  if (seminars.isError) return <p className={shared.error}>Couldn&apos;t load seminars.</p>;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {seminars.data?.length === 0 && <p className={shared.muted}>No seminars yet.</p>}
+      {seminars.data?.map((seminar) => (
+        <Card key={seminar.id}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+            <div>
+              <p style={{ fontWeight: 700 }}>{seminar.title}</p>
+              <p className={shared.muted}>
+                {new Date(seminar.scheduledAt).toLocaleString()} · {seminar.status}
+              </p>
+            </div>
+            <CancelReferenceButton status={seminar.status} busy={busyId === seminar.id} onCancel={() => handleCancel(seminar.id)} />
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function GdsTab() {
+  const { showToast } = useToast();
+  const gds = useAdminGds();
+  const cancelGd = useCancelGdAsAdmin();
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function handleCancel(id: string) {
+    setBusyId(id);
+    try {
+      await cancelGd.mutateAsync(id);
+      showToast("GD cancelled, organizer and every participant refunded");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't cancel that gd — try again.", "error");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  if (gds.isLoading) return <Skeleton />;
+  if (gds.isError) return <p className={shared.error}>Couldn&apos;t load GDs.</p>;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {gds.data?.length === 0 && <p className={shared.muted}>No GDs yet.</p>}
+      {gds.data?.map((gd) => (
+        <Card key={gd.id}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+            <div>
+              <p style={{ fontWeight: 700 }}>{gd.topic}</p>
+              <p className={shared.muted}>
+                {new Date(gd.scheduledAt).toLocaleString()} · {gd.status}
+              </p>
+            </div>
+            <CancelReferenceButton status={gd.status} busy={busyId === gd.id} onCancel={() => handleCancel(gd.id)} />
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminDashboardPage() {
   const [tab, setTab] = useState<Tab>("users");
 
@@ -519,6 +624,8 @@ export default function AdminDashboardPage() {
     { key: "notifications", label: "Notifications" },
     { key: "expertise", label: "Topics" },
     { key: "aiNotes", label: "AI Notes" },
+    { key: "seminars", label: "Seminars" },
+    { key: "gds", label: "GDs" },
   ];
 
   return (
@@ -552,6 +659,8 @@ export default function AdminDashboardPage() {
       {tab === "notifications" && <NotificationsTab />}
       {tab === "expertise" && <ExpertiseTab />}
       {tab === "aiNotes" && <AiNotesTab />}
+      {tab === "seminars" && <SeminarsTab />}
+      {tab === "gds" && <GdsTab />}
     </section>
   );
 }

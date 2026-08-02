@@ -10,6 +10,8 @@ const TABS = [
   { href: "/home", label: "Home", icon: "⌂" },
   { href: "/feed", label: "Feed", icon: "≋" },
   { href: "/requests", label: "Requests", icon: "⇄" },
+  { href: "/seminars", label: "Seminars", icon: "◔" },
+  { href: "/gds", label: "GDs", icon: "◈" },
   { href: "/profile", label: "Profile", icon: "☺" },
 ];
 

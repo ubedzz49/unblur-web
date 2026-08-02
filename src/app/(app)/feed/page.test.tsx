@@ -236,6 +236,7 @@ describe("FeedPage", () => {
         avgRating: 0,
         ratingCount: 0,
         minutesListener: 0,
+        gdPoints: 0,
         eligibility: { canHostSeminar: false, canOrganizeGD: false, canAttendGD: false },
       },
       expertise: [{ id: "e-1", expertiseTypeName: "Physics", expertiseLevelName: "General" }],

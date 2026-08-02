@@ -3,11 +3,15 @@ import {
   addAdminExpertise,
   AiNotesDeliveryStatus,
   blockAdminUser,
+  cancelGdAsAdmin,
+  cancelSeminarAsAdmin,
   ComplaintOutcome,
   ComplaintStatus,
   getAdminAiNotes,
   getAdminComplaints,
   getAdminComplaintRecording,
+  getAdminGds,
+  getAdminSeminars,
   getAdminUsers,
   getExpertiseOptions,
   importAdminExpertise,
@@ -23,6 +27,44 @@ import { useAuth } from "@/lib/auth-context";
 const ADMIN_USERS_KEY = ["admin", "users"];
 const ADMIN_COMPLAINTS_KEY = ["admin", "complaints"];
 const ADMIN_AI_NOTES_KEY = ["admin", "ai-notes"];
+const ADMIN_SEMINARS_KEY = ["admin", "seminars"];
+const ADMIN_GDS_KEY = ["admin", "gds"];
+
+export function useAdminSeminars() {
+  const { token } = useAuth();
+  return useQuery({
+    queryKey: ADMIN_SEMINARS_KEY,
+    queryFn: () => getAdminSeminars(token!),
+    enabled: token !== null,
+  });
+}
+
+export function useCancelSeminarAsAdmin() {
+  const { token } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => cancelSeminarAsAdmin(token!, id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ADMIN_SEMINARS_KEY }),
+  });
+}
+
+export function useAdminGds() {
+  const { token } = useAuth();
+  return useQuery({
+    queryKey: ADMIN_GDS_KEY,
+    queryFn: () => getAdminGds(token!),
+    enabled: token !== null,
+  });
+}
+
+export function useCancelGdAsAdmin() {
+  const { token } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => cancelGdAsAdmin(token!, id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ADMIN_GDS_KEY }),
+  });
+}
 
 export function useAdminUsers() {
   const { token } = useAuth();

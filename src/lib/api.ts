@@ -455,6 +455,7 @@ export interface PublicUserStats {
   avgRating: number;
   ratingCount: number;
   minutesListener: number;
+  gdPoints: number;
   eligibility: Eligibility;
 }
 
@@ -484,6 +485,7 @@ export interface UserStats {
   avgRating: number;
   ratingCount: number;
   minutesListener: number;
+  gdPoints: number;
   updatedAt: string;
   eligibility: Eligibility;
 }
@@ -695,5 +697,176 @@ export function sendAdminNotification(token: string, userId: string, title: stri
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify({ userId, title, body }),
+  });
+}
+
+// --- Seminars (Version 7) ---
+
+export interface Seminar {
+  id: string;
+  hostUserId: string;
+  title: string;
+  description: string | null;
+  scheduledAt: string;
+  durationMins: number;
+  entryFeeCents: number;
+  joinUrl: string | null;
+  status: "scheduled" | "live" | "completed" | "cancelled";
+  createdAt: string;
+}
+
+export interface SeminarRegistration {
+  id: string;
+  seminarId: string;
+  userId: string;
+  paymentId: string | null;
+  status: "registered" | "attended";
+}
+
+export function getSeminarEligibility(token: string) {
+  return request<{ canHostSeminar: boolean }>("/seminars/eligibility", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function createSeminar(
+  token: string,
+  input: { title: string; description?: string; scheduledAt: string; durationMins: number; entryFeeCents: number },
+) {
+  return request<Seminar>("/seminars", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(input),
+  });
+}
+
+export function getSeminars(token: string, params: { upcoming?: boolean } = {}) {
+  const qs = params.upcoming ? "?upcoming=true" : "";
+  return request<Seminar[]>(`/seminars${qs}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function getSeminar(token: string, id: string) {
+  return request<Seminar>(`/seminars/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function registerForSeminar(token: string, id: string) {
+  return request<SeminarRegistration>(`/seminars/${id}/register`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function getSeminarJoinUrl(token: string, id: string) {
+  return request<{ joinUrl: string }>(`/seminars/${id}/join-url`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+// --- Group Discussions / GDs (Version 8) ---
+
+export interface Gd {
+  id: string;
+  organizerUserId: string;
+  topic: string;
+  scheduledAt: string;
+  durationMins: number;
+  entryFeeCents: number;
+  joinUrl: string | null;
+  status: "scheduled" | "live" | "completed" | "cancelled";
+  createdAt: string;
+}
+
+export interface GdParticipant {
+  id: string;
+  gdId: string;
+  userId: string;
+  paymentId: string | null;
+  spokenSeconds: number;
+  status: "joined" | "removed" | "completed";
+}
+
+export function getGdEligibility(token: string) {
+  return request<{ canOrganizeGD: boolean; canAttendGD: boolean }>("/gds/eligibility", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function createGd(token: string, input: { topic: string; scheduledAt: string; durationMins: number; entryFeeCents: number }) {
+  return request<Gd>("/gds", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(input),
+  });
+}
+
+export function getGds(token: string, params: { upcoming?: boolean } = {}) {
+  const qs = params.upcoming ? "?upcoming=true" : "";
+  return request<Gd[]>(`/gds${qs}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function getGd(token: string, id: string) {
+  return request<Gd>(`/gds/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function joinGd(token: string, id: string) {
+  return request<GdParticipant>(`/gds/${id}/join`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function getGdJoinUrl(token: string, id: string) {
+  return request<{ joinUrl: string }>(`/gds/${id}/join-url`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function voteInGd(token: string, id: string, firstUserId: string, secondUserId: string, thirdUserId: string) {
+  return request<{ voted: boolean }>(`/gds/${id}/vote`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ firstUserId, secondUserId, thirdUserId }),
+  });
+}
+
+export function getGdResults(token: string, id: string) {
+  return request<{ results: { userId: string; points: number }[] }>(`/gds/${id}/results`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+// --- Admin: Seminars/GDs (Version 7/8 admin extension) ---
+
+export function getAdminSeminars(token: string) {
+  return request<Seminar[]>("/admin/seminars", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function cancelSeminarAsAdmin(token: string, id: string) {
+  return request<Seminar>(`/admin/seminars/${id}/cancel`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function getAdminGds(token: string) {
+  return request<Gd[]>("/admin/gds", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function cancelGdAsAdmin(token: string, id: string) {
+  return request<Gd>(`/admin/gds/${id}/cancel`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
   });
 }

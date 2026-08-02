@@ -223,6 +223,10 @@ export default function ProfilePage() {
                 <p style={{ fontWeight: 900, fontSize: 20 }}>{myStats.data.minutesListener}</p>
                 <p className={shared.muted}>Minutes as listener</p>
               </div>
+              <div>
+                <p style={{ fontWeight: 900, fontSize: 20 }}>{myStats.data.gdPoints.toFixed(1)}</p>
+                <p className={shared.muted}>Communication score</p>
+              </div>
             </div>
           )}
           {myStats.isSuccess && (

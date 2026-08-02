@@ -15,6 +15,7 @@ const REQUESTER: api.PublicUser = {
     avgRating: 4.8,
     ratingCount: 10,
     minutesListener: 30,
+    gdPoints: 0,
     eligibility: { canHostSeminar: false, canOrganizeGD: true, canAttendGD: true },
   },
   expertise: [{ id: "ux-1", expertiseTypeName: "Mathematics", expertiseLevelName: "Engineering" }],
