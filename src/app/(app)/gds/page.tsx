@@ -2,13 +2,9 @@
 
 import Link from "next/link";
 import { useGdEligibility, useGds } from "@/lib/queries/gds";
-import { Card } from "@/components/ui/Card";
+import { Card, LiveDot, Pill, SectionLabel } from "@/components/scoreboard/kit";
 import { Button } from "@/components/ui/Button";
-import { Pill } from "@/components/ui/Pill";
-import { LiveDot } from "@/components/ui/LiveDot";
 import { PageTransition } from "@/components/ui/PageTransition";
-import shared from "../../shared.module.css";
-import styles from "./page.module.css";
 import type { Gd } from "@/lib/api";
 
 function formatFee(cents: number): string {
@@ -28,9 +24,9 @@ export default function GdsPage() {
 
   return (
     <PageTransition>
-      <section style={{ padding: "32px 0" }}>
-        <div className={styles.header}>
-          <h1 className={shared.heading}>Group discussions</h1>
+      <div className="space-y-6 py-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-fluid-title">Group discussions</h1>
           {eligibility.data?.canOrganizeGD && (
             <Link href="/gds/new">
               <Button>Organize a GD</Button>
@@ -39,44 +35,45 @@ export default function GdsPage() {
         </div>
 
         {eligibility.isSuccess && !eligibility.data.canAttendGD && (
-          <p className={shared.muted} style={{ marginBottom: 16 }}>
+          <p className="text-sm text-muted-foreground">
             Attend a GD once you&apos;ve listened for 50+ minutes. Organize one once you&apos;ve resolved 100+ minutes.
           </p>
         )}
 
-        {gds.isLoading && <p className={shared.muted}>Loading GDs…</p>}
-        {gds.isError && <p className={shared.muted}>Couldn&apos;t load GDs.</p>}
-        {gds.isSuccess && gds.data.length === 0 && <p className={shared.muted}>No upcoming GDs yet.</p>}
+        {gds.isLoading && <p className="text-sm text-muted-foreground">Loading GDs…</p>}
+        {gds.isError && <p className="text-sm text-muted-foreground">Couldn&apos;t load GDs.</p>}
+        {gds.isSuccess && gds.data.length === 0 && (
+          <p className="text-sm text-muted-foreground">No upcoming GDs yet.</p>
+        )}
 
-        <div className={styles.list}>
-          {gds.data?.map((gd) => (
-            <Link key={gd.id} href={`/gds/${gd.id}`} className={styles.link}>
-              <Card>
-                <div className={styles.statusRow}>
-                  <Pill tone={statusTone(gd.status)}>
-                    {gd.status === "live" && <LiveDot />}
-                    {gd.status.replace("_", " ")}
-                  </Pill>
-                </div>
-                <div className={styles.row}>
-                  <div>
-                    <p className={styles.topic}>{gd.topic}</p>
-                    <p className={styles.meta}>
-                      {new Date(gd.scheduledAt).toLocaleString()} ·{" "}
-                      <span className="num">{gd.durationMins}</span> min
-                    </p>
-                  </div>
-                  <div className={styles.feeCol}>
+        <section>
+          <SectionLabel>Discover</SectionLabel>
+          <div className="space-y-3">
+            {gds.data?.map((gd) => (
+              <Link key={gd.id} href={`/gds/${gd.id}`}>
+                <Card interactive className="p-4">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <Pill tone={statusTone(gd.status)}>
+                      {gd.status === "live" && <LiveDot />}
+                      {gd.status.replace("_", " ")}
+                    </Pill>
                     <Pill tone={gd.entryFeeCents === 0 ? "neutral" : "gold"}>
                       <span className="num">{formatFee(gd.entryFeeCents)}</span>
                     </Pill>
                   </div>
-                </div>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </section>
+
+                  <h3 className="text-pretty text-[0.95rem] font-bold leading-snug">{gd.topic}</h3>
+
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {new Date(gd.scheduledAt).toLocaleString()} ·{" "}
+                    <span className="num">{gd.durationMins}</span> min
+                  </p>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+      </div>
     </PageTransition>
   );
 }

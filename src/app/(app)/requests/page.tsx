@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { PageTransition } from "@/components/ui/PageTransition";
-import { Card } from "@/components/ui/Card";
+import { Card, Pill } from "@/components/scoreboard/kit";
 import { Button } from "@/components/ui/Button";
-import { Pill } from "@/components/ui/Pill";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
+import { cn } from "@/lib/utils";
 import { useMe } from "@/lib/queries/users";
 import { useMyDoubts } from "@/lib/queries/doubts";
 import {
@@ -24,8 +24,6 @@ import { relativeTime } from "@/lib/relative-time";
 import { isMeetingWindowOver } from "@/lib/meeting-window";
 import { useComplaint, useFileComplaint } from "@/lib/queries/complaints";
 import { useMyAiNotes } from "@/lib/queries/ai-notes";
-import shared from "../../shared.module.css";
-import styles from "./page.module.css";
 
 type Tab = "forMyDoubts" | "sentByMe" | "bookings";
 
@@ -71,8 +69,8 @@ function IncomingRequestsForDoubt({ doubt }: { doubt: Doubt }) {
   return (
     <>
       {pending.map((request) => (
-        <Card key={request.id} style={{ marginBottom: 12 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 800, marginBottom: 4 }}>{doubt.title}</h3>
+        <Card key={request.id} className="mb-3 p-4">
+          <h3 className="mb-1 text-[15px] font-extrabold">{doubt.title}</h3>
           <ResolutionRequestCard request={request} bare />
         </Card>
       ))}
@@ -82,14 +80,14 @@ function IncomingRequestsForDoubt({ doubt }: { doubt: Doubt }) {
 
 function SentRequestRow({ request }: { request: ResolutionRequest }) {
   return (
-    <Card style={{ marginBottom: 12 }}>
-      <div className={styles.rowHead}>
-        <span className={`${styles.title} num`}>
+    <Card className="mb-3 p-4">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <span className="num text-sm font-extrabold">
           {request.durationMins} min · {formatAmount(request.amountCents)}
         </span>
         <Pill tone={REQUEST_STATUS_TONE[request.status]}>{request.status}</Pill>
       </div>
-      <p className={shared.muted}>Sent {relativeTime(request.createdAt)}</p>
+      <p className="text-sm text-muted-foreground">Sent {relativeTime(request.createdAt)}</p>
     </Card>
   );
 }
@@ -121,16 +119,16 @@ function RatingPrompt({ bookingId }: { bookingId: string }) {
   }
 
   if (outcome === "rated") {
-    return <p style={{ fontWeight: 700, marginTop: 10 }}>You rated this session {rating}★</p>;
+    return <p className="mt-2.5 font-bold">You rated this session {rating}★</p>;
   }
   if (outcome === "already-rated") {
-    return <p className={shared.muted} style={{ marginTop: 10 }}>You&apos;ve already rated this session.</p>;
+    return <p className="mt-2.5 text-sm text-muted-foreground">You&apos;ve already rated this session.</p>;
   }
 
   return (
-    <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
-      <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>Rate this session</p>
-      <div role="group" aria-label="Rating" style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+    <div className="mt-2.5 border-t border-border pt-2.5">
+      <p className="mb-1.5 text-[13px] font-bold">Rate this session</p>
+      <div role="group" aria-label="Rating" className="mb-2 flex gap-1">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
@@ -138,12 +136,10 @@ function RatingPrompt({ bookingId }: { bookingId: string }) {
             aria-pressed={rating >= n}
             aria-label={`${n} star${n === 1 ? "" : "s"}`}
             onClick={() => setRating(n)}
-            style={{
-              fontSize: 20,
-              lineHeight: 1,
-              color: rating >= n ? "var(--accent)" : "var(--muted)",
-              padding: 4,
-            }}
+            className={cn(
+              "min-h-11 min-w-11 p-1 text-xl leading-none",
+              rating >= n ? "text-primary" : "text-muted-foreground",
+            )}
           >
             ★
           </button>
@@ -155,7 +151,7 @@ function RatingPrompt({ bookingId }: { bookingId: string }) {
         value={feedbackText}
         onChange={(e) => setFeedbackText(e.target.value)}
         rows={2}
-        style={{ width: "100%", marginBottom: 8, fontFamily: "inherit", fontSize: 13, padding: 8 }}
+        className="mb-2 w-full rounded-xl border border-border bg-card p-2 text-base text-foreground"
       />
       <Button
         type="button"
@@ -199,16 +195,12 @@ function ComplaintPrompt({ bookingId }: { bookingId: string }) {
         : complaint.data.outcome === "upheld"
           ? "Reported — payout withheld"
           : "Reported — no issue found, payout released";
-    return (
-      <p className={shared.muted} style={{ marginTop: 10 }}>
-        {statusText}
-      </p>
-    );
+    return <p className="mt-2.5 text-sm text-muted-foreground">{statusText}</p>;
   }
 
   if (!open) {
     return (
-      <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
+      <div className="mt-2.5 border-t border-border pt-2.5">
         <Button type="button" variant="secondary" style={{ width: "auto" }} onClick={() => setOpen(true)}>
           Report an issue
         </Button>
@@ -217,17 +209,17 @@ function ComplaintPrompt({ bookingId }: { bookingId: string }) {
   }
 
   return (
-    <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
-      <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>What went wrong?</p>
+    <div className="mt-2.5 border-t border-border pt-2.5">
+      <p className="mb-1.5 text-[13px] font-bold">What went wrong?</p>
       <textarea
         aria-label="Issue description"
         placeholder="Describe the issue with this session"
         value={reason}
         onChange={(e) => setReason(e.target.value)}
         rows={2}
-        style={{ width: "100%", marginBottom: 8, fontFamily: "inherit", fontSize: 13, padding: 8 }}
+        className="mb-2 w-full rounded-xl border border-border bg-card p-2 text-base text-foreground"
       />
-      <div style={{ display: "flex", gap: 8 }}>
+      <div className="flex gap-2">
         <Button
           type="button"
           style={{ width: "auto" }}
@@ -285,16 +277,16 @@ function BookingRow({ booking, role }: { booking: Booking; role: "poster" | "res
   }
 
   return (
-    <Card style={{ marginBottom: 12 }}>
-      <div className={styles.rowHead}>
-        <span className={styles.title}>{formatSlot(booking.slotAt)}</span>
+    <Card className="mb-3 p-4">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <span className="text-sm font-extrabold">{formatSlot(booking.slotAt)}</span>
         <Pill tone={BOOKING_STATUS_TONE[booking.status]}>{BOOKING_STATUS_LABEL[booking.status]}</Pill>
       </div>
-      <p className={`${shared.muted} num`} style={{ marginBottom: 10 }}>
+      <p className="num mb-2.5 text-sm text-muted-foreground">
         {booking.durationMins} min · {formatAmount(booking.amountCents)} · as {role}
       </p>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <div className="flex flex-wrap gap-2">
         {booking.status === "scheduled" && (
           <Link href={`/bookings/${booking.id}/payment`}>
             <Button type="button" variant="secondary" style={{ width: "auto" }}>
@@ -333,21 +325,21 @@ function BookingRow({ booking, role }: { booking: Booking; role: "poster" | "res
       </div>
 
       {booking.status === "scheduled" && !meetingEnded && booking.joinUrl && (
-        <p className={shared.muted} style={{ marginTop: 8, fontSize: 12 }}>
+        <p className="mt-2 text-xs text-muted-foreground">
           This session is recorded for quality and safety. The recording is kept for 15 minutes
           after the session ends, then deleted.
         </p>
       )}
 
       {booking.status === "completed" && role === "resolver" && (
-        <p className={shared.muted} style={{ marginTop: 10, fontSize: 12 }}>
+        <p className="mt-2.5 text-xs text-muted-foreground">
           Your payout is held for up to 30 minutes after the session, then released automatically
           unless the poster reports an issue.
         </p>
       )}
 
       {booking.status === "completed" && aiNotesDelivery && (
-        <div style={{ marginTop: 10 }}>
+        <div className="mt-2.5">
           <Link href={`/ai-notes/${aiNotesDelivery.id}`}>
             <Button type="button" variant="secondary" style={{ width: "auto" }}>
               View AI notes
@@ -374,26 +366,31 @@ export default function RequestsPage() {
   const posterBookings = useMyBookings("poster");
   const resolverBookings = useMyBookings("resolver");
 
+  const tabs: { key: Tab; label: string }[] = [
+    { key: "forMyDoubts", label: "For my doubts" },
+    { key: "sentByMe", label: "Sent by me" },
+    { key: "bookings", label: "Bookings" },
+  ];
+
   return (
     <PageTransition>
-      <section style={{ padding: "32px 0" }}>
-        <h1 className={shared.heading}>Requests</h1>
+      <section className="py-8">
+        <h1 className="mb-3.5 text-3xl font-black leading-tight sm:text-4xl">Requests</h1>
 
-        <div className={styles.tabBar} role="tablist">
-          {(
-            [
-              { key: "forMyDoubts", label: "For my doubts" },
-              { key: "sentByMe", label: "Sent by me" },
-              { key: "bookings", label: "Bookings" },
-            ] as { key: Tab; label: string }[]
-          ).map((t) => (
+        <div className="mb-5 flex gap-1 border-b border-border" role="tablist">
+          {tabs.map((t) => (
             <button
               key={t.key}
               type="button"
               role="tab"
               aria-selected={tab === t.key}
               onClick={() => setTab(t.key)}
-              className={`${styles.tab} ${tab === t.key ? styles.tabActive : ""}`}
+              className={cn(
+                "-mb-px min-h-11 border-b-2 px-3.5 py-2.5 text-sm font-extrabold",
+                tab === t.key
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground",
+              )}
             >
               {t.label}
             </button>
@@ -404,18 +401,18 @@ export default function RequestsPage() {
           <>
             {myDoubts.isLoading && <Skeleton height={80} style={{ marginBottom: 12 }} />}
             {myDoubts.isError && (
-              <Card>
-                <h3>Couldn&apos;t load your doubts</h3>
-                <p className={shared.muted}>Something went wrong reaching the server.</p>
+              <Card className="p-4">
+                <h3 className="mb-1 font-extrabold">Couldn&apos;t load your doubts</h3>
+                <p className="mb-3 text-sm text-muted-foreground">Something went wrong reaching the server.</p>
                 <Button type="button" onClick={() => myDoubts.refetch()}>
                   Try again
                 </Button>
               </Card>
             )}
             {myDoubts.isSuccess && myDoubts.data.length === 0 && (
-              <Card>
-                <h3>No doubts posted yet</h3>
-                <p className={shared.muted}>Post a doubt to start receiving offers to help.</p>
+              <Card className="p-4">
+                <h3 className="mb-1 font-extrabold">No doubts posted yet</h3>
+                <p className="text-sm text-muted-foreground">Post a doubt to start receiving offers to help.</p>
               </Card>
             )}
             {myDoubts.isSuccess &&
@@ -428,18 +425,18 @@ export default function RequestsPage() {
           <>
             {sentRequests.isLoading && <Skeleton height={80} style={{ marginBottom: 12 }} />}
             {sentRequests.isError && (
-              <Card>
-                <h3>Couldn&apos;t load your sent offers</h3>
-                <p className={shared.muted}>Something went wrong reaching the server.</p>
+              <Card className="p-4">
+                <h3 className="mb-1 font-extrabold">Couldn&apos;t load your sent offers</h3>
+                <p className="mb-3 text-sm text-muted-foreground">Something went wrong reaching the server.</p>
                 <Button type="button" onClick={() => sentRequests.refetch()}>
                   Try again
                 </Button>
               </Card>
             )}
             {sentRequests.isSuccess && sentRequests.data.length === 0 && (
-              <Card>
-                <h3>You haven&apos;t offered to help with anything yet</h3>
-                <p className={shared.muted}>Offers you send from the feed show up here.</p>
+              <Card className="p-4">
+                <h3 className="mb-1 font-extrabold">You haven&apos;t offered to help with anything yet</h3>
+                <p className="text-sm text-muted-foreground">Offers you send from the feed show up here.</p>
               </Card>
             )}
             {sentRequests.isSuccess &&
@@ -453,9 +450,9 @@ export default function RequestsPage() {
               <Skeleton height={80} style={{ marginBottom: 12 }} />
             )}
             {(posterBookings.isError || resolverBookings.isError) && (
-              <Card>
-                <h3>Couldn&apos;t load your bookings</h3>
-                <p className={shared.muted}>Something went wrong reaching the server.</p>
+              <Card className="p-4">
+                <h3 className="mb-1 font-extrabold">Couldn&apos;t load your bookings</h3>
+                <p className="mb-3 text-sm text-muted-foreground">Something went wrong reaching the server.</p>
                 <Button
                   type="button"
                   onClick={() => {
@@ -471,9 +468,9 @@ export default function RequestsPage() {
               resolverBookings.isSuccess &&
               posterBookings.data.length === 0 &&
               resolverBookings.data.length === 0 && (
-                <Card>
-                  <h3>No bookings yet</h3>
-                  <p className={shared.muted}>Accepted offers turn into bookings here.</p>
+                <Card className="p-4">
+                  <h3 className="mb-1 font-extrabold">No bookings yet</h3>
+                  <p className="text-sm text-muted-foreground">Accepted offers turn into bookings here.</p>
                 </Card>
               )}
             {posterBookings.data?.map((booking) => <BookingRow key={booking.id} booking={booking} role="poster" />)}

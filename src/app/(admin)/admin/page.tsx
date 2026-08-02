@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Pill } from "@/components/ui/Pill";
 import { useToast } from "@/components/ui/Toast";
+import { Card, Pill } from "@/components/scoreboard/kit";
 import { ApiError, ComplaintOutcome, AdminRole } from "@/lib/api";
 import { useIsSuperadmin } from "@/lib/auth";
 import {
@@ -74,7 +73,7 @@ function UsersTab() {
   if (users.isLoading) return <Skeleton height={200} />;
   if (users.isError) {
     return (
-      <Card>
+      <Card className="p-5">
         <h3>Couldn&apos;t load users</h3>
         <Button type="button" onClick={() => users.refetch()}>
           Try again
@@ -177,7 +176,7 @@ function ComplaintsTab() {
   if (complaints.isLoading) return <Skeleton height={200} />;
   if (complaints.isError) {
     return (
-      <Card>
+      <Card className="p-5">
         <h3>Couldn&apos;t load complaints</h3>
         <Button type="button" onClick={() => complaints.refetch()}>
           Try again
@@ -187,7 +186,7 @@ function ComplaintsTab() {
   }
   if (complaints.data?.length === 0) {
     return (
-      <Card>
+      <Card className="p-5">
         <p className={shared.muted}>No complaints filed yet.</p>
       </Card>
     );
@@ -196,7 +195,7 @@ function ComplaintsTab() {
   return (
     <>
       {complaints.data?.map((c) => (
-        <Card key={c.id} style={{ marginBottom: 12 }}>
+        <Card key={c.id} className="p-5 mb-3">
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
             <span style={{ fontWeight: 800, fontSize: 14 }}>Booking {c.bookingId.slice(0, 8)}</span>
             <Pill tone={c.status === "resolved" ? "neutral" : "live"}>
@@ -275,7 +274,7 @@ function NotificationsTab() {
   }
 
   return (
-    <Card style={{ maxWidth: 480 }}>
+    <Card className="p-5 max-w-[480px]">
       <form onSubmit={handleSubmit}>
         <p className={shared.muted} style={{ marginBottom: 4 }}>User id</p>
         <input
@@ -366,7 +365,7 @@ function ExpertiseTab() {
   return (
     <>
       <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 16 }}>
-        <Card style={{ maxWidth: 380, flex: "1 1 320px" }}>
+        <Card className="p-5 max-w-[380px] min-w-[320px] flex-1">
           <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Add a topic manually</h3>
           <form onSubmit={handleAdd}>
             <input
@@ -388,7 +387,7 @@ function ExpertiseTab() {
           </form>
         </Card>
 
-        <Card style={{ maxWidth: 380, flex: "1 1 320px" }}>
+        <Card className="p-5 max-w-[380px] min-w-[320px] flex-1">
           <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Bulk import via JSON</h3>
           <form onSubmit={handleImport}>
             <textarea
@@ -471,7 +470,7 @@ function AiNotesTab() {
   if (deliveries.isLoading) return <Skeleton height={200} />;
   if (deliveries.isError) {
     return (
-      <Card>
+      <Card className="p-5">
         <h3>Couldn&apos;t load AI notes deliveries</h3>
         <Button type="button" onClick={() => deliveries.refetch()}>
           Try again
@@ -481,7 +480,7 @@ function AiNotesTab() {
   }
   if (deliveries.data?.length === 0) {
     return (
-      <Card>
+      <Card className="p-5">
         <p className={shared.muted}>No failed deliveries.</p>
       </Card>
     );
@@ -569,7 +568,7 @@ function SeminarsTab() {
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {seminars.data?.length === 0 && <p className={shared.muted}>No seminars yet.</p>}
       {seminars.data?.map((seminar) => (
-        <Card key={seminar.id}>
+        <Card key={seminar.id} className="p-5">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
             <div>
               <p style={{ fontWeight: 700 }}>{seminar.title}</p>
@@ -613,7 +612,7 @@ function GdsTab() {
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {gds.data?.length === 0 && <p className={shared.muted}>No GDs yet.</p>}
       {gds.data?.map((gd) => (
-        <Card key={gd.id}>
+        <Card key={gd.id} className="p-5">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
             <div>
               <p style={{ fontWeight: 700 }}>{gd.topic}</p>
@@ -670,7 +669,7 @@ function RbacTab() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <Card>
+      <Card className="p-5">
         <p style={{ fontWeight: 700, marginBottom: 12 }}>Create admin account</p>
         <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <Input label="Username" value={username} onChange={(e) => setUsername(e.target.value)} required />
@@ -692,7 +691,7 @@ function RbacTab() {
       {admins.isError && <p className={shared.error}>Couldn&apos;t load admin accounts.</p>}
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {admins.data?.map((admin) => (
-          <Card key={admin.id}>
+          <Card key={admin.id} className="p-5">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
               <div>
                 <p style={{ fontWeight: 700, marginBottom: 4 }}>{admin.username}</p>
@@ -775,7 +774,7 @@ function GatewayTab() {
   if (routes.isError) return <p className={shared.error}>Couldn&apos;t load the gateway&apos;s routing table.</p>;
 
   return (
-    <Card>
+    <Card className="p-5">
       <p style={{ fontWeight: 700, marginBottom: 8 }}>Gateway routing table</p>
       <p className={shared.muted} style={{ marginBottom: 12 }}>
         Live only -- a change here doesn&apos;t survive the gateway restarting (that still comes from the ECS task

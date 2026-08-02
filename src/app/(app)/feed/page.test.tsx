@@ -155,7 +155,8 @@ describe("FeedPage", () => {
     renderWithProviders(<FeedPage />);
 
     await screen.findByText(doubt.title);
-    expect(await screen.findByText(/Mathematics \(Engineering \(B\.Tech\)\).*Physics \(Engineering \(B\.Tech\)\)/)).toBeInTheDocument();
+    expect(await screen.findByText("Mathematics (Engineering (B.Tech))")).toBeInTheDocument();
+    expect(await screen.findByText("Physics (Engineering (B.Tech))")).toBeInTheDocument();
   });
 
   it("shows an 'Offer to help' action for others' open doubts but not for the user's own doubts", async () => {

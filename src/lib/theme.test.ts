@@ -1,11 +1,15 @@
 import { describe, expect, it, beforeEach } from "vitest";
+import { THEME_PRESETS, DEFAULT_PRESET_ID } from "./theme-presets";
 import {
-  MIN_CONTRAST_RATIO,
+  MIN_ACCENT_CONTRAST_RATIO,
   contrastRatio,
-  validateCustomTheme,
-  saveCustomTheme,
-  loadCustomTheme,
-  clearCustomTheme,
+  validateAccentColor,
+  validatePreset,
+  applyThemePreset,
+  saveThemePreset,
+  loadThemePreset,
+  resetThemePreset,
+  findPreset,
   loadLayoutPrefs,
   saveLayoutPrefs,
 } from "./theme";
@@ -24,71 +28,86 @@ describe("contrastRatio", () => {
   });
 });
 
-describe("validateCustomTheme", () => {
-  it("rejects white-on-white style combinations (the explicit unreadable case)", () => {
-    const result = validateCustomTheme({
-      primary: "#ffffff",
-      secondary: "#ffffff",
-      tertiary: "#ffffff",
-    });
+describe("validateAccentColor", () => {
+  it("rejects white (the explicit unreadable-on-white case)", () => {
+    const result = validateAccentColor("#ffffff", "Primary");
     expect(result.valid).toBe(false);
     expect(result.reasons.length).toBeGreaterThan(0);
   });
 
-  it("accepts the current default Scoreboard palette", () => {
-    const result = validateCustomTheme({
-      primary: "#c47f00",
-      secondary: "#e3e8f0",
-      tertiary: "#d81f3d",
-    });
-    expect(result.valid).toBe(true);
-    expect(result.reasons).toEqual([]);
+  it("rejects a near-invisible pastel against the light background", () => {
+    const result = validateAccentColor("#f0f2f5", "Primary");
+    expect(result.valid).toBe(false);
   });
 
   it("rejects an invalid hex value", () => {
-    const result = validateCustomTheme({
-      primary: "banana",
-      secondary: "#e3e8f0",
-      tertiary: "#d81f3d",
-    });
-    expect(result.valid).toBe(false);
+    expect(validateAccentColor("banana", "Primary").valid).toBe(false);
   });
 
-  it("flags a near-invisible pastel accent against both backgrounds", () => {
-    const result = validateCustomTheme({
-      primary: "#f0f2f5",
-      secondary: "#e3e8f0",
-      tertiary: "#d81f3d",
-    });
-    expect(result.valid).toBe(false);
+  it("accepts the shipped default amber", () => {
+    expect(validateAccentColor("#c47f00", "Primary").valid).toBe(true);
   });
 });
 
-describe("theme persistence", () => {
+describe("every curated preset", () => {
+  it.each(THEME_PRESETS)("$name passes the contrast validator in both light and dark", (preset) => {
+    const result = validatePreset(preset);
+    expect(result.reasons).toEqual([]);
+    expect(result.valid).toBe(true);
+  });
+
+  it("has no duplicate ids", () => {
+    const ids = THEME_PRESETS.map((p) => p.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("includes the documented default preset id", () => {
+    expect(THEME_PRESETS.some((p) => p.id === DEFAULT_PRESET_ID)).toBe(true);
+  });
+});
+
+describe("findPreset", () => {
+  it("falls back to the default when the id is unknown or null", () => {
+    expect(findPreset("not-a-real-id").id).toBe(DEFAULT_PRESET_ID);
+    expect(findPreset(null).id).toBe(DEFAULT_PRESET_ID);
+  });
+
+  it("returns the matching preset by id", () => {
+    expect(findPreset("emerald-rose").id).toBe("emerald-rose");
+  });
+});
+
+describe("theme preset persistence", () => {
   beforeEach(() => {
     window.localStorage.clear();
     document.documentElement.removeAttribute("style");
+    document.documentElement.removeAttribute("data-theme");
   });
 
-  it("saveCustomTheme refuses to persist an invalid combination", () => {
-    const result = saveCustomTheme({ primary: "#ffffff", secondary: "#ffffff", tertiary: "#ffffff" });
-    expect(result.valid).toBe(false);
-    expect(loadCustomTheme()).toBeNull();
+  it("saveThemePreset persists and applies the preset's light-mode colors by default", () => {
+    document.documentElement.setAttribute("data-theme", "light");
+    const preset = findPreset("emerald-rose");
+    saveThemePreset(preset);
+    expect(loadThemePreset().id).toBe("emerald-rose");
+    expect(document.documentElement.style.getPropertyValue("--accent")).toBe(preset.light.primary);
   });
 
-  it("saveCustomTheme persists and applies a valid combination", () => {
-    const colors = { primary: "#c47f00", secondary: "#e3e8f0", tertiary: "#d81f3d" };
-    const result = saveCustomTheme(colors);
-    expect(result.valid).toBe(true);
-    expect(loadCustomTheme()).toEqual(colors);
-    expect(document.documentElement.style.getPropertyValue("--accent")).toBe("#c47f00");
+  it("applies the dark-mode variant when data-theme is dark", () => {
+    document.documentElement.setAttribute("data-theme", "dark");
+    const preset = findPreset("emerald-rose");
+    applyThemePreset(preset);
+    expect(document.documentElement.style.getPropertyValue("--accent")).toBe(preset.dark.primary);
   });
 
-  it("clearCustomTheme removes stored theme and inline overrides", () => {
-    saveCustomTheme({ primary: "#c47f00", secondary: "#e3e8f0", tertiary: "#d81f3d" });
-    clearCustomTheme();
-    expect(loadCustomTheme()).toBeNull();
+  it("resetThemePreset removes stored preset and inline overrides", () => {
+    saveThemePreset(findPreset("emerald-rose"));
+    resetThemePreset();
+    expect(loadThemePreset().id).toBe(DEFAULT_PRESET_ID);
     expect(document.documentElement.style.getPropertyValue("--accent")).toBe("");
+  });
+
+  it("defaults to the documented default preset when nothing is stored", () => {
+    expect(loadThemePreset().id).toBe(DEFAULT_PRESET_ID);
   });
 });
 
@@ -109,6 +128,6 @@ describe("layout prefs persistence", () => {
   });
 });
 
-it("MIN_CONTRAST_RATIO matches WCAG AA for normal text", () => {
-  expect(MIN_CONTRAST_RATIO).toBe(4.5);
+it("MIN_ACCENT_CONTRAST_RATIO stays above 2 -- a real floor, not effectively disabled", () => {
+  expect(MIN_ACCENT_CONTRAST_RATIO).toBeGreaterThanOrEqual(2);
 });

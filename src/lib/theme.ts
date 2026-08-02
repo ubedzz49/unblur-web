@@ -1,18 +1,16 @@
-/** Custom theme + layout preferences, persisted client-side, gated by a contrast check
- * so a user can never save colors that would make text unreadable (e.g. white-on-white). */
+/** Theme + layout preferences, persisted client-side. Colors are chosen from a fixed
+ * list of curated presets (see theme-presets.ts) rather than a free color picker --
+ * every preset is pre-checked against the contrast validator below so there's no way
+ * to end up with an unreadable combination (e.g. all-white text on white). */
 
-export interface CustomThemeColors {
-  primary: string;
-  secondary: string;
-  tertiary: string;
-}
+import { DEFAULT_PRESET_ID, THEME_PRESETS, ThemePreset } from "./theme-presets";
 
 export interface LayoutPrefs {
   density: "comfortable" | "compact";
   contentWidth: "normal" | "wide";
 }
 
-export const THEME_STORAGE_KEY = "unblur:custom-theme";
+export const THEME_PRESET_STORAGE_KEY = "unblur:theme-preset";
 export const LAYOUT_STORAGE_KEY = "unblur:layout-prefs";
 
 // WCAG 2.x minimum contrast ratio for normal-size body text (used for surface/ink checks).
@@ -38,8 +36,6 @@ function relativeLuminance([r, g, b]: [number, number, number]): number {
   return 0.2126 * chan[0] + 0.7152 * chan[1] + 0.0722 * chan[2];
 }
 
-/** WCAG contrast ratio between two hex colors, 1 (no contrast) to 21 (max). Returns
- * null if either color isn't a valid #rrggbb hex. */
 export function contrastRatio(hexA: string, hexB: string): number | null {
   const a = hexToRgb(hexA);
   const b = hexToRgb(hexB);
@@ -53,110 +49,97 @@ export function contrastRatio(hexA: string, hexB: string): number | null {
 
 export interface ThemeValidationResult {
   valid: boolean;
-  /** Human-readable reasons a combination was rejected, empty when valid. */
   reasons: string[];
 }
 
-/** The gate every custom theme save must pass: each accent color must stay readable
- * against both the light and dark page backgrounds it could land on, and against white
- * text (since accents are also used as button backgrounds with white/near-white labels). */
-const INK_LIGHT = "#0c1a2e";
-const INK_DARK = "#eef4ff";
-
-export function validateCustomTheme(
-  colors: CustomThemeColors,
+/** Gate every preset is authored against (see theme-presets.test.ts) -- an accent must
+ * stay legible against both page backgrounds and have some readable text color on top of it. */
+export function validateAccentColor(
+  hex: string,
+  label: string,
   backgrounds: { light: string; dark: string } = { light: "#eef1f6", dark: "#0a1626" },
 ): ThemeValidationResult {
   const reasons: string[] = [];
-
-  function checkColor(hex: string, label: string) {
-    if (!hexToRgb(hex)) {
-      reasons.push(`${label} isn't a valid color.`);
-      return false;
-    }
-    return true;
+  if (!hexToRgb(hex)) {
+    return { valid: false, reasons: [`${label} isn't a valid color.`] };
   }
 
-  // primary/tertiary render as button fills and status text/icons directly on the
-  // page background in both themes -- they need to stand out against both, and have
-  // *some* readable text color sitting on top of them.
-  function checkAccent(hex: string, label: string) {
-    if (!checkColor(hex, label)) return;
-    const vsLight = contrastRatio(hex, backgrounds.light);
-    const vsDark = contrastRatio(hex, backgrounds.dark);
-    const vsWhite = contrastRatio(hex, "#ffffff");
-    const vsBlack = contrastRatio(hex, "#000000");
+  const vsLight = contrastRatio(hex, backgrounds.light);
+  const vsDark = contrastRatio(hex, backgrounds.dark);
+  const vsWhite = contrastRatio(hex, "#ffffff");
+  const vsBlack = contrastRatio(hex, "#000000");
 
-    if (vsLight !== null && vsLight < MIN_ACCENT_CONTRAST_RATIO) {
-      reasons.push(`${label} is too close to the light background to read clearly.`);
-    }
-    if (vsDark !== null && vsDark < MIN_ACCENT_CONTRAST_RATIO) {
-      reasons.push(`${label} is too close to the dark background to read clearly.`);
-    }
-    if (
-      vsWhite !== null &&
-      vsBlack !== null &&
-      vsWhite < MIN_ACCENT_CONTRAST_RATIO &&
-      vsBlack < MIN_ACCENT_CONTRAST_RATIO
-    ) {
-      reasons.push(`${label} wouldn't have any readable text color to sit under it.`);
-    }
+  if (vsLight !== null && vsLight < MIN_ACCENT_CONTRAST_RATIO) {
+    reasons.push(`${label} is too close to the light background to read clearly.`);
   }
-
-  // secondary renders as a surface (card/elevated background) with regular ink text
-  // on top of it in whichever theme is active -- the thing that must stay readable
-  // is ink-on-secondary, not secondary-on-page-background.
-  function checkSurface(hex: string, label: string) {
-    if (!checkColor(hex, label)) return;
-    const vsLightInk = contrastRatio(hex, INK_LIGHT);
-    const vsDarkInk = contrastRatio(hex, INK_DARK);
-    if (vsLightInk !== null && vsLightInk < MIN_CONTRAST_RATIO && vsDarkInk !== null && vsDarkInk < MIN_CONTRAST_RATIO) {
-      reasons.push(`${label} wouldn't leave any readable text color for the content sitting on it.`);
-    }
+  if (vsDark !== null && vsDark < MIN_ACCENT_CONTRAST_RATIO) {
+    reasons.push(`${label} is too close to the dark background to read clearly.`);
   }
-
-  checkAccent(colors.primary, "Primary");
-  checkSurface(colors.secondary, "Secondary");
-  checkAccent(colors.tertiary, "Tertiary");
+  if (vsWhite !== null && vsBlack !== null && vsWhite < MIN_ACCENT_CONTRAST_RATIO && vsBlack < MIN_ACCENT_CONTRAST_RATIO) {
+    reasons.push(`${label} wouldn't have any readable text color to sit under it.`);
+  }
 
   return { valid: reasons.length === 0, reasons };
 }
 
-export function loadCustomTheme(): CustomThemeColors | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(THEME_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as CustomThemeColors) : null;
-  } catch {
-    return null;
-  }
+// light-mode colors only ever render against the light background, dark-mode colors
+// only against the dark background -- so each is validated against its own mode's
+// background only, not cross-checked against the mode it never appears in.
+const LIGHT_ONLY = { light: "#eef1f6", dark: "#eef1f6" };
+const DARK_ONLY = { light: "#0a1626", dark: "#0a1626" };
+
+export function validatePreset(preset: ThemePreset): ThemeValidationResult {
+  const checks = [
+    validateAccentColor(preset.light.primary, `${preset.name} (light primary)`, LIGHT_ONLY),
+    validateAccentColor(preset.light.tertiary, `${preset.name} (light tertiary)`, LIGHT_ONLY),
+    validateAccentColor(preset.dark.primary, `${preset.name} (dark primary)`, DARK_ONLY),
+    validateAccentColor(preset.dark.tertiary, `${preset.name} (dark tertiary)`, DARK_ONLY),
+  ];
+  const reasons = checks.flatMap((c) => c.reasons);
+  return { valid: reasons.length === 0, reasons };
 }
 
-export function saveCustomTheme(colors: CustomThemeColors): ThemeValidationResult {
-  const result = validateCustomTheme(colors);
-  if (!result.valid) return result;
-  applyCustomTheme(colors);
-  window.localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(colors));
-  return result;
+function getEffectiveMode(): "light" | "dark" {
+  if (typeof document === "undefined") return "light";
+  const attr = document.documentElement.getAttribute("data-theme");
+  if (attr === "light" || attr === "dark") return attr;
+  return typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-export function clearCustomTheme() {
+export function findPreset(id: string | null): ThemePreset {
+  return THEME_PRESETS.find((p) => p.id === id) ?? THEME_PRESETS.find((p) => p.id === DEFAULT_PRESET_ID)!;
+}
+
+export function loadThemePreset(): ThemePreset {
+  if (typeof window === "undefined") return findPreset(DEFAULT_PRESET_ID);
+  return findPreset(window.localStorage.getItem(THEME_PRESET_STORAGE_KEY));
+}
+
+/** Applies the preset's colors for whichever mode (light/dark) is currently active --
+ * call again after toggling light/dark so the preset follows the mode switch. */
+export function applyThemePreset(preset: ThemePreset) {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(THEME_STORAGE_KEY);
-  const root = document.documentElement;
-  root.style.removeProperty("--accent");
-  root.style.removeProperty("--bg-alt");
-  root.style.removeProperty("--elevated");
-  root.style.removeProperty("--accent-2");
-}
-
-export function applyCustomTheme(colors: CustomThemeColors) {
-  if (typeof window === "undefined") return;
+  const mode = getEffectiveMode();
+  const colors = preset[mode];
   const root = document.documentElement;
   root.style.setProperty("--accent", colors.primary);
-  root.style.setProperty("--bg-alt", colors.secondary);
-  root.style.setProperty("--elevated", colors.secondary);
+  root.style.setProperty("--ring", colors.primary);
   root.style.setProperty("--accent-2", colors.tertiary);
+}
+
+export function saveThemePreset(preset: ThemePreset) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(THEME_PRESET_STORAGE_KEY, preset.id);
+  applyThemePreset(preset);
+}
+
+export function resetThemePreset() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(THEME_PRESET_STORAGE_KEY);
+  const root = document.documentElement;
+  root.style.removeProperty("--accent");
+  root.style.removeProperty("--ring");
+  root.style.removeProperty("--accent-2");
 }
 
 export function loadLayoutPrefs(): LayoutPrefs {
@@ -183,9 +166,8 @@ export function applyLayoutPrefs(prefs: LayoutPrefs) {
   root.setAttribute("data-content-width", prefs.contentWidth === "wide" ? "wide" : "normal");
 }
 
-/** Call once on app boot (before paint, ideally) to restore a saved theme/layout without a flash. */
+/** Call once on app boot (before paint, ideally) to restore saved theme/layout without a flash. */
 export function applyStoredAppearance() {
-  const theme = loadCustomTheme();
-  if (theme) applyCustomTheme(theme);
+  applyThemePreset(loadThemePreset());
   applyLayoutPrefs(loadLayoutPrefs());
 }

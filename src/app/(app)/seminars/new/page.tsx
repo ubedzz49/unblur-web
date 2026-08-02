@@ -3,15 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCreateSeminar, useSeminarEligibility } from "@/lib/queries/seminars";
-import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { DateTimePicker } from "@/components/ui/DateTimePicker";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { useToast } from "@/components/ui/Toast";
-import shared from "../../../shared.module.css";
-import styles from "./page.module.css";
+import { Card } from "@/components/scoreboard/kit";
 
 export default function NewSeminarPage() {
   const router = useRouter();
@@ -28,15 +26,15 @@ export default function NewSeminarPage() {
   if (eligibility.isSuccess && !eligibility.data.canHostSeminar) {
     return (
       <PageTransition>
-        <section style={{ padding: "32px 0" }}>
-          <h1 className={shared.heading}>Host a seminar</h1>
-          <Card>
-            <p className={`${shared.muted} ${styles.gateHint}`}>
-              You need <span className="num">300+</span> minutes resolved and a{" "}
-              <span className="num">3.5+</span> average rating to host a seminar.
+        <div className="space-y-6 py-8">
+          <h1 className="text-fluid-title">Host a seminar</h1>
+          <Card className="p-4">
+            <p className="text-sm text-muted-foreground">
+              You need <span className="num font-semibold text-foreground">300+</span> minutes resolved and a{" "}
+              <span className="num font-semibold text-foreground">3.5+</span> average rating to host a seminar.
             </p>
           </Card>
-        </section>
+        </div>
       </PageTransition>
     );
   }
@@ -64,10 +62,10 @@ export default function NewSeminarPage() {
 
   return (
     <PageTransition>
-      <section style={{ padding: "32px 0" }}>
-        <h1 className={shared.heading}>Host a seminar</h1>
-        <Card>
-          <form onSubmit={handleSubmit} className={styles.form}>
+      <div className="space-y-6 py-8">
+        <h1 className="text-fluid-title">Host a seminar</h1>
+        <Card className="p-4">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
             <Textarea label="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} />
             <DateTimePicker label="Scheduled at" value={scheduledAt} onChange={setScheduledAt} />
@@ -90,7 +88,7 @@ export default function NewSeminarPage() {
             </Button>
           </form>
         </Card>
-      </section>
+      </div>
     </PageTransition>
   );
 }

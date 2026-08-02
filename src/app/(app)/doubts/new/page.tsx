@@ -3,12 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PageTransition } from "@/components/ui/PageTransition";
-import { Card } from "@/components/ui/Card";
 import { Button, ButtonStatus } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { DoubtExpertisePicker, SelectedExpertise } from "@/components/DoubtExpertisePicker";
-import { SectionLabel } from "@/components/ui/SectionLabel";
+import { Card, SectionLabel } from "@/components/scoreboard/kit";
 import { useToast } from "@/components/ui/Toast";
 import { useMe } from "@/lib/queries/users";
 import { useCreateDoubt } from "@/lib/queries/doubts";
@@ -51,16 +50,16 @@ export default function NewDoubtPage() {
 
   return (
     <PageTransition>
-      <section style={{ padding: "32px 0" }}>
+      <section className="py-8">
         <h1 className={shared.heading}>Post a doubt</h1>
-        <p className={shared.muted} style={{ marginBottom: 24, maxWidth: "44ch" }}>
+        <p className="mb-6 max-w-[44ch] text-sm text-muted-foreground">
           Describe what&apos;s confusing you — people who know this subject will see it in their
           feed.
         </p>
 
-        <Card style={{ maxWidth: 480 }}>
+        <Card className="max-w-[480px] p-4">
           <form onSubmit={handleSubmit}>
-            <fieldset disabled={submitStatus === "loading"} style={{ border: "none", padding: 0, margin: 0 }}>
+            <fieldset disabled={submitStatus === "loading"} className="m-0 border-0 p-0">
               <Input
                 id="doubt-title"
                 label="Title"
@@ -76,7 +75,7 @@ export default function NewDoubtPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add any extra detail that might help (optional)."
               />
-              <div style={{ marginBottom: 16 }}>
+              <div className="mb-4">
                 <SectionLabel>Subject / level</SectionLabel>
                 <DoubtExpertisePicker
                   title={title}

@@ -10,7 +10,13 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         defaultOptions: {
           queries: {
             retry: 1,
-            refetchOnWindowFocus: false,
+            // data here changes from other people's actions (new doubts, incoming
+            // requests, GD state) -- refetch on focus/reconnect and on an interval
+            // so screens update on their own instead of needing a manual refresh
+            refetchOnWindowFocus: true,
+            refetchOnReconnect: true,
+            staleTime: 15_000,
+            refetchInterval: 30_000,
           },
         },
       }),
