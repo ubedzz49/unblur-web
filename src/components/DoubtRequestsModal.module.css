@@ -22,13 +22,14 @@
   max-width: 560px;
   max-height: 88vh;
   overflow-y: auto;
-  border-radius: 12px 12px 0 0;
+  border-radius: var(--radius, 20px) var(--radius, 20px) 0 0;
+  border: 1px solid var(--line);
   padding: 20px;
 }
 
 @media (min-width: 640px) {
   .panel {
-    border-radius: 8px;
+    border-radius: var(--radius, 20px);
   }
 }
 
@@ -81,9 +82,11 @@
 
 .skillPill {
   font-size: 11px;
-  font-weight: 700;
-  padding: 3px 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: var(--bg-alt);
-  color: var(--ink);
+  background: var(--elevated, var(--bg-alt));
+  color: var(--muted);
 }

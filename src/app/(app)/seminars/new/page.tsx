@@ -11,6 +11,7 @@ import { DateTimePicker } from "@/components/ui/DateTimePicker";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { useToast } from "@/components/ui/Toast";
 import shared from "../../../shared.module.css";
+import styles from "./page.module.css";
 
 export default function NewSeminarPage() {
   const router = useRouter();
@@ -29,9 +30,12 @@ export default function NewSeminarPage() {
       <PageTransition>
         <section style={{ padding: "32px 0" }}>
           <h1 className={shared.heading}>Host a seminar</h1>
-          <p className={shared.muted}>
-            You need 300+ minutes resolved and a 3.5+ average rating to host a seminar.
-          </p>
+          <Card>
+            <p className={`${shared.muted} ${styles.gateHint}`}>
+              You need <span className="num">300+</span> minutes resolved and a{" "}
+              <span className="num">3.5+</span> average rating to host a seminar.
+            </p>
+          </Card>
         </section>
       </PageTransition>
     );
@@ -63,7 +67,7 @@ export default function NewSeminarPage() {
       <section style={{ padding: "32px 0" }}>
         <h1 className={shared.heading}>Host a seminar</h1>
         <Card>
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <form onSubmit={handleSubmit} className={styles.form}>
             <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
             <Textarea label="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} />
             <DateTimePicker label="Scheduled at" value={scheduledAt} onChange={setScheduledAt} />

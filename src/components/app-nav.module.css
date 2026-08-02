@@ -2,9 +2,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0;
-  border-bottom: 2px solid var(--line);
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
   gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in oklab, var(--bg) 85%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .brand {
@@ -26,16 +32,17 @@
 }
 
 .desktopTabs a {
-  padding: 8px 14px;
-  border-radius: 4px;
+  padding: 8px 16px;
+  border-radius: 999px;
   font-size: 14px;
   font-weight: 700;
   color: var(--muted);
+  transition: background 0.15s, color 0.15s;
 }
 
 .desktopTabs a[data-active="true"] {
   color: var(--ink);
-  background: var(--bg-alt);
+  background: var(--elevated, var(--bg-alt));
 }
 
 /* bottom tab bar for mobile width */
@@ -54,9 +61,11 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: var(--card);
-    border-top: 2px solid var(--line);
-    padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
+    background: color-mix(in oklab, var(--bg) 90%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--line);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
     z-index: 100;
   }
 
@@ -73,7 +82,7 @@
   }
 
   .tabBar a[data-active="true"] {
-    color: var(--accent-2);
+    color: var(--accent);
   }
 
   .tabIcon {

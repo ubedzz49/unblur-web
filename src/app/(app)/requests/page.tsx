@@ -5,6 +5,7 @@ import { useState } from "react";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Pill } from "@/components/ui/Pill";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { useMe } from "@/lib/queries/users";
@@ -18,12 +19,13 @@ import {
   useSubmitRating,
 } from "@/lib/queries/resolution";
 import { ResolutionRequestCard } from "@/components/ResolutionRequestCard";
-import { ApiError, Booking, BookingStatus, Doubt, ResolutionRequest } from "@/lib/api";
+import { ApiError, Booking, BookingStatus, Doubt, ResolutionRequest, ResolutionRequestStatus } from "@/lib/api";
 import { relativeTime } from "@/lib/relative-time";
 import { isMeetingWindowOver } from "@/lib/meeting-window";
 import { useComplaint, useFileComplaint } from "@/lib/queries/complaints";
 import { useMyAiNotes } from "@/lib/queries/ai-notes";
 import shared from "../../shared.module.css";
+import styles from "./page.module.css";
 
 type Tab = "forMyDoubts" | "sentByMe" | "bookings";
 
@@ -31,6 +33,18 @@ const BOOKING_STATUS_LABEL: Record<BookingStatus, string> = {
   scheduled: "Scheduled",
   completed: "Completed",
   cancelled: "Cancelled",
+};
+
+const BOOKING_STATUS_TONE: Record<BookingStatus, "outline" | "gold" | "danger"> = {
+  scheduled: "outline",
+  completed: "gold",
+  cancelled: "danger",
+};
+
+const REQUEST_STATUS_TONE: Record<ResolutionRequestStatus, "outline" | "gold" | "danger"> = {
+  pending: "outline",
+  accepted: "gold",
+  rejected: "danger",
 };
 
 function formatAmount(amountCents: number): string {
@@ -69,13 +83,11 @@ function IncomingRequestsForDoubt({ doubt }: { doubt: Doubt }) {
 function SentRequestRow({ request }: { request: ResolutionRequest }) {
   return (
     <Card style={{ marginBottom: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-        <span style={{ fontWeight: 800, fontSize: 14 }}>
+      <div className={styles.rowHead}>
+        <span className={`${styles.title} num`}>
           {request.durationMins} min · {formatAmount(request.amountCents)}
         </span>
-        <span className={shared.muted} style={{ textTransform: "capitalize" }}>
-          {request.status}
-        </span>
+        <Pill tone={REQUEST_STATUS_TONE[request.status]}>{request.status}</Pill>
       </div>
       <p className={shared.muted}>Sent {relativeTime(request.createdAt)}</p>
     </Card>
@@ -274,11 +286,11 @@ function BookingRow({ booking, role }: { booking: Booking; role: "poster" | "res
 
   return (
     <Card style={{ marginBottom: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-        <span style={{ fontWeight: 800, fontSize: 14 }}>{formatSlot(booking.slotAt)}</span>
-        <span className={shared.muted}>{BOOKING_STATUS_LABEL[booking.status]}</span>
+      <div className={styles.rowHead}>
+        <span className={styles.title}>{formatSlot(booking.slotAt)}</span>
+        <Pill tone={BOOKING_STATUS_TONE[booking.status]}>{BOOKING_STATUS_LABEL[booking.status]}</Pill>
       </div>
-      <p className={shared.muted} style={{ marginBottom: 10 }}>
+      <p className={`${shared.muted} num`} style={{ marginBottom: 10 }}>
         {booking.durationMins} min · {formatAmount(booking.amountCents)} · as {role}
       </p>
 
@@ -367,7 +379,7 @@ export default function RequestsPage() {
       <section style={{ padding: "32px 0" }}>
         <h1 className={shared.heading}>Requests</h1>
 
-        <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: "1px solid var(--line)" }} role="tablist">
+        <div className={styles.tabBar} role="tablist">
           {(
             [
               { key: "forMyDoubts", label: "For my doubts" },
@@ -381,14 +393,7 @@ export default function RequestsPage() {
               role="tab"
               aria-selected={tab === t.key}
               onClick={() => setTab(t.key)}
-              style={{
-                padding: "8px 14px",
-                fontSize: 14,
-                fontWeight: 700,
-                color: tab === t.key ? "var(--ink)" : "var(--muted)",
-                borderBottom: tab === t.key ? "2px solid var(--accent)" : "2px solid transparent",
-                marginBottom: -1,
-              }}
+              className={`${styles.tab} ${tab === t.key ? styles.tabActive : ""}`}
             >
               {t.label}
             </button>

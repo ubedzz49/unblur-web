@@ -1,14 +1,11 @@
 .greeting {
-  font-weight: 900;
-  font-size: clamp(26px, 6vw, 40px);
-  line-height: 1.08;
   margin: 32px 0 8px;
 }
 
 .subtitle {
   color: var(--muted);
   font-size: 16px;
-  margin-bottom: 28px;
+  margin-bottom: 4px;
 }
 
 .actions {
@@ -17,17 +14,28 @@
   max-width: 460px;
 }
 
+.actionLink {
+  display: block;
+  min-height: 44px;
+}
+
 .actionCard {
   display: block;
-  background: var(--card);
-  border: 2px solid var(--line);
-  border-radius: 8px;
-  padding: 18px;
-  transition: border-color 0.15s;
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
+}
+
+.actionLink:active .actionCard {
+  transform: scale(0.99);
 }
 
 .actionCard:hover {
   border-color: var(--accent-2);
+}
+
+.actionPill {
+  margin-bottom: 10px;
 }
 
 .actionCard h3 {
@@ -43,9 +51,14 @@
 .primaryAction {
   background: var(--accent-2);
   border-color: var(--accent-2);
-  color: #fff;
+  color: var(--danger-foreground);
 }
 
 .primaryAction p {
-  color: rgba(255, 255, 255, 0.85);
+  color: color-mix(in oklab, var(--danger-foreground) 85%, transparent);
+}
+
+.primaryAction .actionPill {
+  background: color-mix(in oklab, var(--danger-foreground) 20%, transparent);
+  color: var(--danger-foreground);
 }

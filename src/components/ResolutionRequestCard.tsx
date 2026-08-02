@@ -3,9 +3,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Pill } from "@/components/ui/Pill";
 import { useToast } from "@/components/ui/Toast";
 import { useAcceptResolutionRequest, useRejectResolutionRequest } from "@/lib/queries/resolution";
-import { ResolutionRequest } from "@/lib/api";
+import { ResolutionRequest, ResolutionRequestStatus } from "@/lib/api";
+
+const STATUS_TONE: Record<ResolutionRequestStatus, "outline" | "gold" | "danger"> = {
+  pending: "outline",
+  accepted: "gold",
+  rejected: "danger",
+};
 
 function formatAmount(amountCents: number): string {
   return `₹${(amountCents / 100).toFixed(0)}`;
@@ -70,7 +77,7 @@ export function ResolutionRequestCard({
 
   const body = (
     <>
-      <p style={{ color: "var(--muted)", fontSize: 14, marginBottom: 10 }}>
+      <p className="num" style={{ color: "var(--muted)", fontSize: 14, marginBottom: 10 }}>
         {request.durationMins} min · {formatAmount(request.amountCents)}
       </p>
 
@@ -86,7 +93,16 @@ export function ResolutionRequestCard({
             id={`slot-choice-${request.id}`}
             value={chosenSlot}
             onChange={(e) => setChosenSlot(e.target.value)}
-            style={{ width: "100%", padding: 10, borderRadius: 4, border: "1px solid var(--line)" }}
+            style={{
+              width: "100%",
+              minHeight: 44,
+              padding: "10px 12px",
+              borderRadius: "var(--radius, 12px)",
+              border: "1px solid var(--line)",
+              fontSize: 16,
+              background: "var(--card)",
+              color: "var(--ink)",
+            }}
           >
             {request.proposedSlots.map((slot) => (
               <option key={slot} value={slot}>
@@ -98,9 +114,9 @@ export function ResolutionRequestCard({
       )}
 
       {!isPending && (
-        <p style={{ color: "var(--muted)", fontSize: 14, marginBottom: 10, textTransform: "capitalize" }}>
-          {request.status}
-        </p>
+        <div style={{ marginBottom: 10 }}>
+          <Pill tone={STATUS_TONE[request.status]}>{request.status}</Pill>
+        </div>
       )}
 
       {isPending && (

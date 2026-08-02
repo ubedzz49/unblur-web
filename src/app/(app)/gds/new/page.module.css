@@ -1,0 +1,30 @@
+.feeNotice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.feeNoticeText {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rulesCard {
+  margin-top: 16px;
+}
+
+.rulesList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+}

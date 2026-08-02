@@ -5,12 +5,14 @@ import { useState } from "react";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { Card } from "@/components/ui/Card";
 import { Button, ButtonStatus } from "@/components/ui/Button";
+import { Pill } from "@/components/ui/Pill";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { useBooking } from "@/lib/queries/resolution";
 import { useConfirmPayment, usePayment } from "@/lib/queries/payments";
 import { isMeetingWindowOver } from "@/lib/meeting-window";
 import shared from "../../../../shared.module.css";
+import styles from "./page.module.css";
 
 function formatAmount(amountCents: number): string {
   return `₹${(amountCents / 100).toFixed(0)}`;
@@ -107,14 +109,24 @@ export default function BookingPaymentPage() {
         <h1 className={shared.heading}>Booking payment</h1>
 
         <Card style={{ maxWidth: 440 }}>
-          <p className={shared.muted} style={{ marginBottom: 4 }}>When</p>
-          <p style={{ fontWeight: 800, marginBottom: 16 }}>{formatSlot(booking.data.slotAt)}</p>
-
-          <p className={shared.muted} style={{ marginBottom: 4 }}>Duration</p>
-          <p style={{ fontWeight: 800, marginBottom: 16 }}>{booking.data.durationMins} min</p>
-
-          <p className={shared.muted} style={{ marginBottom: 4 }}>Amount</p>
-          <p style={{ fontWeight: 800, marginBottom: 20 }}>{formatAmount(payment.data.amountCents)}</p>
+          <div style={{ marginBottom: 20 }}>
+            <div className={styles.row}>
+              <span className={styles.label}>When</span>
+              <span className={styles.value}>{formatSlot(booking.data.slotAt)}</span>
+            </div>
+            <div className={styles.row}>
+              <span className={styles.label}>Duration</span>
+              <span className={`${styles.value} num`}>{booking.data.durationMins} min</span>
+            </div>
+            <div className={styles.row}>
+              <span className={styles.label}>Amount</span>
+              <span className={`${styles.value} num`}>{formatAmount(payment.data.amountCents)}</span>
+            </div>
+            <div className={styles.row}>
+              <span className={styles.label}>Payment status</span>
+              <Pill tone={isCompleted ? "gold" : "outline"}>{payment.data.status}</Pill>
+            </div>
+          </div>
 
           {isCompleted ? (
             meetingEnded ? (

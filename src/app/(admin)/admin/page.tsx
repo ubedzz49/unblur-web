@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Pill } from "@/components/ui/Pill";
 import { useToast } from "@/components/ui/Toast";
 import { ApiError, ComplaintOutcome, AdminRole } from "@/lib/api";
 import { useIsSuperadmin } from "@/lib/auth";
@@ -102,7 +103,9 @@ function UsersTab() {
               <td style={{ padding: 8 }}>{u.email ?? <span className={shared.muted}>—</span>}</td>
               <td style={{ padding: 8 }}>{u.phone ?? <span className={shared.muted}>—</span>}</td>
               <td style={{ padding: 8 }}>{formatDate(u.createdAt)}</td>
-              <td style={{ padding: 8 }}>{u.blockedAt ? "Blocked" : "Active"}</td>
+              <td style={{ padding: 8 }}>
+                <Pill tone={u.blockedAt ? "danger" : "success"}>{u.blockedAt ? "Blocked" : "Active"}</Pill>
+              </td>
               <td style={{ padding: 8 }}>
                 <Button
                   type="button"
@@ -196,9 +199,9 @@ function ComplaintsTab() {
         <Card key={c.id} style={{ marginBottom: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
             <span style={{ fontWeight: 800, fontSize: 14 }}>Booking {c.bookingId.slice(0, 8)}</span>
-            <span className={shared.muted} style={{ textTransform: "capitalize" }}>
+            <Pill tone={c.status === "resolved" ? "neutral" : "live"}>
               {c.status === "resolved" ? `Resolved — ${c.outcome}` : "Open"}
-            </span>
+            </Pill>
           </div>
           <p style={{ marginBottom: 8 }}>{c.reason}</p>
           <p className={shared.muted} style={{ marginBottom: 10, fontSize: 12 }}>
@@ -571,7 +574,10 @@ function SeminarsTab() {
             <div>
               <p style={{ fontWeight: 700 }}>{seminar.title}</p>
               <p className={shared.muted}>
-                {new Date(seminar.scheduledAt).toLocaleString()} · {seminar.status}
+                {new Date(seminar.scheduledAt).toLocaleString()}{" "}
+                <Pill tone={seminar.status === "cancelled" ? "danger" : seminar.status === "completed" ? "success" : "outline"}>
+                  {seminar.status}
+                </Pill>
               </p>
             </div>
             <CancelReferenceButton status={seminar.status} busy={busyId === seminar.id} onCancel={() => handleCancel(seminar.id)} />
@@ -612,7 +618,10 @@ function GdsTab() {
             <div>
               <p style={{ fontWeight: 700 }}>{gd.topic}</p>
               <p className={shared.muted}>
-                {new Date(gd.scheduledAt).toLocaleString()} · {gd.status}
+                {new Date(gd.scheduledAt).toLocaleString()}{" "}
+                <Pill tone={gd.status === "cancelled" ? "danger" : gd.status === "completed" ? "success" : "outline"}>
+                  {gd.status}
+                </Pill>
               </p>
             </div>
             <CancelReferenceButton status={gd.status} busy={busyId === gd.id} onCancel={() => handleCancel(gd.id)} />
@@ -686,8 +695,8 @@ function RbacTab() {
           <Card key={admin.id}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
               <div>
-                <p style={{ fontWeight: 700 }}>{admin.username}</p>
-                <p className={shared.muted}>{admin.role}</p>
+                <p style={{ fontWeight: 700, marginBottom: 4 }}>{admin.username}</p>
+                <Pill tone={admin.role === "superadmin" ? "gold" : "neutral"}>{admin.role}</Pill>
               </div>
               <Button
                 variant="secondary"

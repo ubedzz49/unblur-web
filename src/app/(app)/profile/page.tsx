@@ -14,47 +14,10 @@ import { ProfileCardSkeleton } from "@/components/ui/Skeleton";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { ExpertisePicker } from "@/components/ExpertisePicker";
 import { ThemeCustomizer } from "@/components/ThemeCustomizer";
-import { Eligibility } from "@/lib/api";
+import { EligibilityLadder } from "@/components/EligibilityLadder";
+import { StatTile } from "@/components/ui/StatTile";
+import { SectionLabel } from "@/components/ui/SectionLabel";
 import shared from "../../shared.module.css";
-
-const ELIGIBILITY_LABELS: Record<keyof Eligibility, string> = {
-  canHostSeminar: "Can host a seminar",
-  canOrganizeGD: "Can organize a GD",
-  canAttendGD: "Can attend a GD",
-};
-
-// only show pills for what's unlocked -- a list of things you can't do yet isn't a badge, it's a nag
-function EligibilityBadges({ eligibility }: { eligibility: Eligibility }) {
-  const unlocked = (Object.keys(ELIGIBILITY_LABELS) as (keyof Eligibility)[]).filter((key) => eligibility[key]);
-
-  if (unlocked.length === 0) {
-    return (
-      <p className={shared.muted} style={{ marginTop: 16 }}>
-        Keep helping out to unlock seminar and GD badges.
-      </p>
-    );
-  }
-
-  return (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 16 }}>
-      {unlocked.map((key) => (
-        <span
-          key={key}
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            padding: "4px 10px",
-            borderRadius: 999,
-            background: "var(--bg-alt)",
-            color: "var(--ink)",
-          }}
-        >
-          {ELIGIBILITY_LABELS[key]}
-        </span>
-      ))}
-    </div>
-  );
-}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -197,47 +160,31 @@ export default function ProfilePage() {
           <ExpertisePicker />
         </Card>
 
-        <h2 style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--muted)", margin: "32px 0 14px" }}>
-          Your stats
-        </h2>
-        <Card style={{ maxWidth: 440 }}>
-          {myStats.isLoading && (
-            <div style={{ display: "flex", gap: 16 }}>
-              <div style={{ flex: 1, height: 40, background: "var(--bg-alt)", borderRadius: 4 }} />
-              <div style={{ flex: 1, height: 40, background: "var(--bg-alt)", borderRadius: 4 }} />
-            </div>
-          )}
-          {myStats.isError && <p className={shared.muted}>Couldn&apos;t load your stats.</p>}
-          {myStats.isSuccess && (
-            <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-              <div>
-                <p style={{ fontWeight: 900, fontSize: 20 }}>{myStats.data.minutesResolved}</p>
-                <p className={shared.muted}>Minutes resolved</p>
-              </div>
-              <div>
-                <p style={{ fontWeight: 900, fontSize: 20 }}>
-                  {myStats.data.ratingCount > 0 ? myStats.data.avgRating.toFixed(1) : "—"}
-                </p>
-                <p className={shared.muted}>Avg rating ({myStats.data.ratingCount})</p>
-              </div>
-              <div>
-                <p style={{ fontWeight: 900, fontSize: 20 }}>{myStats.data.minutesListener}</p>
-                <p className={shared.muted}>Minutes as listener</p>
-              </div>
-              <div>
-                <p style={{ fontWeight: 900, fontSize: 20 }}>{myStats.data.gdPoints.toFixed(1)}</p>
-                <p className={shared.muted}>Communication score</p>
-              </div>
-            </div>
-          )}
-          {myStats.isSuccess && (
-            <EligibilityBadges eligibility={myStats.data.eligibility} />
-          )}
-        </Card>
+        <SectionLabel>Your stats</SectionLabel>
+        {myStats.isLoading && (
+          <div style={{ display: "flex", gap: 12 }}>
+            <div style={{ flex: 1, height: 80, background: "var(--elevated, var(--bg-alt))", borderRadius: 16 }} />
+            <div style={{ flex: 1, height: 80, background: "var(--elevated, var(--bg-alt))", borderRadius: 16 }} />
+          </div>
+        )}
+        {myStats.isError && <p className={shared.muted}>Couldn&apos;t load your stats.</p>}
+        {myStats.isSuccess && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, maxWidth: 440 }}>
+            <StatTile label="Minutes resolved" value={myStats.data.minutesResolved} />
+            <StatTile
+              label="Avg rating"
+              value={myStats.data.ratingCount > 0 ? myStats.data.avgRating.toFixed(1) : "—"}
+              sub={`${myStats.data.ratingCount} ratings`}
+            />
+            <StatTile label="Minutes as listener" value={myStats.data.minutesListener} />
+            <StatTile label="Communication score" value={myStats.data.gdPoints.toFixed(1)} accent />
+          </div>
+        )}
 
-        <h2 style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--muted)", margin: "32px 0 14px" }}>
-          Appearance
-        </h2>
+        <SectionLabel>Eligibility</SectionLabel>
+        {myStats.isSuccess && <EligibilityLadder stats={myStats.data} />}
+
+        <SectionLabel>Appearance</SectionLabel>
         <Card style={{ maxWidth: 440 }}>
           <ThemeCustomizer />
         </Card>

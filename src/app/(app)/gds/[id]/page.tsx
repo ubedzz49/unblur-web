@@ -8,6 +8,9 @@ import { useGd, useGdJoinUrl, useGdResults, useJoinGd, useVoteInGd } from "@/lib
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Pill } from "@/components/ui/Pill";
+import { LiveDot } from "@/components/ui/LiveDot";
+import { ProgressMeter } from "@/components/ui/ProgressMeter";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { useToast } from "@/components/ui/Toast";
 import { confirmPayment } from "@/lib/api";
@@ -116,12 +119,17 @@ export default function GdDetailPage() {
       <section style={{ padding: "32px 0" }}>
         <h1 className={shared.heading}>{gd.data.topic}</h1>
         <Card>
+          <div style={{ marginBottom: 12 }}>
+            <Pill tone={gd.data.status === "live" ? "live" : gd.data.status === "cancelled" ? "danger" : "outline"}>
+              {gd.data.status === "live" && <LiveDot />}
+              {gd.data.status.replace("_", " ")}
+            </Pill>
+          </div>
           <p className={shared.muted}>{new Date(gd.data.scheduledAt).toLocaleString()}</p>
           <p className={shared.muted}>{gd.data.durationMins} minutes</p>
-          <p className={shared.muted}>
+          <p className={shared.muted} style={{ marginBottom: 16 }}>
             {gd.data.entryFeeCents === 0 ? "Free" : `₹${(gd.data.entryFeeCents / 100).toFixed(0)} entry fee`}
           </p>
-          <p className={shared.muted} style={{ marginBottom: 16 }}>Status: {gd.data.status}</p>
 
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             {!isOrganizer && gd.data.status === "scheduled" && (
@@ -144,19 +152,38 @@ export default function GdDetailPage() {
 
         {gd.data.status !== "completed" && gd.data.status !== "cancelled" && (
           <Card style={{ marginTop: 16 }}>
-            <p style={{ fontWeight: 700, marginBottom: 8 }}>Speaking</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <p style={{ fontWeight: 900 }}>Speaking</p>
+              {speaking.speakers.length > 0 && <Pill tone="live"><LiveDot /> Live</Pill>}
+            </div>
             {!GD_SERVICE_WS_URL && (
               <p className={shared.muted}>Real-time speaking controls aren&apos;t configured for this environment.</p>
             )}
-            {isMuted && <p className={shared.error}>You&apos;re muted for exceeding your speaking time.</p>}
+            {isMuted && (
+              <div style={{ marginBottom: 12 }}>
+                <Pill tone="danger">Muted for exceeding your speaking time</Pill>
+              </div>
+            )}
             {speaking.speakers.length === 0 && <p className={shared.muted}>No one is speaking right now.</p>}
-            {speaking.speakers.map((s) => (
-              <p key={s.userId} className={shared.muted}>
-                {s.userId === me.data?.id ? "You" : s.userId}: {s.spokenSeconds}s / {s.limitSeconds}s
-              </p>
-            ))}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {speaking.speakers.map((s) => {
+                const isSelf = s.userId === me.data?.id;
+                const overLimit = s.spokenSeconds >= s.limitSeconds;
+                return (
+                  <div key={s.userId} className={overLimit ? undefined : "animate-speaking"} style={{ borderRadius: 12, padding: 8 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
+                      <span style={{ fontWeight: 700 }}>{isSelf ? "You" : s.userId}</span>
+                      <span className="num" style={{ color: overLimit ? "var(--accent-2)" : "var(--muted)" }}>
+                        {s.spokenSeconds}s / {s.limitSeconds}s
+                      </span>
+                    </div>
+                    <ProgressMeter value={s.spokenSeconds} max={s.limitSeconds} tone={overLimit ? "danger" : "gold"} />
+                  </div>
+                );
+              })}
+            </div>
             {socket && !isMuted && (
-              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+              <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
                 <Button variant="secondary" onClick={() => socket.emit("speak_start", { gdId: id })}>
                   Start speaking
                 </Button>
@@ -182,12 +209,20 @@ export default function GdDetailPage() {
 
             {results.data && results.data.results.length > 0 && (
               <div style={{ marginTop: 16 }}>
-                <p style={{ fontWeight: 700, marginBottom: 8 }}>Current results</p>
-                {results.data.results.map((r) => (
-                  <p key={r.userId} className={shared.muted}>
-                    {r.userId === me.data?.id ? "You" : r.userId}: {r.points.toFixed(1)} pts
-                  </p>
-                ))}
+                <p style={{ fontWeight: 900, marginBottom: 8 }}>Current results</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {results.data.results.map((r, i) => (
+                    <div key={r.userId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontWeight: 700 }}>
+                        {i === 0 ? <Pill tone="gold">#1</Pill> : <span className={shared.muted}>#{i + 1}</span>}{" "}
+                        {r.userId === me.data?.id ? "You" : r.userId}
+                      </span>
+                      <span className="num" style={{ fontWeight: 900 }}>
+                        {r.points.toFixed(1)} pts
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </Card>

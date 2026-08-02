@@ -8,6 +8,7 @@ import { Button, ButtonStatus } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { DoubtExpertisePicker, SelectedExpertise } from "@/components/DoubtExpertisePicker";
+import { SectionLabel } from "@/components/ui/SectionLabel";
 import { useToast } from "@/components/ui/Toast";
 import { useMe } from "@/lib/queries/users";
 import { useCreateDoubt } from "@/lib/queries/doubts";
@@ -76,18 +77,7 @@ export default function NewDoubtPage() {
                 placeholder="Add any extra detail that might help (optional)."
               />
               <div style={{ marginBottom: 16 }}>
-                <label
-                  style={{
-                    fontSize: 12,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                    color: "var(--muted)",
-                    marginBottom: 6,
-                    display: "block",
-                  }}
-                >
-                  Subject / level
-                </label>
+                <SectionLabel>Subject / level</SectionLabel>
                 <DoubtExpertisePicker
                   title={title}
                   description={description}
