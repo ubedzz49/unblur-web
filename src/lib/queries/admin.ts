@@ -1,26 +1,34 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addAdminExpertise,
+  AdminRole,
   AiNotesDeliveryStatus,
   blockAdminUser,
   cancelGdAsAdmin,
   cancelSeminarAsAdmin,
   ComplaintOutcome,
   ComplaintStatus,
+  createAdminUser,
+  GatewayRoute,
   getAdminAiNotes,
   getAdminComplaints,
   getAdminComplaintRecording,
   getAdminGds,
   getAdminSeminars,
   getAdminUsers,
+  getAdminUsersList,
+  getAuditLog,
   getExpertiseOptions,
+  getGatewayRoutes,
   importAdminExpertise,
   refundBookingAsAdmin,
   removeAdminExpertise,
   resolveAdminComplaint,
   retryAdminAiNotes,
+  revokeAdminUser,
   sendAdminNotification,
   unblockAdminUser,
+  updateGatewayRoutes,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 
@@ -186,5 +194,64 @@ export function useRemoveAdminExpertise() {
   return useMutation({
     mutationFn: (expertiseLevelId: string) => removeAdminExpertise(token!, expertiseLevelId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["expertise-options"] }),
+  });
+}
+
+const ADMIN_USERS_LIST_KEY = ["admin", "admin-users"];
+const AUDIT_LOG_KEY = ["admin", "audit-log"];
+const GATEWAY_ROUTES_KEY = ["admin", "gateway-routes"];
+
+export function useAdminUsersList() {
+  const { token } = useAuth();
+  return useQuery({
+    queryKey: ADMIN_USERS_LIST_KEY,
+    queryFn: () => getAdminUsersList(token!),
+    enabled: token !== null,
+  });
+}
+
+export function useCreateAdminUser() {
+  const { token } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { username: string; password: string; role: AdminRole }) =>
+      createAdminUser(token!, input.username, input.password, input.role),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ADMIN_USERS_LIST_KEY }),
+  });
+}
+
+export function useRevokeAdminUser() {
+  const { token } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => revokeAdminUser(token!, id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ADMIN_USERS_LIST_KEY }),
+  });
+}
+
+export function useAuditLog() {
+  const { token } = useAuth();
+  return useQuery({
+    queryKey: AUDIT_LOG_KEY,
+    queryFn: () => getAuditLog(token!),
+    enabled: token !== null,
+  });
+}
+
+export function useGatewayRoutes() {
+  const { token } = useAuth();
+  return useQuery({
+    queryKey: GATEWAY_ROUTES_KEY,
+    queryFn: () => getGatewayRoutes(token!),
+    enabled: token !== null,
+  });
+}
+
+export function useUpdateGatewayRoutes() {
+  const { token } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (routes: GatewayRoute[]) => updateGatewayRoutes(token!, routes),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: GATEWAY_ROUTES_KEY }),
   });
 }

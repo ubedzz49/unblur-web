@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
-import { ApiError, ComplaintOutcome } from "@/lib/api";
+import { ApiError, ComplaintOutcome, AdminRole } from "@/lib/api";
+import { useIsSuperadmin } from "@/lib/auth";
 import {
   useAddAdminExpertise,
   useAdminAiNotes,
@@ -15,20 +17,26 @@ import {
   useAdminGds,
   useAdminSeminars,
   useAdminUsers,
+  useAdminUsersList,
+  useAuditLog,
   useBlockAdminUser,
   useCancelGdAsAdmin,
   useCancelSeminarAsAdmin,
+  useCreateAdminUser,
+  useGatewayRoutes,
   useImportAdminExpertise,
   useRefundBookingAsAdmin,
   useRemoveAdminExpertise,
   useResolveAdminComplaint,
   useRetryAdminAiNotes,
+  useRevokeAdminUser,
   useSendAdminNotification,
   useUnblockAdminUser,
+  useUpdateGatewayRoutes,
 } from "@/lib/queries/admin";
 import shared from "../../shared.module.css";
 
-type Tab = "users" | "complaints" | "notifications" | "expertise" | "aiNotes" | "seminars" | "gds";
+type Tab = "users" | "complaints" | "notifications" | "expertise" | "aiNotes" | "seminars" | "gds" | "rbac" | "auditLog" | "gateway";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
@@ -615,8 +623,173 @@ function GdsTab() {
   );
 }
 
+// superadmin-only: manage other admin accounts (Version 9 RBAC)
+function RbacTab() {
+  const { showToast } = useToast();
+  const admins = useAdminUsersList();
+  const createAdmin = useCreateAdminUser();
+  const revokeAdmin = useRevokeAdminUser();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<AdminRole>("admin");
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      await createAdmin.mutateAsync({ username, password, role });
+      showToast(`Admin account "${username}" created`);
+      setUsername("");
+      setPassword("");
+      setRole("admin");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't create that admin account — try again.", "error");
+    }
+  }
+
+  async function handleRevoke(id: string, username: string) {
+    setBusyId(id);
+    try {
+      await revokeAdmin.mutateAsync(id);
+      showToast(`Revoked ${username}'s admin access`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't revoke that admin account — try again.", "error");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <Card>
+        <p style={{ fontWeight: 700, marginBottom: 12 }}>Create admin account</p>
+        <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <Input label="Username" value={username} onChange={(e) => setUsername(e.target.value)} required />
+          <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+          <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>Role</span>
+            <select value={role} onChange={(e) => setRole(e.target.value as AdminRole)} style={{ padding: 8, borderRadius: 4 }}>
+              <option value="admin">admin</option>
+              <option value="superadmin">superadmin</option>
+            </select>
+          </label>
+          <Button type="submit" status={createAdmin.isPending ? "loading" : "idle"} loadingLabel="Creating…">
+            Create
+          </Button>
+        </form>
+      </Card>
+
+      {admins.isLoading && <Skeleton />}
+      {admins.isError && <p className={shared.error}>Couldn&apos;t load admin accounts.</p>}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {admins.data?.map((admin) => (
+          <Card key={admin.id}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+              <div>
+                <p style={{ fontWeight: 700 }}>{admin.username}</p>
+                <p className={shared.muted}>{admin.role}</p>
+              </div>
+              <Button
+                variant="secondary"
+                onClick={() => handleRevoke(admin.id, admin.username)}
+                status={busyId === admin.id ? "loading" : "idle"}
+                loadingLabel="Revoking…"
+              >
+                Revoke
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AuditLogTab() {
+  const auditLog = useAuditLog();
+
+  if (auditLog.isLoading) return <Skeleton />;
+  if (auditLog.isError) return <p className={shared.error}>Couldn&apos;t load the audit log.</p>;
+
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr style={{ textAlign: "left", borderBottom: "1px solid var(--line)" }}>
+            <th style={{ padding: 8 }}>When</th>
+            <th style={{ padding: 8 }}>Admin</th>
+            <th style={{ padding: 8 }}>Action</th>
+            <th style={{ padding: 8 }}>Target</th>
+          </tr>
+        </thead>
+        <tbody>
+          {auditLog.data?.map((entry) => (
+            <tr key={entry.id} style={{ borderBottom: "1px solid var(--line)" }}>
+              <td style={{ padding: 8 }}>{new Date(entry.createdAt).toLocaleString()}</td>
+              <td style={{ padding: 8 }}>{entry.adminUsername}</td>
+              <td style={{ padding: 8 }}>{entry.action}</td>
+              <td style={{ padding: 8 }}>
+                {entry.targetType}:{entry.targetId}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {auditLog.data?.length === 0 && <p className={shared.muted}>No admin actions recorded yet.</p>}
+    </div>
+  );
+}
+
+// superadmin-only: view/replace the gateway's live routing table (Version 9's admin/config
+// service for gateway routes). Textarea-based JSON editor -- deliberately simple, this is an
+// infrequent, high-stakes operational action, not a polished everyday screen.
+function GatewayTab() {
+  const { showToast } = useToast();
+  const routes = useGatewayRoutes();
+  const updateRoutes = useUpdateGatewayRoutes();
+  const [draft, setDraft] = useState<string | null>(null);
+
+  const currentJson = draft ?? (routes.data ? JSON.stringify(routes.data, null, 2) : "");
+
+  async function handleSave() {
+    try {
+      const parsed = JSON.parse(currentJson);
+      await updateRoutes.mutateAsync(parsed);
+      showToast("Gateway routing table updated");
+      setDraft(null);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't update the routing table — check the JSON.", "error");
+    }
+  }
+
+  if (routes.isLoading) return <Skeleton />;
+  if (routes.isError) return <p className={shared.error}>Couldn&apos;t load the gateway&apos;s routing table.</p>;
+
+  return (
+    <Card>
+      <p style={{ fontWeight: 700, marginBottom: 8 }}>Gateway routing table</p>
+      <p className={shared.muted} style={{ marginBottom: 12 }}>
+        Live only -- a change here doesn&apos;t survive the gateway restarting (that still comes from the ECS task
+        definition&apos;s ROUTES env var). Use this for a temporary operational change, not a permanent one.
+      </p>
+      <textarea
+        value={currentJson}
+        onChange={(e) => setDraft(e.target.value)}
+        rows={16}
+        style={{ width: "100%", fontFamily: "monospace", fontSize: 13, padding: 8 }}
+      />
+      <div style={{ marginTop: 12 }}>
+        <Button onClick={handleSave} status={updateRoutes.isPending ? "loading" : "idle"} loadingLabel="Saving…">
+          Save
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
 export default function AdminDashboardPage() {
   const [tab, setTab] = useState<Tab>("users");
+  const isSuperadmin = useIsSuperadmin();
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "users", label: "Users" },
@@ -626,6 +799,11 @@ export default function AdminDashboardPage() {
     { key: "aiNotes", label: "AI Notes" },
     { key: "seminars", label: "Seminars" },
     { key: "gds", label: "GDs" },
+    { key: "auditLog", label: "Audit Log" },
+    // RBAC and gateway management are superadmin-only -- the backend independently enforces
+    // this too, hiding the tabs is just so a plain admin isn't shown an action they'll get a
+    // 403 on
+    ...(isSuperadmin ? [{ key: "rbac" as const, label: "Admins" }, { key: "gateway" as const, label: "Gateway" }] : []),
   ];
 
   return (
@@ -661,6 +839,9 @@ export default function AdminDashboardPage() {
       {tab === "aiNotes" && <AiNotesTab />}
       {tab === "seminars" && <SeminarsTab />}
       {tab === "gds" && <GdsTab />}
+      {tab === "auditLog" && <AuditLogTab />}
+      {tab === "rbac" && isSuperadmin && <RbacTab />}
+      {tab === "gateway" && isSuperadmin && <GatewayTab />}
     </section>
   );
 }
