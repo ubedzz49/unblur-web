@@ -67,6 +67,7 @@ describe("ProfilePage", () => {
       avgRating: 4.5,
       ratingCount: 3,
       minutesListener: 30,
+      gdPoints: 12.5,
       updatedAt: new Date().toISOString(),
       eligibility: { canHostSeminar: true, canOrganizeGD: false, canAttendGD: true },
     });
@@ -84,6 +85,7 @@ describe("ProfilePage", () => {
       avgRating: 0,
       ratingCount: 0,
       minutesListener: 0,
+      gdPoints: 0,
       updatedAt: new Date().toISOString(),
       eligibility: { canHostSeminar: false, canOrganizeGD: false, canAttendGD: false },
     });
