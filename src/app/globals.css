@@ -7,6 +7,14 @@
   --accent-2: #d81f3d;
   --line: #c9d2e0;
   --card: #ffffff;
+
+  /* Scoreboard semantic extras -- shared with the v0 design prototype's token set */
+  --elevated: #e3e8f0;
+  --gold: #c47f00;
+  --gold-foreground: #ffffff;
+  --danger: #d81f3d;
+  --danger-foreground: #ffffff;
+  --radius: 0.75rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,6 +27,11 @@
     --accent-2: #ff3d5a;
     --line: #1c3252;
     --card: #0d1c33;
+    --elevated: #0f2038;
+    --gold: #ffb703;
+    --gold-foreground: #1a1200;
+    --danger: #ff3d5a;
+    --danger-foreground: #1a0006;
   }
 }
 
@@ -31,6 +44,11 @@
   --accent-2: #ff3d5a;
   --line: #1c3252;
   --card: #0d1c33;
+  --elevated: #0f2038;
+  --gold: #ffb703;
+  --gold-foreground: #1a1200;
+  --danger: #ff3d5a;
+  --danger-foreground: #1a0006;
 }
 
 :root[data-theme="light"] {
@@ -42,6 +60,11 @@
   --accent-2: #d81f3d;
   --line: #c9d2e0;
   --card: #ffffff;
+  --elevated: #e3e8f0;
+  --gold: #c47f00;
+  --gold-foreground: #ffffff;
+  --danger: #d81f3d;
+  --danger-foreground: #ffffff;
 }
 
 * {
@@ -86,4 +109,80 @@ a {
 button,
 input {
   font-family: inherit;
+}
+
+/* Fluid headline sizes -- scales with viewport instead of one hard breakpoint jump */
+.text-fluid-display {
+  font-size: clamp(2rem, 1.2rem + 4vw, 3.25rem);
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.text-fluid-title {
+  font-size: clamp(1.35rem, 1rem + 1.6vw, 1.9rem);
+  line-height: 1.05;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+@keyframes sb-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* live-speaking pulse ring -- GD room speaker indicator */
+@keyframes sb-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 10px color-mix(in oklab, var(--accent) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 0%, transparent);
+  }
+}
+.animate-speaking {
+  animation: sb-pulse 1.5s ease-out infinite;
+}
+
+@keyframes sb-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-slide-up {
+  animation: sb-slide-up 0.18s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-speaking,
+  .animate-slide-up {
+    animation: none;
+  }
+}
+
+/* Layout density / width, set by the appearance customizer (see lib/theme.ts) */
+:root[data-density="compact"] {
+  --space-unit: 0.85;
+}
+:root:not([data-density="compact"]) {
+  --space-unit: 1;
+}
+
+:root[data-content-width="wide"] {
+  --content-max-width: 1240px;
+}
+:root:not([data-content-width="wide"]) {
+  --content-max-width: 1080px;
 }

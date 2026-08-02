@@ -13,6 +13,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { ProfileCardSkeleton } from "@/components/ui/Skeleton";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { ExpertisePicker } from "@/components/ExpertisePicker";
+import { ThemeCustomizer } from "@/components/ThemeCustomizer";
 import { Eligibility } from "@/lib/api";
 import shared from "../../shared.module.css";
 
@@ -232,6 +233,13 @@ export default function ProfilePage() {
           {myStats.isSuccess && (
             <EligibilityBadges eligibility={myStats.data.eligibility} />
           )}
+        </Card>
+
+        <h2 style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--muted)", margin: "32px 0 14px" }}>
+          Appearance
+        </h2>
+        <Card style={{ maxWidth: 440 }}>
+          <ThemeCustomizer />
         </Card>
       </section>
     </PageTransition>
