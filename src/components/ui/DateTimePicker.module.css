@@ -21,7 +21,7 @@
 
 .monthLabel {
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .navButton {
@@ -81,9 +81,9 @@
 }
 
 .dayCell[data-selected="true"] {
-  background: var(--accent-2);
-  color: #fff;
-  font-weight: 800;
+  background: var(--accent);
+  color: var(--gold-foreground);
+  font-weight: 600;
 }
 
 .timeRow {
@@ -104,6 +104,6 @@
 }
 
 .timeSeparator {
-  font-weight: 800;
+  font-weight: 600;
   color: var(--muted);
 }

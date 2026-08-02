@@ -33,80 +33,83 @@
   --color-elevated: var(--elevated);
   --color-live: var(--danger);
 
-  --radius-sm: calc(var(--radius) * 0.55);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.85);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.9);
-  --radius-3xl: calc(var(--radius) * 2.4);
+  --radius-xl: calc(var(--radius) * 1.2);
+  --radius-2xl: calc(var(--radius) * 1.4);
+  --radius-3xl: calc(var(--radius) * 1.7);
 }
 
+/* Professional/lavender direction -- clean neutral surfaces, black/white text,
+ * a single lavender accent instead of a "gamified" gold/red duo. Kept the same
+ * variable names (--gold/--danger etc.) so every component built against them
+ * doesn't need touching; --gold is now just "the accent used as a fill". */
 :root {
-  --bg: #eef1f6;
-  --bg-alt: #e3e8f0;
-  --ink: #0c1a2e;
-  --muted: #54627a;
-  --accent: #c47f00;
-  --accent-2: #d81f3d;
-  --line: #c9d2e0;
+  --bg: #fafafa;
+  --bg-alt: #f4f3fa;
+  --ink: #18181b;
+  --muted: #6b7280;
+  --accent: #6d5fe8;
+  --accent-2: #dc2626;
+  --line: #d4d4d8;
   --card: #ffffff;
 
-  /* Scoreboard semantic extras -- shared with the v0 design prototype's token set */
-  --elevated: #e3e8f0;
-  --gold: #c47f00;
+  --elevated: #f4f3fa;
+  --gold: #6d5fe8;
   --gold-foreground: #ffffff;
-  --danger: #d81f3d;
+  --danger: #dc2626;
   --danger-foreground: #ffffff;
-  --radius: 0.75rem;
+  --radius: 0.625rem;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0a1626;
-    --bg-alt: #1a3665;
-    --ink: #eef4ff;
-    --muted: #7d93b8;
-    --accent: #ffb703;
-    --accent-2: #ff3d5a;
-    --line: #33517d;
-    --card: #152a4d;
-    --elevated: #1a3665;
-    --gold: #ffb703;
-    --gold-foreground: #1a1200;
-    --danger: #ff3d5a;
-    --danger-foreground: #1a0006;
+    --bg: #0f0f12;
+    --bg-alt: #242330;
+    --ink: #f4f4f5;
+    --muted: #9497a6;
+    --accent: #9b8afb;
+    --accent-2: #f87171;
+    --line: #3a3844;
+    --card: #1c1b23;
+    --elevated: #242330;
+    --gold: #9b8afb;
+    --gold-foreground: #18181b;
+    --danger: #f87171;
+    --danger-foreground: #18181b;
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #0a1626;
-  --bg-alt: #1a3665;
-  --ink: #eef4ff;
-  --muted: #7d93b8;
-  --accent: #ffb703;
-  --accent-2: #ff3d5a;
-  --line: #33517d;
-  --card: #152a4d;
-  --elevated: #1a3665;
-  --gold: #ffb703;
-  --gold-foreground: #1a1200;
-  --danger: #ff3d5a;
-  --danger-foreground: #1a0006;
+  --bg: #0f0f12;
+  --bg-alt: #242330;
+  --ink: #f4f4f5;
+  --muted: #9497a6;
+  --accent: #9b8afb;
+  --accent-2: #f87171;
+  --line: #3a3844;
+  --card: #1c1b23;
+  --elevated: #242330;
+  --gold: #9b8afb;
+  --gold-foreground: #18181b;
+  --danger: #f87171;
+  --danger-foreground: #18181b;
 }
 
 :root[data-theme="light"] {
-  --bg: #eef1f6;
-  --bg-alt: #e3e8f0;
-  --ink: #0c1a2e;
-  --muted: #54627a;
-  --accent: #c47f00;
-  --accent-2: #d81f3d;
-  --line: #c9d2e0;
+  --bg: #fafafa;
+  --bg-alt: #f4f3fa;
+  --ink: #18181b;
+  --muted: #6b7280;
+  --accent: #6d5fe8;
+  --accent-2: #dc2626;
+  --line: #d4d4d8;
   --card: #ffffff;
-  --elevated: #e3e8f0;
-  --gold: #c47f00;
+  --elevated: #f4f3fa;
+  --gold: #6d5fe8;
   --gold-foreground: #ffffff;
-  --danger: #d81f3d;
+  --danger: #dc2626;
   --danger-foreground: #ffffff;
 }
 
@@ -158,14 +161,14 @@ input {
 .text-fluid-display {
   font-size: clamp(2rem, 1.2rem + 4vw, 3.25rem);
   line-height: 0.95;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.03em;
 }
 
 .text-fluid-title {
   font-size: clamp(1.35rem, 1rem + 1.6vw, 1.9rem);
   line-height: 1.05;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 

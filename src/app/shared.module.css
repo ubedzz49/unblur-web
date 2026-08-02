@@ -9,10 +9,10 @@
   padding: 12px;
   min-height: 48px;
   border: none;
-  border-radius: 4px;
-  background: var(--accent-2);
-  color: #fff;
-  font-weight: 800;
+  border-radius: var(--radius, 10px);
+  background: var(--accent);
+  color: var(--gold-foreground);
+  font-weight: 600;
   cursor: pointer;
   font-size: 15px;
 }
@@ -29,9 +29,9 @@
 }
 
 .heading {
-  font-weight: 900;
-  font-size: clamp(26px, 6vw, 40px);
-  line-height: 1.08;
+  font-weight: 700;
+  font-size: clamp(24px, 5vw, 34px);
+  line-height: 1.15;
   margin: 0 0 14px;
 }
 

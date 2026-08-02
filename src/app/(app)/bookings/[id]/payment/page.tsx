@@ -112,7 +112,7 @@ export default function BookingPaymentPage() {
   return (
     <PageTransition>
       <section className="py-8">
-        <h1 className="mb-3.5 text-3xl font-black leading-tight sm:text-4xl">Booking payment</h1>
+        <h1 className="mb-3.5 text-3xl font-semibold leading-tight sm:text-4xl">Booking payment</h1>
 
         <Card className="max-w-[440px] p-5">
           <div className="mb-5">

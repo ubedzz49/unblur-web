@@ -157,7 +157,7 @@ export default function GdDetailPage() {
             return (
               <div key={r.title} className="rounded-2xl border border-border bg-card p-4">
                 <Icon className="h-5 w-5 text-primary" />
-                <div className="mt-2 text-sm font-black">{r.title}</div>
+                <div className="mt-2 text-sm font-semibold">{r.title}</div>
                 <div className="mt-0.5 text-xs leading-snug text-muted-foreground">{r.desc}</div>
               </div>
             );
@@ -179,7 +179,7 @@ export default function GdDetailPage() {
         {gd.data.status !== "completed" && gd.data.status !== "cancelled" && (
           <Card className="mt-4 p-5">
             <div className="mb-3 flex items-center gap-2">
-              <p className="font-black">Speaking</p>
+              <p className="font-semibold">Speaking</p>
               {speaking.speakers.length > 0 && <Pill tone="live"><LiveDot /> Live</Pill>}
             </div>
             {!GD_SERVICE_WS_URL && (
@@ -235,7 +235,7 @@ export default function GdDetailPage() {
 
             {results.data && results.data.results.length > 0 && (
               <div className="mt-4">
-                <p className="mb-2 font-black">Current results</p>
+                <p className="mb-2 font-semibold">Current results</p>
                 <div className="flex flex-col gap-2">
                   {results.data.results.map((r, i) => (
                     <div key={r.userId} className="flex items-center justify-between">
@@ -243,7 +243,7 @@ export default function GdDetailPage() {
                         {i === 0 ? <Pill tone="gold">#1</Pill> : <span className={shared.muted}>#{i + 1}</span>}{" "}
                         {r.userId === me.data?.id ? "You" : r.userId}
                       </span>
-                      <span className="num font-black">{r.points.toFixed(1)} pts</span>
+                      <span className="num font-semibold">{r.points.toFixed(1)} pts</span>
                     </div>
                   ))}
                 </div>

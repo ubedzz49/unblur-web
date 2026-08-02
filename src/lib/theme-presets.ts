@@ -12,6 +12,7 @@ export interface ThemePreset {
 }
 
 export const THEME_PRESETS: ThemePreset[] = [
+  { id: "lavender", name: "Lavender (default)", light: { primary: "#6d5fe8", tertiary: "#dc2626" }, dark: { primary: "#9b8afb", tertiary: "#f87171" } },
   { id: "amber-rose", name: "Amber & Rose", light: { primary: "#c47f00", tertiary: "#d81f3d" }, dark: { primary: "#ffb703", tertiary: "#ff3d5a" } },
   { id: "emerald-rose", name: "Emerald & Rose", light: { primary: "#0f9d58", tertiary: "#d81f3d" }, dark: { primary: "#34d399", tertiary: "#ff3d5a" } },
   { id: "ocean-coral", name: "Ocean Blue & Coral", light: { primary: "#1d6fd6", tertiary: "#e0522d" }, dark: { primary: "#5b9bff", tertiary: "#ff7a52" } },
@@ -29,4 +30,4 @@ export const THEME_PRESETS: ThemePreset[] = [
   { id: "maroon-steel", name: "Maroon & Steel", light: { primary: "#8c2f39", tertiary: "#3d5a73" }, dark: { primary: "#c96570", tertiary: "#7ba0bd" } },
 ];
 
-export const DEFAULT_PRESET_ID = "amber-rose";
+export const DEFAULT_PRESET_ID = "lavender";

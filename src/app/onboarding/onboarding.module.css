@@ -12,11 +12,11 @@
 }
 
 .progressStep[data-done="true"] {
-  background: var(--accent-2);
+  background: var(--accent);
 }
 
 .stepTitle {
-  font-weight: 900;
+  font-weight: 700;
   font-size: clamp(24px, 6vw, 34px);
   line-height: 1.1;
   margin-bottom: 8px;

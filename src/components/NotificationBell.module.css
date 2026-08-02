@@ -24,7 +24,7 @@
   background: var(--accent-2);
   color: #fff;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 16px;
   text-align: center;
 }
@@ -54,7 +54,7 @@
 
 .title {
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .markAll {
@@ -91,7 +91,7 @@
 }
 
 .item[data-unread="true"] .itemTitle {
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .item[data-unread="false"] .itemTitle {

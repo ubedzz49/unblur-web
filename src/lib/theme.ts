@@ -57,7 +57,7 @@ export interface ThemeValidationResult {
 export function validateAccentColor(
   hex: string,
   label: string,
-  backgrounds: { light: string; dark: string } = { light: "#eef1f6", dark: "#0a1626" },
+  backgrounds: { light: string; dark: string } = { light: "#fafafa", dark: "#0f0f12" },
 ): ThemeValidationResult {
   const reasons: string[] = [];
   if (!hexToRgb(hex)) {
@@ -85,8 +85,8 @@ export function validateAccentColor(
 // light-mode colors only ever render against the light background, dark-mode colors
 // only against the dark background -- so each is validated against its own mode's
 // background only, not cross-checked against the mode it never appears in.
-const LIGHT_ONLY = { light: "#eef1f6", dark: "#eef1f6" };
-const DARK_ONLY = { light: "#0a1626", dark: "#0a1626" };
+const LIGHT_ONLY = { light: "#fafafa", dark: "#fafafa" };
+const DARK_ONLY = { light: "#0f0f12", dark: "#0f0f12" };
 
 export function validatePreset(preset: ThemePreset): ThemeValidationResult {
   const checks = [

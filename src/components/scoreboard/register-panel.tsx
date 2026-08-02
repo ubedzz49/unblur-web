@@ -25,7 +25,7 @@ export function RegisterPanel({
         <div className="mb-3 flex items-center justify-between">
           <div>
             <div className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Entry fee</div>
-            <div className="num flex items-center text-2xl font-black">
+            <div className="num flex items-center text-2xl font-semibold">
               <IndianRupee className="h-5 w-5" />
               {fee}
             </div>
@@ -39,13 +39,13 @@ export function RegisterPanel({
 
         {status === "joined" ? (
           <div className="space-y-2">
-            <div className="flex items-center justify-center gap-2 rounded-xl bg-primary/15 py-3 text-sm font-black text-primary">
+            <div className="flex items-center justify-center gap-2 rounded-xl bg-primary/15 py-3 text-sm font-semibold text-primary">
               <Check className="h-4 w-4" /> You&apos;re registered
             </div>
             <button
               type="button"
               onClick={onGetJoinUrl}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-black text-primary-foreground"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground"
             >
               <Video className="h-4 w-4" /> {joinUrl ? "Join meeting" : "Get join link"}
             </button>
@@ -55,7 +55,7 @@ export function RegisterPanel({
             type="button"
             onClick={onPay}
             disabled={soldOut || status === "paying"}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-black text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
           >
             {soldOut ? "Sold out" : status === "paying" ? "Processing…" : cta}
           </button>

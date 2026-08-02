@@ -42,7 +42,7 @@ export function ScoreHero({
       <div className="flex items-center gap-4 px-5 py-5">
         <Avatar initials={initials} size="lg" ring />
         <div className="min-w-0">
-          <h1 className="truncate text-xl font-black tracking-tight">{name}</h1>
+          <h1 className="truncate text-xl font-semibold tracking-tight">{name}</h1>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{bio}</p>
         </div>
       </div>

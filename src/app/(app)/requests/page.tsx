@@ -375,7 +375,7 @@ export default function RequestsPage() {
   return (
     <PageTransition>
       <section className="py-8">
-        <h1 className="mb-3.5 text-3xl font-black leading-tight sm:text-4xl">Requests</h1>
+        <h1 className="mb-3.5 text-3xl font-semibold leading-tight sm:text-4xl">Requests</h1>
 
         <div className="mb-5 flex gap-1 border-b border-border" role="tablist">
           {tabs.map((t) => (

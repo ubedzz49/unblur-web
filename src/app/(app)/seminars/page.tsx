@@ -39,7 +39,7 @@ export default function SeminarsPage() {
                 <Trophy className="h-5 w-5" />
               </span>
               <div>
-                <div className="text-sm font-black">Host a seminar</div>
+                <div className="text-sm font-semibold">Host a seminar</div>
                 <div className="text-xs text-muted-foreground">You&apos;re eligible. Keep 90%.</div>
               </div>
             </Card>
@@ -72,7 +72,7 @@ export default function SeminarsPage() {
                 <Card interactive className="p-4">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-[0.95rem] font-bold leading-snug text-pretty">{seminar.title}</p>
-                    <span className="num shrink-0 font-black text-foreground">{formatFee(seminar.entryFeeCents)}</span>
+                    <span className="num shrink-0 font-semibold text-foreground">{formatFee(seminar.entryFeeCents)}</span>
                   </div>
                   <p className="num mt-1 text-xs text-muted-foreground">
                     {new Date(seminar.scheduledAt).toLocaleString()} · {seminar.durationMins} min
