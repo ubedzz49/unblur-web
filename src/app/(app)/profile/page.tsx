@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { Clock, Headphones, Settings, Star, Sparkles } from "lucide-react";
+import { Clock, Headphones, Star, Sparkles } from "lucide-react";
 import { useMe, useMyStats } from "@/lib/queries/users";
 import { ProfileCardSkeleton } from "@/components/ui/Skeleton";
 import { PageTransition } from "@/components/ui/PageTransition";
@@ -52,17 +51,6 @@ export default function ProfilePage() {
   return (
     <PageTransition>
       <div className="space-y-8 py-8">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1" />
-          <Link
-            href="/settings"
-            aria-label={t("profile.openSettings")}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Settings className="h-4.5 w-4.5" />
-          </Link>
-        </div>
-
         {myStats.isSuccess && (
           <ScoreHero
             name={me.data.name ?? "Unnamed"}

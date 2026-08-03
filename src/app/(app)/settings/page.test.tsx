@@ -68,9 +68,9 @@ describe("SettingsPage", () => {
     expect(screen.getByText(/your expertise/i)).toBeInTheDocument();
     expect(screen.getByText(/^appearance$/i)).toBeInTheDocument();
     expect(screen.getByText(/^language$/i)).toBeInTheDocument();
-    // the design-pattern picker lists all 8 patterns
-    expect(screen.getByText(/split diagonal/i)).toBeInTheDocument();
-    expect(screen.getByText(/terminal grid/i)).toBeInTheDocument();
+    // the appearance section is now just a light/dark/system toggle, not a pattern picker
+    expect(screen.getByText(/^theme$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^system$/i)).toBeInTheDocument();
     // the language picker lists Hindi among the 10 languages
     expect(screen.getByText("हिन्दी")).toBeInTheDocument();
   });

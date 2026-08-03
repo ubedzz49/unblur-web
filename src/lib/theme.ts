@@ -1,6 +1,6 @@
-/** Contrast-check utilities (used to author the fixed palette in layout-presets.ts
- * and to keep it honest in tests) plus density/content-width preferences, which
- * are still a free user choice independent of the design pattern. */
+/** Contrast-check utilities (used to author the single light/dark palette in
+ * globals.css and keep it honest in tests) plus density/content-width
+ * preferences, which remain a free user choice independent of theme mode. */
 
 export interface LayoutPrefs {
   density: "comfortable" | "compact";
@@ -46,11 +46,11 @@ export interface ThemeValidationResult {
 }
 
 /** An accent must stay legible against its own background and have some readable
- * text color on top of it. Used to author/verify layout-presets.ts's palettes. */
+ * text color on top of it. Used to author/verify the app's palette in globals.css. */
 export function validateAccentColor(
   hex: string,
   label: string,
-  backgrounds: { light: string; dark: string } = { light: "#fdfbf9", dark: "#171018" },
+  backgrounds: { light: string; dark: string } = { light: "#f7f7fb", dark: "#0d0e14" },
 ): ThemeValidationResult {
   const reasons: string[] = [];
   if (!hexToRgb(hex)) {

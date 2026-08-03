@@ -3,6 +3,14 @@
 
 @custom-variant dark (&:is([data-theme="dark"] *));
 
+/* Track fill for a zero/near-zero ProgressMeter needs to read as a visible
+ * groove against both the page and card backgrounds, not just "bg-elevated"
+ * (which was too close to the card color in some palettes) -- add a hairline
+ * border in both modes so the empty state is always legible. */
+.meter-track {
+  border: 1px solid var(--line);
+}
+
 /* shadcn-style aliases -- so Tailwind utilities (bg-primary, text-foreground, etc.) resolve
  * to the exact same source-of-truth variables the CSS-module components and theme-script
  * already read (--bg, --ink, --accent...), instead of keeping two parallel token systems. */
@@ -41,76 +49,67 @@
   --radius-3xl: calc(var(--radius) * 1.7);
 }
 
-/* Default colors match the "Split Diagonal" pattern's palette (see
- * lib/layout-presets.ts) -- this is only the static fallback for first paint;
- * the boot script (theme-script.tsx) and lib/layout.ts overwrite these inline
- * to match whichever pattern + light/dark mode the user actually has saved. */
-:root {
-  --bg: #fdfbf9;
-  --bg-alt: #f6f0f2;
-  --ink: #1b1120;
-  --muted: #766c82;
-  --accent: #ff4d6d;
-  --accent-2: #d23a56;
-  --line: #ece5e9;
+/* Single unified light/dark palette + shape language for the whole app.
+ * Accent pairing: indigo (primary -- nav, links, CTAs, progress) + amber
+ * (secondary -- achievement/points/energy). Both verified >=4.5:1 against
+ * their own background and against their chosen foreground in lib/theme.ts's
+ * contrast utilities, in both modes. */
+:root,
+:root[data-theme="light"] {
+  --bg: #f7f7fb;
+  --bg-alt: #eeeef4;
+  --ink: #14151f;
+  --muted: #63636f;
+  --accent: #4f46e5;
+  --accent-2: #b45309;
+  --line: #e3e3ea;
   --card: #ffffff;
-
-  --elevated: #f6f0f2;
-  --gold: #ff4d6d;
+  --elevated: #eeeef4;
+  --gold: #4f46e5;
   --gold-foreground: #ffffff;
-  --danger: #d23a56;
+  --danger: #dc2626;
   --danger-foreground: #ffffff;
-  --radius: 0.625rem;
+
+  --radius: 0.75rem;
+  --shell-shadow: 0 1px 2px rgba(20, 21, 31, 0.04), 0 8px 24px -12px rgba(20, 21, 31, 0.12);
+  --shell-border-w: 1px;
+  --shell-font-display: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #171018;
-    --bg-alt: #241a22;
-    --ink: #f3edf1;
-    --muted: #a8969f;
-    --accent: #ff6f8a;
-    --accent-2: #ff8fa3;
-    --line: #33232e;
-    --card: #211720;
-    --elevated: #241a22;
-    --gold: #ff6f8a;
-    --gold-foreground: #2b0c16;
-    --danger: #ff8fa3;
-    --danger-foreground: #2b0c16;
+    --bg: #0d0e14;
+    --bg-alt: #1c1d26;
+    --ink: #f1f1f6;
+    --muted: #9a9aa8;
+    --accent: #818cf8;
+    --accent-2: #fbbf24;
+    --line: #26272f;
+    --card: #16171f;
+    --elevated: #1c1d26;
+    --gold: #818cf8;
+    --gold-foreground: #1e1b4b;
+    --danger: #f87171;
+    --danger-foreground: #450a0a;
+    --shell-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #171018;
-  --bg-alt: #241a22;
-  --ink: #f3edf1;
-  --muted: #a8969f;
-  --accent: #ff6f8a;
-  --accent-2: #ff8fa3;
-  --line: #33232e;
-  --card: #211720;
-  --elevated: #241a22;
-  --gold: #ff6f8a;
-  --gold-foreground: #2b0c16;
-  --danger: #ff8fa3;
-  --danger-foreground: #2b0c16;
-}
-
-:root[data-theme="light"] {
-  --bg: #fdfbf9;
-  --bg-alt: #f6f0f2;
-  --ink: #1b1120;
-  --muted: #766c82;
-  --accent: #ff4d6d;
-  --accent-2: #d23a56;
-  --line: #ece5e9;
-  --card: #ffffff;
-  --elevated: #f6f0f2;
-  --gold: #ff4d6d;
-  --gold-foreground: #ffffff;
-  --danger: #d23a56;
-  --danger-foreground: #ffffff;
+  --bg: #0d0e14;
+  --bg-alt: #1c1d26;
+  --ink: #f1f1f6;
+  --muted: #9a9aa8;
+  --accent: #818cf8;
+  --accent-2: #fbbf24;
+  --line: #26272f;
+  --card: #16171f;
+  --elevated: #1c1d26;
+  --gold: #818cf8;
+  --gold-foreground: #1e1b4b;
+  --danger: #f87171;
+  --danger-foreground: #450a0a;
+  --shell-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
 }
 
 * {
@@ -235,63 +234,3 @@ input {
   --content-max-width: 1080px;
 }
 
-/* Layout presets (see lib/layout-presets.ts) -- shape/type language shared by
- * every Card/Button/heading through --radius, --shell-shadow, --shell-border-w,
- * --shell-font-display. "sidebar"/"split" additionally change nav structure,
- * handled in React (AppShell), not here. */
-:root,
-:root[data-layout="split"] {
-  --radius: 0.625rem;
-  --shell-shadow: 0 1px 2px rgba(16, 12, 30, 0.04);
-  --shell-border-w: 1px;
-  --shell-font-display: -apple-system, "Segoe UI", sans-serif;
-}
-
-:root[data-layout="bento"] {
-  --radius: 1.375rem;
-  --shell-shadow: none;
-  --shell-border-w: 1px;
-  --shell-font-display: -apple-system, "Segoe UI", sans-serif;
-}
-
-:root[data-layout="sidebar"] {
-  --radius: 0.625rem;
-  --shell-shadow: none;
-  --shell-border-w: 1px;
-  --shell-font-display: ui-monospace, "SF Mono", "Cascadia Code", monospace;
-}
-
-:root[data-layout="marquee"] {
-  --radius: 0.5rem;
-  --shell-shadow: none;
-  --shell-border-w: 1px;
-  --shell-font-display: Georgia, "Times New Roman", serif;
-}
-
-:root[data-layout="deck"] {
-  --radius: 1.25rem;
-  --shell-shadow: 0 14px 28px -18px rgba(30, 20, 60, 0.35);
-  --shell-border-w: 0px;
-  --shell-font-display: -apple-system, "Segoe UI", sans-serif;
-}
-
-:root[data-layout="terminal"] {
-  --radius: 0.125rem;
-  --shell-shadow: none;
-  --shell-border-w: 1px;
-  --shell-font-display: ui-monospace, "SF Mono", "Cascadia Code", monospace;
-}
-
-:root[data-layout="poster"] {
-  --radius: 0.25rem;
-  --shell-shadow: none;
-  --shell-border-w: 1px;
-  --shell-font-display: "Iowan Old Style", Georgia, serif;
-}
-
-:root[data-layout="neu"] {
-  --radius: 1.5rem;
-  --shell-shadow: 6px 6px 14px rgba(0, 0, 0, 0.12), -6px -6px 14px rgba(255, 255, 255, 0.5);
-  --shell-border-w: 0px;
-  --shell-font-display: -apple-system, "Segoe UI", sans-serif;
-}
