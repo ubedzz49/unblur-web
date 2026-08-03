@@ -199,7 +199,7 @@ export function ProgressMeter({
   }
   return (
     <div
-      className={cn('h-2 w-full overflow-hidden rounded-full bg-elevated', className)}
+      className={cn('meter-track h-2 w-full overflow-hidden rounded-full bg-elevated', className)}
       role="progressbar"
       aria-valuenow={Math.round(pct)}
       aria-valuemin={0}

@@ -68,7 +68,7 @@ describe("ProfilePage", () => {
     expect(screen.queryByText(/unlocked/i)).not.toBeInTheDocument();
   });
 
-  it("shows a link to settings for account editing, since profile is now display-only", async () => {
+  it("has no local settings link, since the nav's gear icon is sufficient", async () => {
     vi.spyOn(api, "getMyStats").mockResolvedValue({
       minutesResolved: 0,
       avgRating: 0,
@@ -81,7 +81,7 @@ describe("ProfilePage", () => {
 
     renderWithProviders(<ProfilePage />);
 
-    const settingsLink = await screen.findByRole("link", { name: /settings/i });
-    expect(settingsLink).toHaveAttribute("href", "/settings");
+    await screen.findByText(/software engineer/i);
+    expect(screen.queryByRole("link", { name: /settings/i })).not.toBeInTheDocument();
   });
 });
