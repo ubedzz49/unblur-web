@@ -24,6 +24,12 @@ const id: Dictionary = {
   "home.matchedToYou": "Sesuai keahlianmu",
   "home.seeAll": "Lihat semua",
   "home.yourScore": "Skormu",
+  "home.recentActivity": "Aktivitas terbaru",
+  "home.recentActivityDesc": "Pertanyaan dan tawaran dari feed Anda",
+  "home.noActivity": "Belum ada apa-apa — aktivitas Anda akan muncul di sini.",
+  "home.upcoming": "Mendatang",
+  "home.upcomingDesc": "Pemesanan dan seminar",
+  "home.noUpcoming": "Belum ada jadwal.",
 
   "profile.careerStats": "Statistik",
   "profile.minutesResolved": "Menit terselesaikan",

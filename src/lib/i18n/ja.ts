@@ -24,6 +24,12 @@ const ja: Dictionary = {
   "home.matchedToYou": "あなたの専門分野に一致",
   "home.seeAll": "すべて見る",
   "home.yourScore": "あなたのスコア",
+  "home.recentActivity": "最近のアクティビティ",
+  "home.recentActivityDesc": "フィードからの質問とオファー",
+  "home.noActivity": "まだ何もありません。アクティビティはここに表示されます。",
+  "home.upcoming": "予定",
+  "home.upcomingDesc": "予約とセミナー",
+  "home.noUpcoming": "予定はまだありません。",
 
   "profile.careerStats": "実績",
   "profile.minutesResolved": "解決した分数",

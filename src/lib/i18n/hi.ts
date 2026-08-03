@@ -24,6 +24,12 @@ const hi: Dictionary = {
   "home.matchedToYou": "आपकी विशेषज्ञता से मेल खाते",
   "home.seeAll": "सभी देखें",
   "home.yourScore": "आपका स्कोर",
+  "home.recentActivity": "हाल की गतिविधि",
+  "home.recentActivityDesc": "आपकी फ़ीड से सवाल और ऑफ़र",
+  "home.noActivity": "अभी तक कुछ नहीं — आपकी गतिविधि यहाँ दिखेगी।",
+  "home.upcoming": "आगामी",
+  "home.upcomingDesc": "बुकिंग और सेमिनार",
+  "home.noUpcoming": "अभी तक कुछ भी निर्धारित नहीं है।",
 
   "profile.careerStats": "करियर आँकड़े",
   "profile.minutesResolved": "हल किए गए मिनट",

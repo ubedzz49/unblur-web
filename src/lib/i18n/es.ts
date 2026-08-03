@@ -24,6 +24,12 @@ const es: Dictionary = {
   "home.matchedToYou": "Coincide con lo que sabes",
   "home.seeAll": "Ver todo",
   "home.yourScore": "Tu puntuación",
+  "home.recentActivity": "Actividad reciente",
+  "home.recentActivityDesc": "Dudas y ofertas de tu feed",
+  "home.noActivity": "Aún no hay nada — tu actividad aparecerá aquí.",
+  "home.upcoming": "Próximos",
+  "home.upcomingDesc": "Reservas y seminarios",
+  "home.noUpcoming": "Nada programado todavía.",
 
   "profile.careerStats": "Estadísticas",
   "profile.minutesResolved": "Minutos resueltos",
