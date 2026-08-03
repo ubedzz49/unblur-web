@@ -41,75 +41,75 @@
   --radius-3xl: calc(var(--radius) * 1.7);
 }
 
-/* Professional/lavender direction -- clean neutral surfaces, black/white text,
- * a single lavender accent instead of a "gamified" gold/red duo. Kept the same
- * variable names (--gold/--danger etc.) so every component built against them
- * doesn't need touching; --gold is now just "the accent used as a fill". */
+/* Default colors match the "Split Diagonal" pattern's palette (see
+ * lib/layout-presets.ts) -- this is only the static fallback for first paint;
+ * the boot script (theme-script.tsx) and lib/layout.ts overwrite these inline
+ * to match whichever pattern + light/dark mode the user actually has saved. */
 :root {
-  --bg: #fafafa;
-  --bg-alt: #f4f3fa;
-  --ink: #18181b;
-  --muted: #6b7280;
-  --accent: #6d5fe8;
-  --accent-2: #dc2626;
-  --line: #d4d4d8;
+  --bg: #fdfbf9;
+  --bg-alt: #f6f0f2;
+  --ink: #1b1120;
+  --muted: #766c82;
+  --accent: #ff4d6d;
+  --accent-2: #d23a56;
+  --line: #ece5e9;
   --card: #ffffff;
 
-  --elevated: #f4f3fa;
-  --gold: #6d5fe8;
+  --elevated: #f6f0f2;
+  --gold: #ff4d6d;
   --gold-foreground: #ffffff;
-  --danger: #dc2626;
+  --danger: #d23a56;
   --danger-foreground: #ffffff;
   --radius: 0.625rem;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f0f12;
-    --bg-alt: #242330;
-    --ink: #f4f4f5;
-    --muted: #9497a6;
-    --accent: #9b8afb;
-    --accent-2: #f87171;
-    --line: #3a3844;
-    --card: #1c1b23;
-    --elevated: #242330;
-    --gold: #9b8afb;
-    --gold-foreground: #18181b;
-    --danger: #f87171;
-    --danger-foreground: #18181b;
+    --bg: #171018;
+    --bg-alt: #241a22;
+    --ink: #f3edf1;
+    --muted: #a8969f;
+    --accent: #ff6f8a;
+    --accent-2: #ff8fa3;
+    --line: #33232e;
+    --card: #211720;
+    --elevated: #241a22;
+    --gold: #ff6f8a;
+    --gold-foreground: #2b0c16;
+    --danger: #ff8fa3;
+    --danger-foreground: #2b0c16;
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #0f0f12;
-  --bg-alt: #242330;
-  --ink: #f4f4f5;
-  --muted: #9497a6;
-  --accent: #9b8afb;
-  --accent-2: #f87171;
-  --line: #3a3844;
-  --card: #1c1b23;
-  --elevated: #242330;
-  --gold: #9b8afb;
-  --gold-foreground: #18181b;
-  --danger: #f87171;
-  --danger-foreground: #18181b;
+  --bg: #171018;
+  --bg-alt: #241a22;
+  --ink: #f3edf1;
+  --muted: #a8969f;
+  --accent: #ff6f8a;
+  --accent-2: #ff8fa3;
+  --line: #33232e;
+  --card: #211720;
+  --elevated: #241a22;
+  --gold: #ff6f8a;
+  --gold-foreground: #2b0c16;
+  --danger: #ff8fa3;
+  --danger-foreground: #2b0c16;
 }
 
 :root[data-theme="light"] {
-  --bg: #fafafa;
-  --bg-alt: #f4f3fa;
-  --ink: #18181b;
-  --muted: #6b7280;
-  --accent: #6d5fe8;
-  --accent-2: #dc2626;
-  --line: #d4d4d8;
+  --bg: #fdfbf9;
+  --bg-alt: #f6f0f2;
+  --ink: #1b1120;
+  --muted: #766c82;
+  --accent: #ff4d6d;
+  --accent-2: #d23a56;
+  --line: #ece5e9;
   --card: #ffffff;
-  --elevated: #f4f3fa;
-  --gold: #6d5fe8;
+  --elevated: #f6f0f2;
+  --gold: #ff4d6d;
   --gold-foreground: #ffffff;
-  --danger: #dc2626;
+  --danger: #d23a56;
   --danger-foreground: #ffffff;
 }
 

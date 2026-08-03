@@ -3,19 +3,21 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Trophy } from "lucide-react";
+import { Settings, Trophy } from "lucide-react";
 import { NAV, isActive, MobileTabBar, AppHeader } from "@/components/app-nav";
 import { ThemeToggle } from "@/app/theme-toggle";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useMyStats } from "@/lib/queries/users";
 import { loadLayoutPreset } from "@/lib/layout";
 import { LayoutPreset } from "@/lib/layout-presets";
+import { useTranslation } from "@/lib/i18n/context";
 import { cn } from "@/lib/utils";
 import shared from "@/app/shared.module.css";
 
 function SideRail({ variant }: { variant: "side" | "split" }) {
   const pathname = usePathname();
   const myStats = useMyStats();
+  const { t } = useTranslation();
   const isSplit = variant === "split";
 
   return (
@@ -59,17 +61,33 @@ function SideRail({ variant }: { variant: "side" | "split" }) {
                 )}
               >
                 <Icon className="h-4 w-4" />
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             );
           })}
+          <Link
+            href="/settings"
+            className={cn(
+              "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
+              isSplit
+                ? isActive(pathname, "/settings")
+                  ? "bg-white/20"
+                  : "text-primary-foreground/75 hover:bg-white/10"
+                : isActive(pathname, "/settings")
+                  ? "bg-secondary text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Settings className="h-4 w-4" />
+            {t("nav.settings")}
+          </Link>
         </nav>
       </div>
 
       <div className={cn("mt-8 rounded-xl p-3", isSplit ? "bg-white/10" : "border border-border bg-card")}>
         <div className={cn("mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide", isSplit ? "text-primary-foreground/70" : "text-muted-foreground")}>
           <Trophy className="h-3 w-3" />
-          Your score
+          {t("home.yourScore")}
         </div>
         <div className="num text-xl font-semibold">{myStats.data ? myStats.data.gdPoints.toFixed(1) : "—"}</div>
         <div className={cn("mt-2 flex items-center gap-2", isSplit ? "text-primary-foreground/85" : "")}>

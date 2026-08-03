@@ -2,30 +2,31 @@ import { Check, Lock, Sparkles } from "lucide-react";
 import { ProgressMeter } from "@/components/scoreboard/kit";
 import { cn } from "@/lib/utils";
 import { UserStats } from "@/lib/api";
+import { useTranslation } from "@/lib/i18n/context";
 
 // thresholds from the eligibility ladder spec: 100min organizes a GD, 50min as a
 // listener attends one, 300min+3.5 rating hosts seminars
 const RUNGS = [
   {
     key: "canOrganizeGD" as const,
-    title: "Organize a GD",
-    blurb: "Run a structured group discussion as the organizer.",
+    titleKey: "profile.organizeGd" as const,
+    blurbKey: "profile.organizeGdDesc" as const,
     metric: (s: UserStats) => s.minutesResolved,
     target: 100,
     unit: "min resolved",
   },
   {
     key: "canAttendGD" as const,
-    title: "Attend a GD",
-    blurb: "Join a live group discussion as a listener/speaker.",
+    titleKey: "profile.attendGd" as const,
+    blurbKey: "profile.attendGdDesc" as const,
     metric: (s: UserStats) => s.minutesListener,
     target: 50,
     unit: "min listened",
   },
   {
     key: "canHostSeminar" as const,
-    title: "Host a seminar",
-    blurb: "Run your own scheduled, paid seminar.",
+    titleKey: "profile.hostSeminar" as const,
+    blurbKey: "profile.hostSeminarDesc" as const,
     metric: (s: UserStats) => s.minutesResolved,
     target: 300,
     unit: "min resolved",
@@ -34,6 +35,8 @@ const RUNGS = [
 ];
 
 export function EligibilityLadder({ stats }: { stats: UserStats }) {
+  const { t } = useTranslation();
+
   return (
     <ol className="relative space-y-3">
       {RUNGS.map((rung, i) => {
@@ -59,17 +62,17 @@ export function EligibilityLadder({ stats }: { stats: UserStats }) {
             <div className={cn("mb-1 flex-1 rounded-2xl border p-4", unlocked ? "border-primary/25 bg-primary/5" : "border-border bg-card")}>
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="text-sm font-semibold tracking-tight">{rung.title}</h3>
-                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{rung.blurb}</p>
+                  <h3 className="text-sm font-semibold tracking-tight">{t(rung.titleKey)}</h3>
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{t(rung.blurbKey)}</p>
                 </div>
                 {unlocked ? (
                   <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/15 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-wide text-primary">
                     <Sparkles className="h-3 w-3" />
-                    Unlocked
+                    {t("profile.unlocked")}
                   </span>
                 ) : (
                   <span className="shrink-0 rounded-full border border-border px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Locked
+                    {t("profile.locked")}
                   </span>
                 )}
               </div>
@@ -99,7 +102,9 @@ export function EligibilityLadder({ stats }: { stats: UserStats }) {
                       <span />
                     )}
                     {remaining > 0 ? (
-                      <span className="num rounded-full bg-elevated px-2 py-0.5 text-[0.7rem] font-semibold text-foreground">{remaining} to go</span>
+                      <span className="num rounded-full bg-elevated px-2 py-0.5 text-[0.7rem] font-semibold text-foreground">
+                        {remaining} {t("profile.toGo")}
+                      </span>
                     ) : null}
                   </div>
                 </div>
