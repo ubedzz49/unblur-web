@@ -159,6 +159,7 @@ input {
 
 /* Fluid headline sizes -- scales with viewport instead of one hard breakpoint jump */
 .text-fluid-display {
+  font-family: var(--shell-font-display, inherit);
   font-size: clamp(2rem, 1.2rem + 4vw, 3.25rem);
   line-height: 0.95;
   font-weight: 700;
@@ -166,6 +167,7 @@ input {
 }
 
 .text-fluid-title {
+  font-family: var(--shell-font-display, inherit);
   font-size: clamp(1.35rem, 1rem + 1.6vw, 1.9rem);
   line-height: 1.05;
   font-weight: 700;
@@ -231,4 +233,65 @@ input {
 }
 :root:not([data-content-width="wide"]) {
   --content-max-width: 1080px;
+}
+
+/* Layout presets (see lib/layout-presets.ts) -- shape/type language shared by
+ * every Card/Button/heading through --radius, --shell-shadow, --shell-border-w,
+ * --shell-font-display. "sidebar"/"split" additionally change nav structure,
+ * handled in React (AppShell), not here. */
+:root,
+:root[data-layout="split"] {
+  --radius: 0.625rem;
+  --shell-shadow: 0 1px 2px rgba(16, 12, 30, 0.04);
+  --shell-border-w: 1px;
+  --shell-font-display: -apple-system, "Segoe UI", sans-serif;
+}
+
+:root[data-layout="bento"] {
+  --radius: 1.375rem;
+  --shell-shadow: none;
+  --shell-border-w: 1px;
+  --shell-font-display: -apple-system, "Segoe UI", sans-serif;
+}
+
+:root[data-layout="sidebar"] {
+  --radius: 0.625rem;
+  --shell-shadow: none;
+  --shell-border-w: 1px;
+  --shell-font-display: ui-monospace, "SF Mono", "Cascadia Code", monospace;
+}
+
+:root[data-layout="marquee"] {
+  --radius: 0.5rem;
+  --shell-shadow: none;
+  --shell-border-w: 1px;
+  --shell-font-display: Georgia, "Times New Roman", serif;
+}
+
+:root[data-layout="deck"] {
+  --radius: 1.25rem;
+  --shell-shadow: 0 14px 28px -18px rgba(30, 20, 60, 0.35);
+  --shell-border-w: 0px;
+  --shell-font-display: -apple-system, "Segoe UI", sans-serif;
+}
+
+:root[data-layout="terminal"] {
+  --radius: 0.125rem;
+  --shell-shadow: none;
+  --shell-border-w: 1px;
+  --shell-font-display: ui-monospace, "SF Mono", "Cascadia Code", monospace;
+}
+
+:root[data-layout="poster"] {
+  --radius: 0.25rem;
+  --shell-shadow: none;
+  --shell-border-w: 1px;
+  --shell-font-display: "Iowan Old Style", Georgia, serif;
+}
+
+:root[data-layout="neu"] {
+  --radius: 1.5rem;
+  --shell-shadow: 6px 6px 14px rgba(0, 0, 0, 0.12), -6px -6px 14px rgba(255, 255, 255, 0.5);
+  --shell-border-w: 0px;
+  --shell-font-display: -apple-system, "Segoe UI", sans-serif;
 }

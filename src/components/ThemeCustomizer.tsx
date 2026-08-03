@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { THEME_PRESETS, DEFAULT_PRESET_ID } from "@/lib/theme-presets";
 import { loadThemePreset, saveThemePreset, resetThemePreset, findPreset, loadLayoutPrefs, saveLayoutPrefs, LayoutPrefs } from "@/lib/theme";
+import { LAYOUT_PRESETS } from "@/lib/layout-presets";
+import { loadLayoutPreset, saveLayoutPreset } from "@/lib/layout";
 import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
 import styles from "./ThemeCustomizer.module.css";
@@ -11,6 +13,17 @@ export function ThemeCustomizer() {
   const { showToast } = useToast();
   const [selectedId, setSelectedId] = useState(() => loadThemePreset().id);
   const [layout, setLayout] = useState<LayoutPrefs>(() => loadLayoutPrefs());
+  const [shellId, setShellId] = useState(() => loadLayoutPreset().id);
+
+  function handleSelectShell(id: string) {
+    const preset = LAYOUT_PRESETS.find((p) => p.id === id);
+    if (!preset) return;
+    setShellId(preset.id);
+    saveLayoutPreset(preset);
+    // nav chrome (sidebar/split vs top) is decided once on mount, not reactively --
+    // a full reload is the simplest way to guarantee the new shell actually applies
+    window.location.reload();
+  }
 
   function handleSelect(id: string) {
     const preset = findPreset(id);
@@ -59,7 +72,27 @@ export function ThemeCustomizer() {
         Reset to default
       </button>
 
-      <h3 className={styles.subhead}>Layout</h3>
+      <h3 className={styles.subhead}>Page layout</h3>
+      <p className={styles.hint}>Changes navigation and card shape across the whole app. Switching reloads the page.</p>
+      <div className={styles.grid}>
+        {LAYOUT_PRESETS.map((preset) => {
+          const active = preset.id === shellId;
+          return (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => handleSelectShell(preset.id)}
+              className={cn(styles.swatch, active && styles.swatchActive)}
+              aria-pressed={active}
+              title={preset.description}
+            >
+              <span className={styles.name}>{preset.name}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <h3 className={styles.subhead}>Spacing</h3>
       <div className={styles.layoutRow}>
         <span className={styles.label}>Density</span>
         <div className={styles.toggleGroup}>

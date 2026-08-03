@@ -3,8 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { AppHeader, AppTabBar } from "@/components/app-nav";
-import shared from "../shared.module.css";
+import { AppShell } from "@/components/AppShell";
 
 function noopSubscribe() {
   return () => {};
@@ -33,12 +32,5 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (!hydrated || !isLoggedIn) return null;
 
-  return (
-    <div className={shared.wrap}>
-      <AppHeader />
-      {/* padding-bottom leaves room for the fixed mobile tab bar */}
-      <main style={{ paddingBottom: 80 }}>{children}</main>
-      <AppTabBar />
-    </div>
-  );
+  return <AppShell>{children}</AppShell>;
 }

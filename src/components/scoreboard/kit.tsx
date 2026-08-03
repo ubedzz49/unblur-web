@@ -95,11 +95,12 @@ export function Card({
   return (
     <div
       className={cn(
-        'rounded-2xl border border-border bg-card text-card-foreground shadow-sm',
+        'rounded-2xl border-border bg-card text-card-foreground',
         interactive &&
           'transition-all duration-150 hover:border-primary/40 active:translate-y-px',
         className,
       )}
+      style={{ borderWidth: 'var(--shell-border-w, 1px)', borderStyle: 'solid', boxShadow: 'var(--shell-shadow, none)' }}
     >
       {children}
     </div>
@@ -149,12 +150,13 @@ export function StatTile({
   return (
     <div
       className={cn(
-        'flex flex-col justify-between rounded-2xl border p-4',
+        'flex flex-col justify-between rounded-2xl p-4',
         accent
           ? 'border-primary/30 bg-primary/5'
           : 'border-border bg-card',
         className,
       )}
+      style={{ borderWidth: 'var(--shell-border-w, 1px)', borderStyle: 'solid', boxShadow: 'var(--shell-shadow, none)' }}
     >
       <div className="mb-3 flex items-center gap-1.5 text-muted-foreground">
         {Icon ? <Icon className="h-3.5 w-3.5" /> : null}

@@ -1,4 +1,5 @@
 import { THEME_PRESETS, DEFAULT_PRESET_ID } from "@/lib/theme-presets";
+import { DEFAULT_LAYOUT_ID } from "@/lib/layout-presets";
 
 // Runs before paint so there's no flash of the wrong theme/colors/layout. The presets
 // array is baked in at build time (JSON.stringify below) so this stays a single
@@ -29,6 +30,9 @@ function buildThemeInit() {
       root.setAttribute("data-density", prefs.density === "compact" ? "compact" : "comfortable");
       root.setAttribute("data-content-width", prefs.contentWidth === "wide" ? "wide" : "normal");
     }
+
+    var layoutId = localStorage.getItem("unblur:layout") || ${JSON.stringify(DEFAULT_LAYOUT_ID)};
+    root.setAttribute("data-layout", layoutId);
   } catch (e) {}
 })();
 `;
