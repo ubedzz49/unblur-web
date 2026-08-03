@@ -24,6 +24,12 @@ const ar: Dictionary = {
   "home.matchedToYou": "مطابق لمجال خبرتك",
   "home.seeAll": "عرض الكل",
   "home.yourScore": "درجتك",
+  "home.recentActivity": "النشاط الأخير",
+  "home.recentActivityDesc": "الأسئلة والعروض من موجزك",
+  "home.noActivity": "لا يوجد شيء بعد — سيظهر نشاطك هنا.",
+  "home.upcoming": "القادم",
+  "home.upcomingDesc": "الحجوزات والندوات",
+  "home.noUpcoming": "لا يوجد شيء مجدول بعد.",
 
   "profile.careerStats": "الإحصاءات",
   "profile.minutesResolved": "الدقائق التي تم حلها",

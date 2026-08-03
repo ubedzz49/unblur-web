@@ -24,6 +24,12 @@ const fr: Dictionary = {
   "home.matchedToYou": "En lien avec ton expertise",
   "home.seeAll": "Tout voir",
   "home.yourScore": "Ton score",
+  "home.recentActivity": "Activité récente",
+  "home.recentActivityDesc": "Doutes et offres de ton fil",
+  "home.noActivity": "Rien pour l'instant — ton activité apparaîtra ici.",
+  "home.upcoming": "À venir",
+  "home.upcomingDesc": "Réservations et séminaires",
+  "home.noUpcoming": "Rien de prévu pour l'instant.",
 
   "profile.careerStats": "Statistiques",
   "profile.minutesResolved": "Minutes résolues",

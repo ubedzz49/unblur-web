@@ -24,6 +24,12 @@ const zh: Dictionary = {
   "home.matchedToYou": "与你的专长匹配",
   "home.seeAll": "查看全部",
   "home.yourScore": "你的分数",
+  "home.recentActivity": "近期活动",
+  "home.recentActivityDesc": "来自你动态的问题与提议",
+  "home.noActivity": "暂时还没有内容,你的活动会显示在这里。",
+  "home.upcoming": "即将开始",
+  "home.upcomingDesc": "预约和研讨会",
+  "home.noUpcoming": "暂无安排。",
 
   "profile.careerStats": "履历统计",
   "profile.minutesResolved": "已解答分钟数",

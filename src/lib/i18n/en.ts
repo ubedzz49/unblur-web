@@ -25,6 +25,12 @@ const en = {
   "home.matchedToYou": "Matched to what you know",
   "home.seeAll": "See all",
   "home.yourScore": "Your score",
+  "home.recentActivity": "Recent activity",
+  "home.recentActivityDesc": "Doubts and offers from your feed",
+  "home.noActivity": "Nothing yet — your activity will show up here.",
+  "home.upcoming": "Upcoming",
+  "home.upcomingDesc": "Bookings and seminars",
+  "home.noUpcoming": "Nothing scheduled yet.",
 
   "profile.careerStats": "Career stats",
   "profile.minutesResolved": "Minutes resolved",
