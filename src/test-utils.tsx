@@ -3,6 +3,7 @@ import { render } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/lib/auth-context";
 import { ToastProvider } from "@/components/ui/Toast";
+import { I18nProvider } from "@/lib/i18n/context";
 
 export function renderWithProviders(ui: ReactElement) {
   const client = new QueryClient({
@@ -11,9 +12,11 @@ export function renderWithProviders(ui: ReactElement) {
 
   return render(
     <QueryClientProvider client={client}>
-      <AuthProvider>
-        <ToastProvider>{ui}</ToastProvider>
-      </AuthProvider>
+      <I18nProvider>
+        <AuthProvider>
+          <ToastProvider>{ui}</ToastProvider>
+        </AuthProvider>
+      </I18nProvider>
     </QueryClientProvider>,
   );
 }

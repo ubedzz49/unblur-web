@@ -2,21 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Layers, ListChecks, Presentation, User, Users } from "lucide-react";
+import { Home, Layers, ListChecks, Presentation, Settings, User, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ThemeToggle } from "@/app/theme-toggle";
 import { NotificationBell } from "@/components/NotificationBell";
+import { useTranslation } from "@/lib/i18n/context";
+import type { TranslationKey } from "@/lib/i18n/dictionaries";
 import { cn } from "@/lib/utils";
 
-export type NavItem = { href: string; label: string; icon: LucideIcon; mobile: boolean };
+export type NavItem = { href: string; labelKey: TranslationKey; icon: LucideIcon; mobile: boolean };
 
 export const NAV: NavItem[] = [
-  { href: "/home", label: "Home", icon: Home, mobile: true },
-  { href: "/feed", label: "Feed", icon: Layers, mobile: true },
-  { href: "/requests", label: "Requests", icon: ListChecks, mobile: true },
-  { href: "/seminars", label: "Seminars", icon: Presentation, mobile: false },
-  { href: "/gds", label: "GDs", icon: Users, mobile: true },
-  { href: "/profile", label: "Profile", icon: User, mobile: true },
+  { href: "/home", labelKey: "nav.home", icon: Home, mobile: true },
+  { href: "/feed", labelKey: "nav.feed", icon: Layers, mobile: true },
+  { href: "/requests", labelKey: "nav.requests", icon: ListChecks, mobile: true },
+  { href: "/seminars", labelKey: "nav.seminars", icon: Presentation, mobile: false },
+  { href: "/gds", labelKey: "nav.gds", icon: Users, mobile: true },
+  { href: "/profile", labelKey: "nav.profile", icon: User, mobile: true },
 ];
 
 export function isActive(pathname: string, href: string): boolean {
@@ -25,6 +27,7 @@ export function isActive(pathname: string, href: string): boolean {
 
 export function MobileTabBar() {
   const pathname = usePathname();
+  const { t } = useTranslation();
   const mobileNav = NAV.filter((n) => n.mobile);
 
   return (
@@ -49,7 +52,7 @@ export function MobileTabBar() {
               <span className={cn("flex h-8 w-12 items-center justify-center rounded-full transition-colors", active && "bg-primary/12")}>
                 <Icon className="h-5 w-5" />
               </span>
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           );
         })}
@@ -60,6 +63,7 @@ export function MobileTabBar() {
 
 export function AppHeader() {
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   return (
     <header className="sticky top-0 z-40 -mx-5 border-b border-border bg-background/85 px-5 backdrop-blur-md">
@@ -83,7 +87,7 @@ export function AppHeader() {
                   active ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             );
           })}
@@ -92,6 +96,16 @@ export function AppHeader() {
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
           <NotificationBell />
+          <Link
+            href="/settings"
+            aria-label={t("nav.settings")}
+            className={cn(
+              "flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground",
+              isActive(pathname, "/settings") && "border-primary text-primary",
+            )}
+          >
+            <Settings className="h-4 w-4" />
+          </Link>
         </div>
       </div>
 

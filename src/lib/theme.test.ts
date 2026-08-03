@@ -1,15 +1,8 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { THEME_PRESETS, DEFAULT_PRESET_ID } from "./theme-presets";
 import {
   MIN_ACCENT_CONTRAST_RATIO,
   contrastRatio,
   validateAccentColor,
-  validatePreset,
-  applyThemePreset,
-  saveThemePreset,
-  loadThemePreset,
-  resetThemePreset,
-  findPreset,
   loadLayoutPrefs,
   saveLayoutPrefs,
 } from "./theme";
@@ -20,7 +13,7 @@ describe("contrastRatio", () => {
   });
 
   it("returns ~1 for identical colors", () => {
-    expect(contrastRatio("#c47f00", "#c47f00")).toBeCloseTo(1, 1);
+    expect(contrastRatio("#ff4d6d", "#ff4d6d")).toBeCloseTo(1, 1);
   });
 
   it("returns null for an invalid hex", () => {
@@ -36,7 +29,7 @@ describe("validateAccentColor", () => {
   });
 
   it("rejects a near-invisible pastel against the light background", () => {
-    const result = validateAccentColor("#f0f2f5", "Primary");
+    const result = validateAccentColor("#f8f7f5", "Primary");
     expect(result.valid).toBe(false);
   });
 
@@ -44,74 +37,8 @@ describe("validateAccentColor", () => {
     expect(validateAccentColor("banana", "Primary").valid).toBe(false);
   });
 
-  it("accepts the amber preset color", () => {
-    expect(validateAccentColor("#c47f00", "Primary").valid).toBe(true);
-  });
-
-  it("accepts the default lavender accent", () => {
-    expect(validateAccentColor("#6d5fe8", "Primary").valid).toBe(true);
-  });
-});
-
-describe("every curated preset", () => {
-  it.each(THEME_PRESETS)("$name passes the contrast validator in both light and dark", (preset) => {
-    const result = validatePreset(preset);
-    expect(result.reasons).toEqual([]);
-    expect(result.valid).toBe(true);
-  });
-
-  it("has no duplicate ids", () => {
-    const ids = THEME_PRESETS.map((p) => p.id);
-    expect(new Set(ids).size).toBe(ids.length);
-  });
-
-  it("includes the documented default preset id", () => {
-    expect(THEME_PRESETS.some((p) => p.id === DEFAULT_PRESET_ID)).toBe(true);
-  });
-});
-
-describe("findPreset", () => {
-  it("falls back to the default when the id is unknown or null", () => {
-    expect(findPreset("not-a-real-id").id).toBe(DEFAULT_PRESET_ID);
-    expect(findPreset(null).id).toBe(DEFAULT_PRESET_ID);
-  });
-
-  it("returns the matching preset by id", () => {
-    expect(findPreset("emerald-rose").id).toBe("emerald-rose");
-  });
-});
-
-describe("theme preset persistence", () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-    document.documentElement.removeAttribute("style");
-    document.documentElement.removeAttribute("data-theme");
-  });
-
-  it("saveThemePreset persists and applies the preset's light-mode colors by default", () => {
-    document.documentElement.setAttribute("data-theme", "light");
-    const preset = findPreset("emerald-rose");
-    saveThemePreset(preset);
-    expect(loadThemePreset().id).toBe("emerald-rose");
-    expect(document.documentElement.style.getPropertyValue("--accent")).toBe(preset.light.primary);
-  });
-
-  it("applies the dark-mode variant when data-theme is dark", () => {
-    document.documentElement.setAttribute("data-theme", "dark");
-    const preset = findPreset("emerald-rose");
-    applyThemePreset(preset);
-    expect(document.documentElement.style.getPropertyValue("--accent")).toBe(preset.dark.primary);
-  });
-
-  it("resetThemePreset removes stored preset and inline overrides", () => {
-    saveThemePreset(findPreset("emerald-rose"));
-    resetThemePreset();
-    expect(loadThemePreset().id).toBe(DEFAULT_PRESET_ID);
-    expect(document.documentElement.style.getPropertyValue("--accent")).toBe("");
-  });
-
-  it("defaults to the documented default preset when nothing is stored", () => {
-    expect(loadThemePreset().id).toBe(DEFAULT_PRESET_ID);
+  it("accepts the default Split Diagonal accent", () => {
+    expect(validateAccentColor("#ff4d6d", "Primary").valid).toBe(true);
   });
 });
 

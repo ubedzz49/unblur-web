@@ -1,19 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { THEME_PRESETS, DEFAULT_PRESET_ID } from "@/lib/theme-presets";
-import { loadThemePreset, saveThemePreset, resetThemePreset, findPreset, loadLayoutPrefs, saveLayoutPrefs, LayoutPrefs } from "@/lib/theme";
-import { LAYOUT_PRESETS } from "@/lib/layout-presets";
+import { LAYOUT_PRESETS, DEFAULT_LAYOUT_ID } from "@/lib/layout-presets";
 import { loadLayoutPreset, saveLayoutPreset } from "@/lib/layout";
-import { useToast } from "@/components/ui/Toast";
+import { loadLayoutPrefs, saveLayoutPrefs, LayoutPrefs } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import styles from "./ThemeCustomizer.module.css";
+import styles from "./AppearanceSettings.module.css";
 
-export function ThemeCustomizer() {
-  const { showToast } = useToast();
-  const [selectedId, setSelectedId] = useState(() => loadThemePreset().id);
-  const [layout, setLayout] = useState<LayoutPrefs>(() => loadLayoutPrefs());
+export function AppearanceSettings() {
   const [shellId, setShellId] = useState(() => loadLayoutPreset().id);
+  const [layout, setLayout] = useState<LayoutPrefs>(() => loadLayoutPrefs());
 
   function handleSelectShell(id: string) {
     const preset = LAYOUT_PRESETS.find((p) => p.id === id);
@@ -21,21 +17,8 @@ export function ThemeCustomizer() {
     setShellId(preset.id);
     saveLayoutPreset(preset);
     // nav chrome (sidebar/split vs top) is decided once on mount, not reactively --
-    // a full reload is the simplest way to guarantee the new shell actually applies
+    // a full reload is the simplest way to guarantee the new pattern actually applies
     window.location.reload();
-  }
-
-  function handleSelect(id: string) {
-    const preset = findPreset(id);
-    setSelectedId(preset.id);
-    saveThemePreset(preset);
-    showToast(`Theme set to ${preset.name}`);
-  }
-
-  function handleReset() {
-    resetThemePreset();
-    setSelectedId(DEFAULT_PRESET_ID);
-    showToast("Theme reset to default");
   }
 
   function updateLayout(next: Partial<LayoutPrefs>) {
@@ -46,34 +29,7 @@ export function ThemeCustomizer() {
 
   return (
     <div className={styles.wrap}>
-      <p className={styles.hint}>Every combination below is pre-checked for readability, so any pick stays legible in both light and dark mode.</p>
-      <div className={styles.grid}>
-        {THEME_PRESETS.map((preset) => {
-          const active = preset.id === selectedId;
-          return (
-            <button
-              key={preset.id}
-              type="button"
-              onClick={() => handleSelect(preset.id)}
-              className={cn(styles.swatch, active && styles.swatchActive)}
-              aria-pressed={active}
-            >
-              <span className={styles.dots}>
-                <span className={styles.dot} style={{ background: preset.light.primary }} />
-                <span className={styles.dot} style={{ background: preset.light.tertiary }} />
-              </span>
-              <span className={styles.name}>{preset.name}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      <button type="button" className={styles.resetLink} onClick={handleReset}>
-        Reset to default
-      </button>
-
-      <h3 className={styles.subhead}>Page layout</h3>
-      <p className={styles.hint}>Changes navigation and card shape across the whole app. Switching reloads the page.</p>
+      <p className={styles.hint}>Each pattern bundles its own colors for both light and dark mode — pick the one you like, then use the sun/moon toggle to switch between its two looks.</p>
       <div className={styles.grid}>
         {LAYOUT_PRESETS.map((preset) => {
           const active = preset.id === shellId;
@@ -84,9 +40,14 @@ export function ThemeCustomizer() {
               onClick={() => handleSelectShell(preset.id)}
               className={cn(styles.swatch, active && styles.swatchActive)}
               aria-pressed={active}
-              title={preset.description}
             >
+              <span className={styles.dots} aria-hidden="true">
+                <span className={styles.dot} style={{ background: preset.light.accent }} />
+                <span className={styles.dot} style={{ background: preset.light.accent2 }} />
+              </span>
               <span className={styles.name}>{preset.name}</span>
+              <span className={styles.desc}>{preset.description}</span>
+              {preset.id === DEFAULT_LAYOUT_ID && <span className={styles.defaultTag}>Default</span>}
             </button>
           );
         })}

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { screen, fireEvent, waitFor } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import ProfilePage from "./page";
 import { renderWithProviders } from "@/test-utils";
 import * as api from "@/lib/api";
@@ -27,40 +27,6 @@ describe("ProfilePage", () => {
     vi.spyOn(api, "getMe").mockResolvedValue(baseUser);
   });
 
-  it("loads the profile and saves an edit with a success toast", async () => {
-    vi.spyOn(api, "updateMe").mockResolvedValue({ ...baseUser, name: "Asha" });
-
-    renderWithProviders(<ProfilePage />);
-
-    const nameInput = await screen.findByLabelText(/^name$/i);
-    expect(nameInput).toHaveValue("Ubed");
-
-    fireEvent.change(nameInput, { target: { value: "Asha" } });
-    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
-
-    await waitFor(() =>
-      expect(api.updateMe).toHaveBeenCalledWith("test-token", {
-        name: "Asha",
-        bio: "Software Engineer",
-        aiNotesAndTranscriptsEnabled: true,
-      }),
-    );
-    expect(await screen.findByText(/profile updated/i)).toBeInTheDocument();
-  });
-
-  it("rejects an unsupported file type before ever calling the upload API", async () => {
-    const uploadSpy = vi.spyOn(api, "requestPhotoUploadUrl");
-
-    renderWithProviders(<ProfilePage />);
-    const fileInput = (await screen.findByLabelText(/change photo/i)) as HTMLInputElement;
-
-    const pdf = new File(["not an image"], "resume.pdf", { type: "application/pdf" });
-    fireEvent.change(fileInput, { target: { files: [pdf] } });
-
-    expect(await screen.findByText(/jpeg, png, or webp/i)).toBeInTheDocument();
-    expect(uploadSpy).not.toHaveBeenCalled();
-  });
-
   it("shows the eligibility ladder with unlocked rungs marked and locked ones showing progress", async () => {
     vi.spyOn(api, "getMyStats").mockResolvedValue({
       minutesResolved: 120,
@@ -76,7 +42,7 @@ describe("ProfilePage", () => {
 
     expect(await screen.findByText(/host a seminar/i)).toBeInTheDocument();
     expect(screen.getAllByText(/unlocked/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/organize a gd/i)).toBeInTheDocument();
+    expect(screen.getByText(/organize a discussion/i)).toBeInTheDocument();
     // organize a GD is still locked even though minutesResolved cleared the 100min bar --
     // the ladder shows the server's eligibility flag, not a client-recomputed guess
     expect(
@@ -100,5 +66,22 @@ describe("ProfilePage", () => {
     await screen.findByText(/career stats/i);
     expect(screen.getAllByText(/locked/i).length).toBe(3);
     expect(screen.queryByText(/unlocked/i)).not.toBeInTheDocument();
+  });
+
+  it("shows a link to settings for account editing, since profile is now display-only", async () => {
+    vi.spyOn(api, "getMyStats").mockResolvedValue({
+      minutesResolved: 0,
+      avgRating: 0,
+      ratingCount: 0,
+      minutesListener: 0,
+      gdPoints: 0,
+      updatedAt: new Date().toISOString(),
+      eligibility: { canHostSeminar: false, canOrganizeGD: false, canAttendGD: false },
+    });
+
+    renderWithProviders(<ProfilePage />);
+
+    const settingsLink = await screen.findByRole("link", { name: /settings/i });
+    expect(settingsLink).toHaveAttribute("href", "/settings");
   });
 });

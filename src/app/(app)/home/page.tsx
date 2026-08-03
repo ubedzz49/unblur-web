@@ -9,18 +9,21 @@ import { useGds } from "@/lib/queries/gds";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { Avatar, Card, LiveDot, Pill, SectionLabel } from "@/components/scoreboard/kit";
+import { useTranslation } from "@/lib/i18n/context";
+import type { TranslationKey } from "@/lib/i18n/dictionaries";
 
-const ACTIONS = [
-  { href: "/doubts/new", label: "Post a doubt", desc: "Get a real person on a call", icon: PlusCircle, primary: true },
-  { href: "/feed", label: "Resolve doubts", desc: "Earn from your expertise", icon: Layers },
-  { href: "/gds", label: "Join a GD", desc: "Build your score", icon: Users },
-  { href: "/seminars", label: "Seminars", desc: "Learn from proven hosts", icon: Presentation },
+const ACTIONS: { href: string; labelKey: TranslationKey; descKey: TranslationKey; icon: typeof PlusCircle; primary?: boolean }[] = [
+  { href: "/doubts/new", labelKey: "home.postDoubt", descKey: "home.postDoubtDesc", icon: PlusCircle, primary: true },
+  { href: "/feed", labelKey: "home.resolveDoubts", descKey: "home.resolveDoubtsDesc", icon: Layers },
+  { href: "/gds", labelKey: "home.joinGd", descKey: "home.joinGdDesc", icon: Users },
+  { href: "/seminars", labelKey: "home.seminars", descKey: "home.seminarsDesc", icon: Presentation },
 ];
 
 export default function HomePage() {
   const me = useMe();
   const myStats = useMyStats();
   const myExpertise = useMyExpertise();
+  const { t } = useTranslation();
   const expertiseLevelIds = (myExpertise.data ?? []).map((e) => e.expertiseLevelId);
   const feed = useFeed(expertiseLevelIds);
   const gds = useGds(false);
@@ -43,7 +46,7 @@ export default function HomePage() {
             <Skeleton width="50%" height={36} style={{ margin: "0 0 8px" }} />
           ) : (
             <>
-              <p className="text-sm font-semibold text-muted-foreground">Welcome back,</p>
+              <p className="text-sm font-semibold text-muted-foreground">{t("home.greeting")}</p>
               <h1 className="text-fluid-title mt-0.5">{firstName ?? "there"}.</h1>
             </>
           )}
@@ -54,7 +57,7 @@ export default function HomePage() {
                 <Avatar initials={initials} size="md" ring />
                 <div>
                   <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                    <Trophy className="h-3.5 w-3.5 text-primary" /> Your score
+                    <Trophy className="h-3.5 w-3.5 text-primary" /> {t("home.yourScore")}
                   </div>
                   <div className="num text-2xl font-semibold leading-none text-primary">{myStats.data.gdPoints.toFixed(1)}</div>
                 </div>
@@ -67,7 +70,7 @@ export default function HomePage() {
         </section>
 
         <section>
-          <SectionLabel>Get started</SectionLabel>
+          <SectionLabel>{t("home.getStarted")}</SectionLabel>
           <div className="grid grid-cols-2 gap-3">
             {ACTIONS.map((a) => {
               const Icon = a.icon;
@@ -81,8 +84,8 @@ export default function HomePage() {
                     >
                       <Icon className="h-5 w-5" />
                     </span>
-                    <div className="mt-3 text-sm font-semibold">{a.label}</div>
-                    <div className="mt-0.5 text-xs leading-snug text-muted-foreground">{a.desc}</div>
+                    <div className="mt-3 text-sm font-semibold">{t(a.labelKey)}</div>
+                    <div className="mt-0.5 text-xs leading-snug text-muted-foreground">{t(a.descKey)}</div>
                   </Card>
                 </Link>
               );
@@ -92,12 +95,12 @@ export default function HomePage() {
 
         {liveGd && (
           <section>
-            <SectionLabel>Happening now</SectionLabel>
+            <SectionLabel>{t("home.happeningNow")}</SectionLabel>
             <Link href={`/gds/${liveGd.id}`}>
               <Card interactive className="overflow-hidden">
                 <div className="flex items-center gap-2 border-b border-border bg-destructive/10 px-4 py-2 text-destructive">
                   <LiveDot />
-                  <span className="text-xs font-semibold uppercase tracking-wide">Live GD</span>
+                  <span className="text-xs font-semibold uppercase tracking-wide">{t("home.liveGd")}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3 p-4">
                   <div>
@@ -118,11 +121,11 @@ export default function HomePage() {
             <SectionLabel
               action={
                 <Link href="/feed" className="inline-flex items-center gap-1 text-xs font-bold text-primary">
-                  See all <ArrowRight className="h-3.5 w-3.5" />
+                  {t("home.seeAll")} <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               }
             >
-              Matched to your expertise
+              {t("home.matchedToYou")}
             </SectionLabel>
             <div className="space-y-3">
               {exactMatches.map((d) => (

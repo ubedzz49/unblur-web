@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { LAYOUT_PRESETS, DEFAULT_LAYOUT_ID, findLayoutPreset } from "./layout-presets";
 import { loadLayoutId, loadLayoutPreset, saveLayoutPreset, applyLayoutPreset } from "./layout";
+import { validateAccentColor } from "./theme";
 
 describe("layout presets", () => {
   it("has 8 distinct presets with no duplicate ids", () => {
@@ -20,6 +21,19 @@ describe("layout presets", () => {
 
   it("falls back to the default for an unknown id", () => {
     expect(findLayoutPreset("not-a-real-id").id).toBe(DEFAULT_LAYOUT_ID);
+  });
+
+  it.each(LAYOUT_PRESETS)("$name's accent and secondary accent stay legible in both light and dark", (preset) => {
+    const lightBg = { light: preset.light.bg, dark: preset.light.bg };
+    const darkBg = { light: preset.dark.bg, dark: preset.dark.bg };
+    const checks = [
+      validateAccentColor(preset.light.accent, `${preset.name} light accent`, lightBg),
+      validateAccentColor(preset.light.accent2, `${preset.name} light accent2`, lightBg),
+      validateAccentColor(preset.dark.accent, `${preset.name} dark accent`, darkBg),
+      validateAccentColor(preset.dark.accent2, `${preset.name} dark accent2`, darkBg),
+    ];
+    const reasons = checks.flatMap((c) => c.reasons);
+    expect(reasons).toEqual([]);
   });
 });
 
