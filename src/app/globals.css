@@ -1,115 +1,89 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is([data-theme="dark"] *));
-
 /* Track fill for a zero/near-zero ProgressMeter needs to read as a visible
  * groove against both the page and card backgrounds, not just "bg-elevated"
- * (which was too close to the card color in some palettes) -- add a hairline
- * border in both modes so the empty state is always legible. */
+ * -- add a hairline border so the empty state is always legible. */
 .meter-track {
   border: 1px solid var(--line);
 }
 
 /* shadcn-style aliases -- so Tailwind utilities (bg-primary, text-foreground, etc.) resolve
- * to the exact same source-of-truth variables the CSS-module components and theme-script
- * already read (--bg, --ink, --accent...), instead of keeping two parallel token systems. */
+ * to the exact same source-of-truth variables the CSS-module components read below,
+ * instead of keeping two parallel token systems. */
 @theme inline {
-  --color-background: var(--bg);
-  --color-foreground: var(--ink);
-  --color-card: var(--card);
-  --color-card-foreground: var(--ink);
-  --color-popover: var(--card);
-  --color-popover-foreground: var(--ink);
-  --color-primary: var(--accent);
-  --color-primary-foreground: var(--gold-foreground);
-  --color-secondary: var(--bg-alt);
-  --color-secondary-foreground: var(--ink);
-  --color-muted: var(--elevated);
-  --color-muted-foreground: var(--muted);
-  --color-accent: var(--elevated);
-  --color-accent-foreground: var(--ink);
-  --color-destructive: var(--accent-2);
-  --color-destructive-foreground: var(--danger-foreground);
+  --color-background: var(--ink);
+  --color-foreground: var(--paper);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--paper);
+  --color-popover: var(--surface-2);
+  --color-popover-foreground: var(--paper);
+  --color-primary: var(--violet);
+  --color-primary-foreground: var(--ink-strong);
+  --color-secondary: var(--surface-2);
+  --color-secondary-foreground: var(--paper);
+  --color-muted: var(--surface-2);
+  --color-muted-foreground: var(--dim);
+  --color-accent: var(--surface-2);
+  --color-accent-foreground: var(--paper);
+  --color-destructive: var(--red);
+  --color-destructive-foreground: var(--ink-strong);
   --color-border: var(--line);
   --color-input: var(--line);
-  --color-ring: var(--accent);
+  --color-ring: var(--violet);
   --color-gold: var(--gold);
-  --color-gold-foreground: var(--gold-foreground);
-  --color-danger: var(--danger);
-  --color-danger-foreground: var(--danger-foreground);
-  --color-elevated: var(--elevated);
-  --color-live: var(--danger);
+  --color-gold-foreground: var(--ink-strong);
+  --color-danger: var(--red);
+  --color-danger-foreground: var(--ink-strong);
+  --color-elevated: var(--surface-2);
+  --color-live: var(--red);
 
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.85);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.2);
-  --radius-2xl: calc(var(--radius) * 1.4);
-  --radius-3xl: calc(var(--radius) * 1.7);
+  --font-display: var(--font-fraunces);
+  --font-numeric: var(--font-space-grotesk);
+  --font-sans: var(--font-inter);
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 18px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
 }
 
-/* Single unified light/dark palette + shape language for the whole app.
- * Accent pairing: indigo (primary -- nav, links, CTAs, progress) + amber
- * (secondary -- achievement/points/energy). Both verified >=4.5:1 against
- * their own background and against their chosen foreground in lib/theme.ts's
- * contrast utilities, in both modes. */
-:root,
-:root[data-theme="light"] {
-  --bg: #f7f7fb;
-  --bg-alt: #eeeef4;
-  --ink: #14151f;
-  --muted: #63636f;
-  --accent: #4f46e5;
-  --accent-2: #b45309;
-  --line: #e3e3ea;
-  --card: #ffffff;
-  --elevated: #eeeef4;
-  --gold: #4f46e5;
-  --gold-foreground: #ffffff;
-  --danger: #dc2626;
-  --danger-foreground: #ffffff;
+/* Single committed dark theme -- these mockups have no light mode, and none is
+ * built here. Every color below is taken verbatim from the delivered design files. */
+:root {
+  --ink: #0f0e14;
+  --ink-strong: #1a1330;
+  --surface: #181722;
+  --surface-2: #1f1e2c;
+  --paper: #f3f1ea;
+  --dim: #9a96a8;
+  --violet: #a78bfa;
+  --violet-dim: rgba(167, 139, 250, 0.15);
+  --line: rgba(243, 241, 234, 0.09);
+  --green: #7fd99a;
+  --coral: #ff8a65;
+  --red: #ff6b6b;
+  --gold: #f5c451;
+  --blue: #7fb3ff;
 
-  --radius: 0.75rem;
-  --shell-shadow: 0 1px 2px rgba(20, 21, 31, 0.04), 0 8px 24px -12px rgba(20, 21, 31, 0.12);
+  /* legacy aliases kept for any component not yet migrated off the old names */
+  --bg: var(--ink);
+  --bg-alt: var(--surface-2);
+  --muted: var(--dim);
+  --accent: var(--violet);
+  --accent-2: var(--coral);
+  --card: var(--surface);
+  --elevated: var(--surface-2);
+  --danger: var(--red);
+  --danger-foreground: var(--ink-strong);
+  --gold-foreground: var(--ink-strong);
+
+  --radius: 12px;
+  --shell-shadow: none;
   --shell-border-w: 1px;
-  --shell-font-display: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0d0e14;
-    --bg-alt: #1c1d26;
-    --ink: #f1f1f6;
-    --muted: #9a9aa8;
-    --accent: #818cf8;
-    --accent-2: #fbbf24;
-    --line: #26272f;
-    --card: #16171f;
-    --elevated: #1c1d26;
-    --gold: #818cf8;
-    --gold-foreground: #1e1b4b;
-    --danger: #f87171;
-    --danger-foreground: #450a0a;
-    --shell-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
-  }
-}
-
-:root[data-theme="dark"] {
-  --bg: #0d0e14;
-  --bg-alt: #1c1d26;
-  --ink: #f1f1f6;
-  --muted: #9a9aa8;
-  --accent: #818cf8;
-  --accent-2: #fbbf24;
-  --line: #26272f;
-  --card: #16171f;
-  --elevated: #1c1d26;
-  --gold: #818cf8;
-  --gold-foreground: #1e1b4b;
-  --danger: #f87171;
-  --danger-foreground: #450a0a;
-  --shell-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+  --shell-font-display: var(--font-fraunces), serif;
 }
 
 * {
@@ -131,17 +105,9 @@ html {
 
 body {
   min-height: 100%;
-  color: var(--ink);
-  background: var(--bg);
-  font-family:
-    -apple-system,
-    "Segoe UI",
-    Helvetica,
-    Arial,
-    sans-serif;
-  transition:
-    background 0.3s,
-    color 0.3s;
+  color: var(--paper);
+  background: var(--ink);
+  font-family: var(--font-inter), "Inter", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -152,25 +118,58 @@ a {
 }
 
 button,
-input {
+input,
+textarea,
+select {
   font-family: inherit;
+}
+
+/* Bare <table> elements (admin dashboard tables, landing page's comparison table)
+ * read as an extension of the card/surface system by default -- dim uppercase
+ * headers, hairline row borders, a hover highlight -- without needing every call
+ * site to repeat the same inline styles. Explicit inline styles still win where set. */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th {
+  text-align: left;
+  color: var(--dim);
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+tbody tr:hover {
+  background: var(--surface);
+}
+
+/* Large numeric stats (stat-strip numbers, GD score, some prices) get the
+ * Space Grotesk "number/brand" face -- kit.tsx's StatTile value carries this class. */
+.num {
+  font-family: var(--font-space-grotesk), sans-serif;
 }
 
 /* Fluid headline sizes -- scales with viewport instead of one hard breakpoint jump */
 .text-fluid-display {
-  font-family: var(--shell-font-display, inherit);
-  font-size: clamp(2rem, 1.2rem + 4vw, 3.25rem);
-  line-height: 0.95;
+  font-family: var(--font-fraunces), serif;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: clamp(2rem, 1.2rem + 4vw, 3.5rem);
+  line-height: 1.12;
 }
 
 .text-fluid-title {
-  font-family: var(--shell-font-display, inherit);
+  font-family: var(--font-fraunces), serif;
   font-size: clamp(1.35rem, 1rem + 1.6vw, 1.9rem);
-  line-height: 1.05;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-weight: 600;
 }
 
 @keyframes sb-shimmer {
@@ -185,13 +184,13 @@ input {
 /* live-speaking pulse ring -- GD room speaker indicator */
 @keyframes sb-pulse {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 55%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--violet) 55%, transparent);
   }
   70% {
-    box-shadow: 0 0 0 10px color-mix(in oklab, var(--accent) 0%, transparent);
+    box-shadow: 0 0 0 10px color-mix(in oklab, var(--violet) 0%, transparent);
   }
   100% {
-    box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 0%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--violet) 0%, transparent);
   }
 }
 .animate-speaking {
@@ -233,4 +232,3 @@ input {
 :root:not([data-content-width="wide"]) {
   --content-max-width: 1080px;
 }
-

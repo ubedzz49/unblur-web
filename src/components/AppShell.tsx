@@ -1,29 +1,18 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { Sidebar, MobileTabBar, TopBar, NAV } from "@/components/app-nav";
-import { useTranslation } from "@/lib/i18n/context";
+import { TopNav } from "@/components/app-nav";
 
-/** The one nav structure for the whole app: a persistent left sidebar on desktop
- * (icon+label, user menu at the bottom for settings/admin/logout) and a bottom
- * tab bar + "More" sheet on mobile. The old 8-way top/side/split preset branching
- * is gone -- every page renders through this single shell. */
+/** The one nav structure for the whole app: a sticky top nav bar (logo, inline
+ * links, post-a-doubt CTA, bell, avatar) per the design mockups. There is no
+ * persistent left sidebar anymore -- pages that need their own local sidebars
+ * (e.g. feed's filter/stats rails) build those as page-local content. */
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const { t } = useTranslation();
-  const activeItem = NAV.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
-  const title = activeItem ? t(activeItem.labelKey) : undefined;
-
   return (
-    <div className="flex min-h-dvh">
-      <Sidebar />
-      <div className="min-w-0 flex-1 px-5 py-6 pb-24 md:pb-6">
-        <div className="mx-auto w-full" style={{ maxWidth: "var(--content-max-width)" }}>
-          <TopBar title={title} />
-          {children}
-        </div>
+    <div className="flex min-h-dvh flex-col">
+      <TopNav />
+      <div className="mx-auto w-full flex-1" style={{ maxWidth: "var(--content-max-width)" }}>
+        {children}
       </div>
-      <MobileTabBar />
     </div>
   );
 }

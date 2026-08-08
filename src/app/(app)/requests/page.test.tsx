@@ -114,7 +114,7 @@ describe("RequestsPage", () => {
     renderWithProviders(<RequestsPage />);
 
     expect(await screen.findByText(MY_DOUBT.title)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^accept$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /accept and pay/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^reject$/i })).toBeInTheDocument();
   });
 
@@ -155,7 +155,8 @@ describe("RequestsPage", () => {
     expect(options).toEqual(INCOMING_REQUEST.proposedSlots);
 
     fireEvent.change(select, { target: { value: INCOMING_REQUEST.proposedSlots[1] } });
-    fireEvent.click(screen.getByRole("button", { name: /^accept$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /accept and pay/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^pay .* and confirm$/i }));
 
     await waitFor(() =>
       expect(acceptSpy).toHaveBeenCalledWith("test-token", INCOMING_REQUEST.id, INCOMING_REQUEST.proposedSlots[1]),

@@ -103,7 +103,8 @@ describe("DoubtRequestsModal", () => {
     renderWithProviders(<DoubtRequestsModal doubtId="doubt-1" onClose={vi.fn()} />);
 
     await screen.findByText("Asha Rao");
-    fireEvent.click(screen.getByRole("button", { name: /^accept$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /accept and pay/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^pay .* and confirm$/i }));
 
     await waitFor(() =>
       expect(acceptSpy).toHaveBeenCalledWith("test-token", PENDING_REQUEST.id, PENDING_REQUEST.proposedSlots[0]),
@@ -132,7 +133,7 @@ describe("DoubtRequestsModal", () => {
     renderWithProviders(<DoubtRequestsModal doubtId="doubt-1" onClose={vi.fn()} />);
 
     await screen.findByText("Asha Rao");
-    expect(screen.queryByRole("button", { name: /^accept$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /accept and pay/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^reject$/i })).not.toBeInTheDocument();
   });
 

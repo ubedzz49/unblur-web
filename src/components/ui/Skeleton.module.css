@@ -1,5 +1,5 @@
 .skeleton {
-  background: linear-gradient(90deg, var(--bg-alt) 25%, var(--line) 37%, var(--bg-alt) 63%);
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--line) 37%, var(--surface-2) 63%);
   background-size: 400% 100%;
   border-radius: 4px;
   animation: shimmer 1.4s ease infinite;
@@ -17,6 +17,6 @@
 @media (prefers-reduced-motion: reduce) {
   .skeleton {
     animation: none;
-    background: var(--bg-alt);
+    background: var(--surface-2);
   }
 }

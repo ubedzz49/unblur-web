@@ -44,7 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             logout();
             router.push("/login");
           }}
-          style={{ fontSize: 13, fontWeight: 700, color: "var(--muted)" }}
+          style={{ fontSize: 13, fontWeight: 700, color: "var(--dim)" }}
         >
           Log out
         </button>

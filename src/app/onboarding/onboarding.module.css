@@ -16,10 +16,16 @@
 }
 
 .stepTitle {
-  font-weight: 700;
+  font-family: var(--font-fraunces), serif;
+  font-weight: 600;
   font-size: clamp(24px, 6vw, 34px);
   line-height: 1.1;
   margin-bottom: 8px;
+  text-align: center;
+}
+
+.stepHint {
+  text-align: center;
 }
 
 .stepHint {

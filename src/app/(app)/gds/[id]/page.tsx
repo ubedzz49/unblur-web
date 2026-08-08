@@ -8,7 +8,7 @@ import { useMe } from "@/lib/queries/users";
 import { useGd, useGdJoinUrl, useGdResults, useJoinGd, useVoteInGd } from "@/lib/queries/gds";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card, Pill, LiveDot, ProgressMeter } from "@/components/scoreboard/kit";
+import { Card, Pill, LiveDot } from "@/components/scoreboard/kit";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { useToast } from "@/components/ui/Toast";
 import { RegisterPanel } from "@/components/scoreboard/register-panel";
@@ -22,6 +22,52 @@ const RULES = [
   { icon: Mic, title: "Overtime = mute", desc: "Go past your limit and you're muted for a short penalty." },
   { icon: Vote, title: "Vote at the end", desc: "Rank your top 3 speakers. Points build your score." },
 ];
+
+function SpeakerTile({
+  label,
+  status,
+  spokenSeconds,
+  limitSeconds,
+  speaking,
+  muted,
+}: {
+  label: string;
+  status: string;
+  spokenSeconds: number;
+  limitSeconds: number;
+  speaking: boolean;
+  muted: boolean;
+}) {
+  const overLimit = spokenSeconds >= limitSeconds;
+  const pct = limitSeconds > 0 ? Math.min(100, (spokenSeconds / limitSeconds) * 100) : 0;
+  return (
+    <div
+      className="relative rounded-[14px] border p-4"
+      style={{
+        borderColor: speaking ? "var(--violet)" : "var(--line)",
+        background: "var(--surface)",
+        opacity: muted ? 0.5 : 1,
+      }}
+    >
+      <div className="mb-3 flex items-center gap-2.5">
+        <span className="h-8 w-8 shrink-0 rounded-full" style={{ background: "var(--violet-dim)" }} />
+        <div>
+          <div className="text-[13px] font-semibold">{label}</div>
+          <div className="text-[11px]" style={{ color: "var(--dim)" }}>{status}</div>
+        </div>
+      </div>
+      <div className="mb-2 h-1.5 overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${pct}%`, background: overLimit ? "var(--red)" : pct > 85 ? "var(--coral)" : "var(--violet)" }}
+        />
+      </div>
+      <div className="text-right text-[11px]" style={{ color: "var(--dim)" }}>
+        {spokenSeconds}s of {limitSeconds}s used
+      </div>
+    </div>
+  );
+}
 
 interface SpeakingState {
   speakers: { userId: string; spokenSeconds: number; limitSeconds: number }[];
@@ -177,48 +223,70 @@ export default function GdDetailPage() {
         )}
 
         {gd.data.status !== "completed" && gd.data.status !== "cancelled" && (
-          <Card className="mt-4 p-5">
-            <div className="mb-3 flex items-center gap-2">
-              <p className="font-semibold">Speaking</p>
-              {speaking.speakers.length > 0 && <Pill tone="live"><LiveDot /> Live</Pill>}
+          <div className="mt-5 rounded-[14px] border p-5" style={{ borderColor: "var(--line)", background: "var(--surface)" }}>
+            <div className="mb-4 flex items-center gap-2">
+              <p className="text-[13px] font-semibold uppercase tracking-wide" style={{ color: "var(--dim)" }}>Speaking</p>
+              {speaking.speakers.length > 0 && (
+                <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: "rgba(255,107,107,0.12)", color: "var(--red)" }}>
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--red)" }} /> Live
+                </span>
+              )}
             </div>
             {!GD_SERVICE_WS_URL && (
-              <p className={shared.muted}>Real-time speaking controls aren&apos;t configured for this environment.</p>
+              <p className="text-sm" style={{ color: "var(--dim)" }}>Real-time speaking controls aren&apos;t configured for this environment.</p>
             )}
             {isMuted && (
-              <div className="mb-3">
-                <Pill tone="danger">Muted for exceeding your speaking time</Pill>
+              <div className="mb-3.5 inline-block rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: "rgba(255,138,101,0.15)", color: "var(--coral)" }}>
+                Muted for exceeding your speaking time
               </div>
             )}
-            {speaking.speakers.length === 0 && <p className={shared.muted}>No one is speaking right now.</p>}
-            <div className="flex flex-col gap-3">
+            {speaking.speakers.length === 0 && <p className="text-sm" style={{ color: "var(--dim)" }}>No one is speaking right now.</p>}
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
               {speaking.speakers.map((s) => {
                 const isSelf = s.userId === me.data?.id;
                 const overLimit = s.spokenSeconds >= s.limitSeconds;
                 return (
-                  <div key={s.userId} className={`rounded-xl p-2 ${overLimit ? "" : "animate-speaking"}`}>
-                    <div className="mb-1.5 flex justify-between text-[13px]">
-                      <span className="font-bold">{isSelf ? "You" : s.userId}</span>
-                      <span className={`num ${overLimit ? "text-destructive" : "text-muted-foreground"}`}>
-                        {s.spokenSeconds}s / {s.limitSeconds}s
-                      </span>
-                    </div>
-                    <ProgressMeter value={s.spokenSeconds} max={s.limitSeconds} tone={overLimit ? "danger" : "gold"} />
-                  </div>
+                  <SpeakerTile
+                    key={s.userId}
+                    label={isSelf ? "You" : s.userId}
+                    status={overLimit ? "Muted, over cap" : "Speaking"}
+                    spokenSeconds={s.spokenSeconds}
+                    limitSeconds={s.limitSeconds}
+                    speaking={!overLimit}
+                    muted={overLimit && isMuted && isSelf}
+                  />
                 );
               })}
             </div>
             {socket && !isMuted && (
-              <div className="mt-4 flex gap-2">
-                <Button variant="secondary" onClick={() => socket.emit("speak_start", { gdId: id })}>
-                  Start speaking
-                </Button>
-                <Button variant="secondary" onClick={() => socket.emit("speak_stop", { gdId: id, elapsedSeconds: 0 })}>
-                  Stop speaking
-                </Button>
+              <div className="mt-5 flex justify-center gap-3.5">
+                <button
+                  type="button"
+                  onClick={() => socket.emit("speak_start", { gdId: id })}
+                  className="flex h-12.5 w-12.5 items-center justify-center rounded-full border text-lg"
+                  style={{ borderColor: "var(--line)", background: "var(--surface-2)" }}
+                  aria-label="Start speaking"
+                >
+                  🎤
+                </button>
+                <button
+                  type="button"
+                  onClick={() => socket.emit("speak_stop", { gdId: id, elapsedSeconds: 0 })}
+                  className="flex h-12.5 w-12.5 items-center justify-center rounded-full text-lg"
+                  style={{ background: "var(--violet)", color: "var(--ink-strong)" }}
+                  aria-label="Stop speaking / raise hand"
+                >
+                  ✋
+                </button>
               </div>
             )}
-          </Card>
+            {isOrganizer && (
+              <p className="mt-5 text-center text-xs" style={{ color: "var(--dim)" }}>
+                You are the organizer. You can remove a disruptive participant from room settings, entry fees are not
+                refunded on removal.
+              </p>
+            )}
+          </div>
         )}
 
         {gd.data.status === "completed" && (
