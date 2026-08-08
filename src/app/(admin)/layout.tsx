@@ -4,7 +4,6 @@ import { useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/lib/auth";
-import shared from "../shared.module.css";
 
 function noopSubscribe() {
   return () => {};
@@ -15,9 +14,12 @@ function useHydrated(): boolean {
   return useSyncExternalStore(noopSubscribe, () => true, () => false);
 }
 
+// The admin dashboard gets its own persistent left sidebar (see admin/Sidebar.tsx), not the
+// main app's top nav or the centered `.wrap` column -- so this layout stays a thin guard and
+// lets the page render the full-bleed sidebar+main grid itself.
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn } = useAuth();
   const isAdmin = useIsAdmin();
   const hydrated = useHydrated();
 
@@ -34,22 +36,5 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!hydrated || !isLoggedIn || !isAdmin) return null;
 
-  return (
-    <div className={shared.wrap}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 0" }}>
-        <span style={{ fontWeight: 800, fontSize: 18 }}>Unblur admin</span>
-        <button
-          type="button"
-          onClick={() => {
-            logout();
-            router.push("/login");
-          }}
-          style={{ fontSize: 13, fontWeight: 700, color: "var(--dim)" }}
-        >
-          Log out
-        </button>
-      </header>
-      <main style={{ paddingBottom: 40 }}>{children}</main>
-    </div>
-  );
+  return <>{children}</>;
 }
