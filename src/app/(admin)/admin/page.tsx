@@ -83,7 +83,7 @@ function UsersTab() {
   }
 
   return (
-    <div style={{ overflowX: "auto" }}>
+    <div style={{ overflowX: "auto", border: "1px solid var(--line)", borderRadius: 14, background: "var(--surface)", padding: "4px 12px" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
         <thead>
           <tr style={{ textAlign: "left", borderBottom: "1px solid var(--line)" }}>
@@ -406,7 +406,7 @@ function ExpertiseTab() {
 
       {options.isLoading && <Skeleton height={200} />}
       {options.isSuccess && (
-        <div style={{ overflowX: "auto" }}>
+        <div style={{ overflowX: "auto", border: "1px solid var(--line)", borderRadius: 14, background: "var(--surface)", padding: "4px 12px" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ textAlign: "left", borderBottom: "1px solid var(--line)" }}>
@@ -487,7 +487,7 @@ function AiNotesTab() {
   }
 
   return (
-    <div style={{ overflowX: "auto" }}>
+    <div style={{ overflowX: "auto", border: "1px solid var(--line)", borderRadius: 14, background: "var(--surface)", padding: "4px 12px" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
         <thead>
           <tr style={{ textAlign: "left", borderBottom: "1px solid var(--line)" }}>
@@ -720,7 +720,7 @@ function AuditLogTab() {
   if (auditLog.isError) return <p className={shared.error}>Couldn&apos;t load the audit log.</p>;
 
   return (
-    <div style={{ overflowX: "auto" }}>
+    <div style={{ overflowX: "auto", border: "1px solid var(--line)", borderRadius: 14, background: "var(--surface)", padding: "4px 12px" }}>
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ textAlign: "left", borderBottom: "1px solid var(--line)" }}>
@@ -818,7 +818,7 @@ export default function AdminDashboardPage() {
     <section style={{ padding: "16px 0" }}>
       <h1 className={shared.heading}>Admin dashboard</h1>
 
-      <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: "1px solid var(--line)" }} role="tablist">
+      <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: "1px solid var(--line)", overflowX: "auto" }} role="tablist">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -827,11 +827,12 @@ export default function AdminDashboardPage() {
             aria-selected={tab === t.key}
             onClick={() => setTab(t.key)}
             style={{
-              padding: "8px 14px",
-              fontSize: 14,
-              fontWeight: 700,
-              color: tab === t.key ? "var(--ink)" : "var(--muted)",
-              borderBottom: tab === t.key ? "2px solid var(--accent)" : "2px solid transparent",
+              padding: "10px 16px",
+              fontSize: 13.5,
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+              color: tab === t.key ? "var(--paper)" : "var(--dim)",
+              borderBottom: tab === t.key ? "2px solid var(--violet)" : "2px solid transparent",
               marginBottom: -1,
             }}
           >

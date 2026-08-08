@@ -29,7 +29,8 @@
 }
 
 .heading {
-  font-weight: 700;
+  font-family: var(--font-fraunces), serif;
+  font-weight: 600;
   font-size: clamp(24px, 5vw, 34px);
   line-height: 1.15;
   margin: 0 0 14px;

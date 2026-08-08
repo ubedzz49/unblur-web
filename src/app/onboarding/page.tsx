@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/Input";
 import { Avatar } from "@/components/ui/Avatar";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { ExpertisePicker } from "@/components/ExpertisePicker";
+import { Logo } from "@/components/Logo";
 import shared from "../shared.module.css";
 import styles from "./onboarding.module.css";
 
@@ -66,6 +67,12 @@ export default function OnboardingPage() {
 
   return (
     <PageTransition className={shared.wrap}>
+      <div className="mb-8 flex justify-center pt-6">
+        <div className="flex items-center gap-2 text-[18px] font-bold" style={{ fontFamily: "var(--font-space-grotesk)" }}>
+          <Logo size={16} />
+          unblur
+        </div>
+      </div>
       <div style={{ maxWidth: 420, margin: "0 auto" }}>
         <div className={styles.progress} aria-label={`Step ${step} of ${TOTAL_STEPS}`}>
           {Array.from({ length: TOTAL_STEPS }, (_, i) => (

@@ -4,13 +4,14 @@
 
 .bellButton {
   position: relative;
-  min-height: 44px;
-  min-width: 44px;
+  min-height: 36px;
+  min-width: 36px;
+  border-radius: 999px;
   border: none;
   background: transparent;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
-  color: var(--ink);
+  color: var(--dim);
 }
 
 .badge {
@@ -21,28 +22,27 @@
   height: 16px;
   padding: 0 4px;
   border-radius: 999px;
-  background: var(--accent-2);
-  color: #fff;
+  background: var(--violet);
+  color: var(--ink-strong);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 16px;
   text-align: center;
 }
 
 .panel {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
   right: 0;
   width: 320px;
   max-width: calc(100vw - 32px);
   max-height: 420px;
   overflow-y: auto;
-  background: var(--card);
+  background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-radius: 14px;
   z-index: 100;
-  padding: 12px;
+  padding: 14px;
 }
 
 .header {
@@ -60,7 +60,7 @@
 .markAll {
   font-size: 12px;
   font-weight: 700;
-  color: var(--accent-2);
+  color: var(--violet);
   background: none;
   border: none;
   cursor: pointer;
@@ -80,7 +80,11 @@
 }
 
 .item[data-unread="true"] {
-  background: var(--bg-alt);
+  background: var(--violet-dim);
+}
+
+.item:hover {
+  background: var(--surface);
 }
 
 .itemTitle {
@@ -103,7 +107,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--accent-2);
+  background: var(--violet);
   display: inline-block;
   flex-shrink: 0;
 }

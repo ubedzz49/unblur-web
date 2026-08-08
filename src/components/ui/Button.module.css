@@ -37,7 +37,7 @@
 
 .secondary {
   background: var(--bg-alt);
-  color: var(--ink);
+  color: var(--paper);
   border: 1px solid var(--line);
 }
 
@@ -52,7 +52,7 @@
 
 .secondary .spinner {
   border: 2px solid var(--line);
-  border-top-color: var(--ink);
+  border-top-color: var(--paper);
 }
 
 @keyframes spin {

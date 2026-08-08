@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useResolutionRequestsForDoubt } from "@/lib/queries/resolution";
@@ -27,17 +28,24 @@ function RequesterRow({ request }: { request: ResolutionRequest }) {
         ) : (
           <Avatar initials={initials} size="md" />
         )}
-        <span className="text-[15px] font-extrabold">{user.data.name ?? "Someone"}</span>
+        <Link href={`/resolvers/${request.resolverUserId}`} className="text-[15px] font-extrabold hover:underline">
+          {user.data.name ?? "Someone"}
+        </Link>
       </div>
 
-      {user.data.bio && <p className="mb-2.5 text-[13px] text-muted-foreground">{user.data.bio}</p>}
+      {user.data.bio && (
+        <p className="mb-2.5 text-[13px]" style={{ color: "var(--dim)" }}>
+          {user.data.bio}
+        </p>
+      )}
 
       {user.data.expertise.length > 0 && (
         <div className="mb-3.5 flex flex-wrap gap-1.5">
           {user.data.expertise.map((e) => (
             <span
               key={e.id}
-              className="rounded-full bg-elevated px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground"
+              className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
+              style={{ background: "var(--surface-2)", color: "var(--dim)" }}
             >
               {e.expertiseTypeName}
               {e.expertiseLevelName && e.expertiseLevelName.toLowerCase() !== "general"
@@ -48,7 +56,7 @@ function RequesterRow({ request }: { request: ResolutionRequest }) {
         </div>
       )}
 
-      <ResolutionRequestCard request={request} bare />
+      <ResolutionRequestCard request={request} resolverName={user.data.name ?? undefined} bare />
     </div>
   );
 }
@@ -72,17 +80,21 @@ export function DoubtRequestsModal({ doubtId, onClose }: { doubtId: string; onCl
       role="presentation"
     >
       <div
-        className="max-h-[88vh] w-full max-w-xl overflow-y-auto rounded-t-[20px] border border-border bg-card p-5 sm:rounded-[20px]"
+        className="max-h-[88vh] w-full max-w-xl overflow-y-auto rounded-t-[20px] border p-6 sm:rounded-[20px]"
+        style={{ borderColor: "var(--line)", background: "var(--surface)" }}
         role="dialog"
         aria-modal="true"
         aria-label="Offers for this doubt"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-[17px] font-extrabold">Offers to help</h2>
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-[19px] font-semibold" style={{ fontFamily: "var(--font-fraunces)" }}>
+            Offers received
+          </h2>
           <button
             type="button"
-            className="flex min-h-11 min-w-11 items-center justify-center text-xl text-muted-foreground"
+            className="flex min-h-11 min-w-11 items-center justify-center text-xl"
+            style={{ color: "var(--dim)" }}
             onClick={onClose}
             aria-label="Close"
           >

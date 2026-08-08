@@ -2,20 +2,17 @@
 
 import Link from "next/link";
 import { useGdEligibility, useGds } from "@/lib/queries/gds";
-import { Card, LiveDot, Pill, SectionLabel } from "@/components/scoreboard/kit";
-import { Button } from "@/components/ui/Button";
 import { PageTransition } from "@/components/ui/PageTransition";
 import type { Gd } from "@/lib/api";
 
 function formatFee(cents: number): string {
-  return cents === 0 ? "Free" : `₹${(cents / 100).toFixed(0)}`;
+  return cents === 0 ? "Free to join" : `₹${(cents / 100).toFixed(0)} entry`;
 }
 
-function statusTone(status: Gd["status"]): "outline" | "live" | "neutral" | "danger" {
-  if (status === "live") return "live";
-  if (status === "cancelled") return "danger";
-  if (status === "completed") return "neutral";
-  return "outline";
+// Per-participant speaking cap: at most 1/10th of the room duration (matches
+// gd-service's own rule, see NewGdPage) -- display-only.
+function speakingCapMins(durationMins: number): number {
+  return Math.round((durationMins / 10) * 10) / 10;
 }
 
 export default function GdsPage() {
@@ -24,55 +21,65 @@ export default function GdsPage() {
 
   return (
     <PageTransition>
-      <div className="space-y-6 py-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="mx-auto max-w-[1000px] px-6 py-10">
+        <div className="mb-7 flex items-center justify-between gap-3">
           <h1 className="text-fluid-title">Group discussions</h1>
-          {eligibility.data?.canOrganizeGD && (
-            <Link href="/gds/new">
-              <Button>Organize a GD</Button>
+          {eligibility.data?.canOrganizeGD ? (
+            <Link
+              href="/gds/new"
+              className="rounded-lg px-5 py-3 text-[13.5px] font-semibold"
+              style={{ background: "var(--violet)", color: "var(--ink-strong)" }}
+            >
+              Organize a GD
             </Link>
+          ) : (
+            <span className="text-xs" style={{ color: "var(--dim)" }}>
+              Resolve 100+ minutes to organize a GD
+            </span>
           )}
         </div>
 
         {eligibility.isSuccess && !eligibility.data.canAttendGD && (
-          <p className="text-sm text-muted-foreground">
-            Attend a GD once you&apos;ve listened for 50+ minutes. Organize one once you&apos;ve resolved 100+ minutes.
+          <p className="mb-5 text-sm" style={{ color: "var(--dim)" }}>
+            Attend a GD once you&apos;ve listened for 50+ minutes.
           </p>
         )}
 
-        {gds.isLoading && <p className="text-sm text-muted-foreground">Loading GDs…</p>}
-        {gds.isError && <p className="text-sm text-muted-foreground">Couldn&apos;t load GDs.</p>}
-        {gds.isSuccess && gds.data.length === 0 && (
-          <p className="text-sm text-muted-foreground">No upcoming GDs yet.</p>
-        )}
+        {gds.isLoading && <p className="text-sm" style={{ color: "var(--dim)" }}>Loading GDs…</p>}
+        {gds.isError && <p className="text-sm" style={{ color: "var(--dim)" }}>Couldn&apos;t load GDs.</p>}
+        {gds.isSuccess && gds.data.length === 0 && <p className="text-sm" style={{ color: "var(--dim)" }}>No upcoming GDs yet.</p>}
 
-        <section>
-          <SectionLabel>Discover</SectionLabel>
-          <div className="space-y-3">
-            {gds.data?.map((gd) => (
-              <Link key={gd.id} href={`/gds/${gd.id}`}>
-                <Card interactive className="p-4">
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <Pill tone={statusTone(gd.status)}>
-                      {gd.status === "live" && <LiveDot />}
-                      {gd.status.replace("_", " ")}
-                    </Pill>
-                    <Pill tone={gd.entryFeeCents === 0 ? "neutral" : "gold"}>
-                      <span className="num">{formatFee(gd.entryFeeCents)}</span>
-                    </Pill>
-                  </div>
-
-                  <h3 className="text-pretty text-[0.95rem] font-bold leading-snug">{gd.topic}</h3>
-
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {new Date(gd.scheduledAt).toLocaleString()} ·{" "}
-                    <span className="num">{gd.durationMins}</span> min
-                  </p>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </section>
+        <div className="grid grid-cols-1 gap-4.5 sm:grid-cols-2">
+          {gds.data?.map((gd: Gd) => (
+            <Link
+              key={gd.id}
+              href={`/gds/${gd.id}`}
+              className="block rounded-2xl border p-5.5"
+              style={{ borderColor: "var(--line)", background: "var(--surface)" }}
+            >
+              <span
+                className="mb-3 inline-block rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                style={{ background: "var(--violet-dim)", color: "var(--violet)" }}
+              >
+                {gd.status === "live" ? "Live now" : new Date(gd.scheduledAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+              </span>
+              <h3 className="mb-2.5 text-[17px] font-semibold">{gd.topic}</h3>
+              <div className="mb-4 flex flex-wrap gap-3.5 text-xs" style={{ color: "var(--dim)" }}>
+                <span>{gd.durationMins} min</span>
+                <span>{speakingCapMins(gd.durationMins)} min speaking cap each</span>
+                <span>Max 3 speakers</span>
+              </div>
+              <div className="flex items-center justify-between border-t pt-3.5" style={{ borderColor: "var(--line)" }}>
+                <span className="text-[13.5px] font-semibold" style={{ color: gd.entryFeeCents === 0 ? "var(--dim)" : "var(--green)" }}>
+                  {formatFee(gd.entryFeeCents)}
+                </span>
+                <span className="rounded-lg px-4 py-2 text-[12.5px] font-semibold" style={{ background: "var(--violet)", color: "var(--ink-strong)" }}>
+                  {gd.status === "live" ? "Join" : "View"}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
     </PageTransition>
   );

@@ -3,13 +3,13 @@
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { PageTransition } from "@/components/ui/PageTransition";
-import { Card, Pill } from "@/components/scoreboard/kit";
-import { Button, ButtonStatus } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
-import { useBooking } from "@/lib/queries/resolution";
+import { useBooking, useCancelBooking, useSubmitRating } from "@/lib/queries/resolution";
 import { useConfirmPayment, usePayment } from "@/lib/queries/payments";
+import { usePublicUser } from "@/lib/queries/users";
 import { isMeetingWindowOver } from "@/lib/meeting-window";
+import type { ButtonStatus } from "@/components/ui/Button";
 
 function formatAmount(amountCents: number): string {
   return `₹${(amountCents / 100).toFixed(0)}`;
@@ -25,11 +25,79 @@ function formatSlot(iso: string): string {
   });
 }
 
-function PaymentRow({ label, children }: { label: string; children: React.ReactNode }) {
+function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between border-b border-border py-2.5 last:border-b-0">
-      <span className="text-[13px] text-muted-foreground">{label}</span>
-      <span className="text-[15px] font-extrabold">{children}</span>
+    <div className="flex items-baseline justify-between border-b py-3 text-sm last:border-b-0" style={{ borderColor: "var(--line)" }}>
+      <span style={{ color: "var(--dim)" }}>{label}</span>
+      <span className="num font-medium">{children}</span>
+    </div>
+  );
+}
+
+function RatingCard({ bookingId, resolverName }: { bookingId: string; resolverName: string }) {
+  const { showToast } = useToast();
+  const submitRating = useSubmitRating();
+  const [rating, setRating] = useState(0);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  async function handleSubmit() {
+    if (rating < 1 || rating > 5 || submitRating.isPending) return;
+    try {
+      await submitRating.mutateAsync({ bookingId, rating, feedbackText: feedbackText || undefined });
+      setSubmitted(true);
+      showToast("Thanks for rating this session");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't submit that rating — try again.", "error");
+    }
+  }
+
+  return (
+    <div className="mt-9">
+      <div className="mb-4 text-[13px] font-medium uppercase tracking-wide" style={{ color: "var(--dim)" }}>
+        After the session
+      </div>
+      <div className="rounded-2xl border p-6" style={{ borderColor: "var(--line)", background: "var(--surface)" }}>
+        {submitted ? (
+          <p className="text-center text-sm font-semibold">You rated this session {rating}★. Thanks!</p>
+        ) : (
+          <>
+            <p className="text-center text-sm" style={{ color: "var(--dim)" }}>How did the session go with {resolverName}?</p>
+            <div className="my-4.5 flex justify-center gap-2" role="group" aria-label="Rating">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  aria-pressed={rating >= n}
+                  aria-label={`${n} star${n === 1 ? "" : "s"}`}
+                  onClick={() => setRating(n)}
+                  className="text-[34px] leading-none"
+                  style={{ color: rating >= n ? "var(--gold)" : "var(--line)" }}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+            <textarea
+              aria-label="Optional feedback"
+              placeholder={`Optional feedback for ${resolverName}`}
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              className="mb-4 min-h-[80px] w-full rounded-lg border p-3.5 text-sm"
+              style={{ borderColor: "var(--line)", background: "var(--surface-2)", color: "var(--paper)" }}
+            />
+            <button
+              type="button"
+              disabled={rating < 1 || rating > 5 || submitRating.isPending}
+              onClick={handleSubmit}
+              className="w-full rounded-lg py-3.5 text-[14.5px] font-semibold disabled:opacity-50"
+              style={{ background: "var(--violet)", color: "var(--ink-strong)" }}
+            >
+              Submit rating
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -42,7 +110,10 @@ export default function BookingPaymentPage() {
   const booking = useBooking(bookingId);
   const payment = usePayment(booking.data?.paymentId);
   const confirmPayment = useConfirmPayment();
+  const cancelBooking = useCancelBooking();
+  const resolver = usePublicUser(booking.data?.resolverUserId);
   const [payStatus, setPayStatus] = useState<ButtonStatus>("idle");
+  const [cancelling, setCancelling] = useState(false);
 
   async function handlePay() {
     if (!payment.data || payStatus === "loading") return;
@@ -53,7 +124,6 @@ export default function BookingPaymentPage() {
         setPayStatus("success");
         showToast("Payment confirmed");
       } else {
-        // sandbox simulated failure -- payment stays pending/failed, let the user retry
         setPayStatus("idle");
         showToast("Payment didn't go through (sandbox) — try again.", "error");
       }
@@ -63,16 +133,29 @@ export default function BookingPaymentPage() {
     }
   }
 
+  async function handleCancel() {
+    if (!booking.data || cancelling) return;
+    setCancelling(true);
+    try {
+      await cancelBooking.mutateAsync(booking.data.id);
+      showToast("Booking cancelled, full refund issued");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't cancel that booking — try again.", "error");
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   if (booking.isLoading || (booking.isSuccess && payment.isLoading)) {
     return (
       <PageTransition>
-        <section className="py-8">
-          <Card className="max-w-[440px] p-5">
+        <section className="mx-auto max-w-[640px] py-10 px-5">
+          <div className="max-w-[440px] rounded-2xl border p-6" style={{ borderColor: "var(--line)", background: "var(--surface)" }}>
             <Skeleton width="60%" height={18} style={{ marginBottom: 12 }} />
             <Skeleton width="100%" height={14} style={{ marginBottom: 8 }} />
             <Skeleton width="80%" height={14} style={{ marginBottom: 20 }} />
             <Skeleton width="100%" height={44} />
-          </Card>
+          </div>
         </section>
       </PageTransition>
     );
@@ -80,90 +163,119 @@ export default function BookingPaymentPage() {
 
   if (booking.isError || !booking.data) {
     return (
-      <section className="py-8">
-        <Card className="max-w-[440px] p-5">
-          <h3 className="mb-1 font-extrabold">Couldn&apos;t load this booking</h3>
-          <p className="mb-3 text-sm text-muted-foreground">Something went wrong reaching the server.</p>
-          <Button type="button" onClick={() => booking.refetch()}>
+      <section className="mx-auto max-w-[640px] py-10 px-5">
+        <div className="max-w-[440px] rounded-2xl border p-6" style={{ borderColor: "var(--line)", background: "var(--surface)" }}>
+          <h3 className="mb-1 font-bold">Couldn&apos;t load this booking</h3>
+          <p className="mb-3 text-sm" style={{ color: "var(--dim)" }}>Something went wrong reaching the server.</p>
+          <button type="button" onClick={() => booking.refetch()} className="rounded-lg px-4 py-2.5 text-sm font-semibold" style={{ background: "var(--violet)", color: "var(--ink-strong)" }}>
             Try again
-          </Button>
-        </Card>
+          </button>
+        </div>
       </section>
     );
   }
 
   if (payment.isError || !payment.data) {
     return (
-      <section className="py-8">
-        <Card className="max-w-[440px] p-5">
-          <h3 className="mb-1 font-extrabold">Couldn&apos;t load the payment</h3>
-          <p className="mb-3 text-sm text-muted-foreground">Something went wrong reaching the server.</p>
-          <Button type="button" onClick={() => payment.refetch()}>
+      <section className="mx-auto max-w-[640px] py-10 px-5">
+        <div className="max-w-[440px] rounded-2xl border p-6" style={{ borderColor: "var(--line)", background: "var(--surface)" }}>
+          <h3 className="mb-1 font-bold">Couldn&apos;t load the payment</h3>
+          <p className="mb-3 text-sm" style={{ color: "var(--dim)" }}>Something went wrong reaching the server.</p>
+          <button type="button" onClick={() => payment.refetch()} className="rounded-lg px-4 py-2.5 text-sm font-semibold" style={{ background: "var(--violet)", color: "var(--ink-strong)" }}>
             Try again
-          </Button>
-        </Card>
+          </button>
+        </div>
       </section>
     );
   }
 
   const isCompleted = payment.data.status === "completed";
   const meetingEnded = isMeetingWindowOver(booking.data.slotAt, booking.data.durationMins);
+  const resolverName = resolver.data?.name ?? "your resolver";
 
   return (
     <PageTransition>
-      <section className="py-8">
-        <h1 className="mb-3.5 text-3xl font-semibold leading-tight sm:text-4xl">Booking payment</h1>
-
-        <Card className="max-w-[440px] p-5">
-          <div className="mb-5">
-            <PaymentRow label="When">{formatSlot(booking.data.slotAt)}</PaymentRow>
-            <PaymentRow label="Duration">
-              <span className="num">{booking.data.durationMins} min</span>
-            </PaymentRow>
-            <PaymentRow label="Amount">
-              <span className="num">{formatAmount(payment.data.amountCents)}</span>
-            </PaymentRow>
-            <PaymentRow label="Payment status">
-              <Pill tone={isCompleted ? "gold" : "outline"}>{payment.data.status}</Pill>
-            </PaymentRow>
+      <section className="mx-auto max-w-[640px] px-5 pb-24 pt-12">
+        {isCompleted && (
+          <div
+            className="mb-6 inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px]"
+            style={{ background: "rgba(127,217,154,0.12)", color: "var(--green)" }}
+          >
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--green)" }} />
+            Booking confirmed
           </div>
+        )}
+        <h1 className="mb-2 text-[26px] font-semibold" style={{ fontFamily: "var(--font-fraunces)" }}>
+          {isCompleted ? `${resolverName} is expecting you` : "Confirm your booking"}
+        </h1>
+        <p className="mb-8 text-[14.5px]" style={{ color: "var(--dim)" }}>{booking.data.durationMins} minute session</p>
 
-          {isCompleted ? (
-            meetingEnded ? (
-              <p className="font-bold">This meeting has ended.</p>
+        <div className="mb-5 rounded-2xl border p-6" style={{ borderColor: "var(--line)", background: "var(--surface)" }}>
+          <DetailRow label="Resolver">{resolverName}</DetailRow>
+          <DetailRow label="Duration">{booking.data.durationMins} minutes</DetailRow>
+          <DetailRow label="Amount">{formatAmount(payment.data.amountCents)}</DetailRow>
+          <DetailRow label="Starts">{formatSlot(booking.data.slotAt)}</DetailRow>
+          <DetailRow label="Payment status">{payment.data.status}</DetailRow>
+        </div>
+
+        {isCompleted ? (
+          <>
+            {!meetingEnded && (
+              <div
+                className="mb-5 flex items-center gap-2.5 rounded-xl border px-4.5 py-3.5 text-[12.5px]"
+                style={{ borderColor: "var(--line)", background: "var(--surface)", color: "var(--dim)" }}
+              >
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "var(--red)" }} />
+                This session is recorded for quality and safety and automatically deleted 15 minutes after it ends.
+              </div>
+            )}
+
+            {meetingEnded ? (
+              <p className="font-semibold">This meeting has ended.</p>
             ) : booking.data.joinUrl ? (
               <>
-                <Button type="button" onClick={() => window.open(booking.data!.joinUrl!, "_blank", "noopener,noreferrer")}>
+                <button
+                  type="button"
+                  onClick={() => window.open(booking.data!.joinUrl!, "_blank", "noopener,noreferrer")}
+                  className="mb-3 w-full rounded-[10px] py-4 text-[15px] font-semibold"
+                  style={{ background: "var(--violet)", color: "var(--ink-strong)" }}
+                >
                   Join meeting
-                </Button>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  This session is recorded for quality and safety. The recording is kept for 15
-                  minutes after the session ends, then deleted.
-                </p>
+                </button>
+                {booking.data.status === "scheduled" && (
+                  <button
+                    type="button"
+                    disabled={cancelling}
+                    onClick={handleCancel}
+                    className="w-full rounded-[10px] border py-3.5 text-sm disabled:opacity-50"
+                    style={{ borderColor: "var(--line)", color: "var(--paper)" }}
+                  >
+                    Cancel booking, full refund
+                  </button>
+                )}
               </>
             ) : (
-              <p className="font-bold">
-                Booking confirmed — you&apos;ll get the meeting link here once available.
-              </p>
-            )
-          ) : (
-            <>
-              <p className="mb-3 text-sm text-muted-foreground">
-                This is a sandbox payment — no real money moves, it just simulates the payment
-                completing.
-              </p>
-              <Button
-                type="button"
-                status={payStatus}
-                loadingLabel="Processing…"
-                successLabel="Paid"
-                onClick={handlePay}
-              >
-                Pay {formatAmount(payment.data.amountCents)} (sandbox)
-              </Button>
-            </>
-          )}
-        </Card>
+              <p className="font-semibold">You&apos;re all set — the meeting link will appear here once it&apos;s ready.</p>
+            )}
+
+            {booking.data.status === "completed" && <RatingCard bookingId={booking.data.id} resolverName={resolverName} />}
+          </>
+        ) : (
+          <>
+            <p className="mb-4 text-sm" style={{ color: "var(--dim)" }}>
+              This is a sandbox payment — no real money moves, it just simulates the payment completing.
+            </p>
+            <button
+              type="button"
+              disabled={payStatus === "loading"}
+              onClick={handlePay}
+              className="w-full rounded-[10px] py-4 text-[15px] font-semibold disabled:opacity-60"
+              style={{ background: "var(--violet)", color: "var(--ink-strong)" }}
+            >
+              {payStatus === "loading" ? "Processing…" : `Pay ${formatAmount(payment.data.amountCents)} (sandbox)`}
+            </button>
+          </>
+        )}
       </section>
     </PageTransition>
   );
